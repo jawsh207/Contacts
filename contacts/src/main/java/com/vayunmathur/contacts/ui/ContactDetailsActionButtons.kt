@@ -1,25 +1,24 @@
 package com.vayunmathur.contacts.ui
 
 import android.content.Context
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.data.PhoneNumber
 import com.vayunmathur.contacts.util.ContactPlatforms
 import com.vayunmathur.contacts.util.PackageUtils
-import com.vayunmathur.library.ui.BadgedBox
 import com.vayunmathur.library.ui.DropdownMenu
 import com.vayunmathur.library.ui.DropdownMenuItem
 import com.vayunmathur.library.ui.MaterialTheme
+import com.vayunmathur.library.ui.Surface
 import com.vayunmathur.library.ui.Text
 
 /** Number-first picker shown by the Call/Message/Video buttons for multi-number contacts. */
@@ -68,24 +67,26 @@ internal fun launchSingleVideoOption(
 fun ActionButton(
     icon: @Composable () -> Unit,
     label: String,
+    modifier: Modifier = Modifier,
     dropdownContent: (@Composable () -> Unit)? = null,
     action: () -> Unit
 ) {
+    // Material 3 Expressive quick action: a wide, fully rounded tonal pill with the label
+    // underneath, matching Google Contacts. Callers share the row width via `modifier`.
     Column(
+        modifier = modifier,
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        BadgedBox(
-            badge = {}
+        Surface(
+            onClick = action,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { action() },
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
+            Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
                 Box(
                     modifier = Modifier.size(24.dp),
                     contentAlignment = androidx.compose.ui.Alignment.Center
@@ -95,6 +96,6 @@ fun ActionButton(
                 dropdownContent?.invoke()
             }
         }
-        Text(text = label, style = MaterialTheme.typography.labelMedium)
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
     }
 }
