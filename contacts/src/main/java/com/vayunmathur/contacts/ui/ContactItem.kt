@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,18 +79,10 @@ fun ContactItem(
         modifier
     }
 
-    // Remembered per (contact, group list): this filters every group and trims each name, and
-    // without the remember it re-ran on every composition of every visible row while scrolling.
-    val contactGroups = remember(contact, allGroups) { contactGroupsOf(contact, allGroups) }
-
-    val trimmedOrg = contact.org.company.trim()
-    val showOrg = trimmedOrg.isNotEmpty()
-    val showGroups = contactGroups.isNotEmpty()
-
     val content = @Composable {
         val hasDropdown = !dropdownList.isNullOrEmpty()
 
-        key(showOrg, showGroups, contactGroups.size) {
+        run {
             val itemModifier = if (embeddedInCard) {
                 combinedModifier
             } else {
@@ -114,7 +105,7 @@ fun ContactItem(
                     contact,
                     decodePhoto,
                     Modifier
-                        .size(50.dp)
+                        .size(40.dp)
                         .then(
                             if (sharedKey == null) Modifier
                             else Modifier.sharedContent("contact-avatar-$sharedKey")
@@ -147,31 +138,18 @@ fun ContactItem(
                             )
                         }
                     }
-                    if (contact.nickname.nickname.isNotBlank()) {
+                    // Google Contacts rows show only the photo and name; company, nickname and
+                    // labels stay on the contact page. A contact saved without a name falls back
+                    // to whatever identifies it, so its row is never blank.
+                    if (parts.isEmpty()) {
                         Text(
-                            text = contact.nickname.nickname,
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = contact.nickname.nickname.ifBlank { contact.org.company.trim() }
+                                .ifBlank { contact.details.phoneNumbers.firstOrNull()?.number.orEmpty() }
+                                .ifBlank { contact.details.emails.firstOrNull()?.address.orEmpty() },
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = if (sharedKey == null) Modifier
-                            else Modifier.sharedText("contact-nickname-$sharedKey"),
-                        )
-                    }
-                    if (showOrg) {
-                        Text(
-                            text = trimmedOrg,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = if (sharedKey == null) Modifier
-                            else Modifier.sharedText("contact-company-$sharedKey"),
-                        )
-                    }
-                    if (showGroups) {
-                        Text(
-                            text = contactGroups.joinToString(", ") { it.name },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

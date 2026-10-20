@@ -1,20 +1,14 @@
 package com.vayunmathur.contacts.ui
 
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.vayunmathur.library.ui.R as UiR
 import androidx.compose.runtime.Composable
@@ -40,9 +34,7 @@ import com.vayunmathur.library.ui.TextField
 import com.vayunmathur.library.ui.animatedColor
 import com.vayunmathur.library.ui.animatedDp
 import com.vayunmathur.library.ui.appBarScrollBehavior
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +48,7 @@ import com.vayunmathur.contacts.util.GroupsUiState
 import com.vayunmathur.library.ui.IconAdd
 import com.vayunmathur.library.ui.IconButton
 import com.vayunmathur.library.ui.IconDelete
-import com.vayunmathur.library.ui.IconGroup
+import com.vayunmathur.library.ui.IconLabel
 import com.vayunmathur.library.util.NavBackStack
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -83,6 +75,7 @@ fun GroupsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, expa
             }
         },
         expandGroupId = expandGroupId,
+        onOpenSettings = { backStack.add(Route.Settings) },
     )
 }
 
@@ -95,7 +88,12 @@ fun GroupsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, expa
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroupsScreen(state: GroupsUiState, actions: ContactsActions, expandGroupId: Long? = null) {
+fun GroupsScreen(
+    state: GroupsUiState,
+    actions: ContactsActions,
+    expandGroupId: Long? = null,
+    onOpenSettings: () -> Unit = {},
+) {
     var showAddDialog by remember { mutableStateOf(false) }
     var newGroupName by remember { mutableStateOf("") }
     var groupToDelete by remember { mutableStateOf<com.vayunmathur.contacts.data.ContactGroup?>(null) }
@@ -105,7 +103,9 @@ fun GroupsScreen(state: GroupsUiState, actions: ContactsActions, expandGroupId: 
         list
     }
 
+    // Google Contacts' Organize tab: labels first, then the management tools.
     LazyListScaffold(
+        title = stringResource(R.string.organize),
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 IconAdd()
@@ -116,16 +116,17 @@ fun GroupsScreen(state: GroupsUiState, actions: ContactsActions, expandGroupId: 
         verticalArrangement = Arrangement.spacedBy(4.dp),
         scrollBehavior = appBarScrollBehavior(),
     ) {
+            item(key = "labels-header") { OrganizeSectionHeader(stringResource(R.string.groups)) }
             if (state.groups.isEmpty()) {
                 item(key = "groups-empty") {
                     if (state.isLoading) {
-                        LoadingState(modifier = Modifier.fillParentMaxSize())
+                        LoadingState(modifier = Modifier.fillMaxWidth().height(EMPTY_LABELS_HEIGHT))
                     } else {
                         EmptyState(
                             title = stringResource(R.string.no_groups_yet),
-                            modifier = Modifier.fillParentMaxSize(),
+                            modifier = Modifier.fillMaxWidth().height(EMPTY_LABELS_HEIGHT),
                             message = stringResource(R.string.no_groups_yet_message),
-                            icon = { IconGroup() },
+                            icon = { IconLabel() },
                         )
                     }
                 }
@@ -175,21 +176,7 @@ fun GroupsScreen(state: GroupsUiState, actions: ContactsActions, expandGroupId: 
                                 supportingContent = {
                                     Text(pluralStringResource(R.plurals.contacts_count, contactsInGroup.size, contactsInGroup.size))
                                 },
-                                leadingContent = {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .background(
-                                                color = getAvatarColor(group.id),
-                                                shape = CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        IconGroup(
-                                            tint = Color.White
-                                        )
-                                    }
-                                },
+                                leadingContent = { IconLabel() },
                                 trailingContent = {
                                     IconButton(onClick = { groupToDelete = group }) {
                                         IconDelete()
@@ -226,6 +213,9 @@ fun GroupsScreen(state: GroupsUiState, actions: ContactsActions, expandGroupId: 
                     }
                 }
             }
+
+            item(key = "manage-header") { OrganizeSectionHeader(stringResource(R.string.fix_and_manage)) }
+            item(key = "manage-settings") { OrganizeSettingsRow(onOpenSettings) }
     }
 
     if (showAddDialog) {
