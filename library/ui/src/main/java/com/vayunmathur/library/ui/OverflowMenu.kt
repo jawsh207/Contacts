@@ -24,7 +24,9 @@ import androidx.compose.ui.Modifier
 @Composable
 fun OverflowMenu(
     modifier: Modifier = Modifier,
-    icon: @Composable () -> Unit = { IconMenu() },
+    // ⋮ rather than a hamburger: Material 3 reserves the hamburger for navigation drawers,
+    // and this fork follows Google Contacts, which has none.
+    icon: @Composable () -> Unit = { IconMoreVert() },
     content: @Composable OverflowMenuScope.() -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
