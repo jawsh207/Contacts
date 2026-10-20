@@ -284,4 +284,18 @@
     <string name="move_partial_failure"><xliff:g id="moved" example="2">%1$d</xliff:g> moved, <xliff:g id="failed" example="1">%2$d</xliff:g> failed</string>
     <!-- Snackbar when nothing moved -->
     <string name="move_failed">Move failed</string>
+
+    <!-- Highlights tab -->
+    <string name="highlights">Highlights</string>
+    <string name="upcoming_birthdays">Upcoming birthdays</string>
+    <string name="birthday_today">Today</string>
+    <string name="birthday_tomorrow">Tomorrow</string>
+    <plurals name="birthday_in_days">
+        <item quantity="one">In %d day</item>
+        <item quantity="other">In %d days</item>
+    </plurals>
+    <!-- Appended to the birthday line, e.g. "Today · Turns 34" -->
+    <string name="birthday_turns_age">Turns %d</string>
+    <string name="no_highlights_yet">Nothing to highlight yet</string>
+    <string name="no_highlights_yet_message">Star contacts to keep them here. Birthdays in the next 30 days show up here too.</string>
 </resources>

@@ -53,6 +53,8 @@ import com.vayunmathur.contacts.ui.CropPhotoScreen
 import com.vayunmathur.contacts.ui.EditContactPage
 import com.vayunmathur.contacts.ui.dialogs.EventDeleteConfirmDialog
 import com.vayunmathur.contacts.ui.GroupsPage
+import com.vayunmathur.contacts.ui.HighlightsPage
+import com.vayunmathur.library.ui.IconStar
 import com.vayunmathur.library.ui.IconGroup
 import com.vayunmathur.library.ui.IconPerson
 import com.vayunmathur.library.ui.IconSettings
@@ -689,12 +691,13 @@ private fun ContactsTabs(
     initialGroupsExpandId: Long? = null,
     startOnSettings: Boolean = false,
 ) {
+    // Tab order: Contacts, Highlights, Groups, Settings.
     val startPage = when {
-        startOnSettings -> 2
-        initialGroupsExpandId != null -> 1
+        startOnSettings -> 3
+        initialGroupsExpandId != null -> 2
         else -> 0
     }
-    val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 3 })
+    val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 4 })
     val tabs = listOf(
         PagerTab(stringResource(UiR.string.contacts), { IconPerson() }) {
             ContactList(
@@ -703,6 +706,9 @@ private fun ContactsTabs(
                 onContactClick = onContactClick,
                 onAddContactClick = onAddContactClick,
             )
+        },
+        PagerTab(stringResource(R.string.highlights), { IconStar() }) {
+            HighlightsPage(viewModel, backStack)
         },
         PagerTab(stringResource(R.string.groups), { IconGroup() }) {
             GroupsPage(viewModel, backStack, initialGroupsExpandId)

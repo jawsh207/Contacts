@@ -129,18 +129,28 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT), emptyList())
 
+    private fun isInVisibleAccount(c: com.vayunmathur.contacts.data.Contact, hidden: Set<String>): Boolean {
+        val key = accountKey(c.accountType, c.accountName)
+        val encodedKey = encodedAccountKey(c.accountType, c.accountName)
+        // Support legacy hidden entries that stored only accountName, raw "type|name"
+        // keys, and separator-safe encoded keys.
+        return key !in hidden && encodedKey !in hidden && c.accountName !in hidden
+    }
+
+    /** Contacts in visible accounts, ignoring the search box — what the Highlights tab draws from. */
+    val visibleContacts: StateFlow<List<com.vayunmathur.contacts.data.Contact>> = combine(
+        allContactsState,
+        hiddenAccounts,
+    ) { all, hidden -> all.filter { isInVisibleAccount(it, hidden) } }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT), emptyList())
+
     val contacts: StateFlow<List<com.vayunmathur.contacts.data.Contact>> = combine(
         searchIndex,
         _searchQuery,
         hiddenAccounts
     ) { indexed, query, hidden ->
-        val visible = indexed.filter { (c, _) ->
-            val key = accountKey(c.accountType, c.accountName)
-            val encodedKey = encodedAccountKey(c.accountType, c.accountName)
-            // Support legacy hidden entries that stored only accountName, raw "type|name"
-            // keys, and separator-safe encoded keys.
-            key !in hidden && encodedKey !in hidden && c.accountName !in hidden
-        }
+        val visible = indexed.filter { (c, _) -> isInVisibleAccount(c, hidden) }
         val tokens = query.trim().lowercase().split(WHITESPACE).filter { it.isNotBlank() }
         if (tokens.isEmpty()) visible.map { it.first }
         else filterByTokens(visible, tokens).map { it.first }
