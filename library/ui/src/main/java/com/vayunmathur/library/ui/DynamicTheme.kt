@@ -17,18 +17,26 @@ import androidx.compose.ui.platform.LocalContext
  * read to pick their Expressive defaults. Without it `MaterialTheme.shapes` carries only the
  * classic five roles, which is why corner radii ended up as call-site literals.
  *
- * Shapes, typography and motion are deliberately not overridden here: Material's own
- * defaults are the token set, so there is nothing for us to restate and nothing to drift
- * from it on a dependency bump.
+ * Shapes and motion are deliberately not overridden here: Material's own defaults are the
+ * token set. Typography keeps Material's scale but sets it in Google Sans Flex, and the
+ * background/surface roles are remapped (below) to match Google Contacts' layering.
  */
 @Composable
 fun DynamicTheme(darkTheme: Boolean? = null, content: @Composable () -> Unit) {
     val isDark = darkTheme ?: isSystemInDarkTheme()
-    val colorScheme = if (isDark) dynamicDarkColorScheme(LocalContext.current) else dynamicLightColorScheme(LocalContext.current)
+    val wallpaperScheme =
+        if (isDark) dynamicDarkColorScheme(LocalContext.current) else dynamicLightColorScheme(LocalContext.current)
+    // Layered like Google's Expressive apps: screens, top bars and lists sit on the tinted
+    // surfaceContainer, and cards use surfaceBright, so cards read brighter than the backdrop
+    // in both light and dark themes.
+    val colorScheme = wallpaperScheme.copy(
+        background = wallpaperScheme.surfaceContainer,
+        surface = wallpaperScheme.surfaceContainer,
+    )
 
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = Typography(),
+        typography = Typography().withFontFamily(GoogleSansFlex),
         content = content
     )
 }

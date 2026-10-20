@@ -40,7 +40,7 @@ internal fun OrganizeSettingsRow(onOpenSettings: () -> Unit) {
         onClick = onOpenSettings,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         ListItem(
             supportingContent = { Text(stringResource(R.string.settings_summary)) },

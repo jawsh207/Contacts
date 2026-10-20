@@ -17,7 +17,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
@@ -78,15 +77,16 @@ fun ContactAvatar(
                 modifier = Modifier.fillMaxSize().clip(shape)
             )
         } else {
+            val colors = avatarColorsFor(contact.id)
             Box(
-                Modifier.fillMaxSize().background(getAvatarColor(contact.id), shape),
+                Modifier.fillMaxSize().background(colors.container, shape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = contact.name.value.firstOrNull()?.uppercase() ?: "",
-                    color = Color.White,
+                    color = colors.content,
                     style = initialsStyle,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
             }
         }

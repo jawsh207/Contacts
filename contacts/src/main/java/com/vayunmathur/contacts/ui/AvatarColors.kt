@@ -1,16 +1,24 @@
 package com.vayunmathur.contacts.ui
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.vayunmathur.library.ui.MaterialTheme
 
-fun getAvatarColor(id: Long): Color {
-    val colors = listOf(
-        Color(0xFF6C3800),
-        Color(0xFF00502A),
-        Color(0xFF8B0053),
-        Color(0xFF891916),
-        Color(0xFF004B5B),
-        Color(0xFF5528A1),
+/** Background and letter colour for a contact's initial avatar. */
+data class AvatarColors(val container: Color, val content: Color)
+
+/**
+ * Tonal avatar colours drawn from the wallpaper palette, like Google Contacts' letter avatars:
+ * a container role with its matching "on" colour for the letter, so every avatar harmonises
+ * with the theme in light and dark mode. Stable per contact id.
+ */
+@Composable
+fun avatarColorsFor(id: Long): AvatarColors {
+    val scheme = MaterialTheme.colorScheme
+    val palette = listOf(
+        AvatarColors(scheme.primaryContainer, scheme.onPrimaryContainer),
+        AvatarColors(scheme.secondaryContainer, scheme.onSecondaryContainer),
+        AvatarColors(scheme.tertiaryContainer, scheme.onTertiaryContainer),
     )
-    val index = Math.floorMod(id, colors.size.toLong()).toInt()
-    return colors[index]
+    return palette[Math.floorMod(id, palette.size.toLong()).toInt()]
 }

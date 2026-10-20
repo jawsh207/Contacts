@@ -52,7 +52,7 @@ fun DetailItem(
     val scope = rememberCoroutineScope()
     Surface(
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceBright,
         modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
@@ -116,7 +116,7 @@ fun GroupedSection(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceBright)
     ) {
         Text(
             text = title,
