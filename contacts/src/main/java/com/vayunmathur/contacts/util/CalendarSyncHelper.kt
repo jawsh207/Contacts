@@ -23,7 +23,7 @@ import com.vayunmathur.contacts.data.Event as ContactEvent
 
 object CalendarSyncHelper {
     private const val ACCOUNT_NAME = "Contacts"
-    private const val ACCOUNT_TYPE = "com.vayunmathur.contacts"
+    private const val ACCOUNT_TYPE = "io.github.jawsh207.contacts"
     private const val CALENDAR_NAME = "Contacts"
     private const val CALENDAR_COLOR_ARGB = 0xFF4285F4
     private const val MILLIS_PER_DAY = 24 * 60 * 60 * 1000L
