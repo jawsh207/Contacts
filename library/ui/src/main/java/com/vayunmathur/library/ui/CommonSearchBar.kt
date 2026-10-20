@@ -50,7 +50,7 @@ fun CommonSearchBar(
             .fillMaxWidth()
             .padding(padding)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            .background(MaterialTheme.colorScheme.surfaceBright),
         placeholder = { Text(placeholder) },
         leadingIcon = {
             IconSearch()

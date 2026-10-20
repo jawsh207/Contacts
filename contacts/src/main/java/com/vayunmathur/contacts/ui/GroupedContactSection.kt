@@ -13,7 +13,7 @@ import com.vayunmathur.library.ui.Surface
 @Composable
 fun GroupedContactSection(
     count: Int,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
     topAttached: Boolean = false,
     row: @Composable (index: Int) -> Unit,
 ) {

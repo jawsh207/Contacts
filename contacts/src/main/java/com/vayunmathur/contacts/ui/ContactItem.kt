@@ -92,7 +92,7 @@ fun ContactItem(
             val rowContainerColor = when {
                 isSelected -> MaterialTheme.colorScheme.primaryContainer
                 embeddedInCard -> Color.Transparent
-                else -> MaterialTheme.colorScheme.surfaceVariant
+                else -> MaterialTheme.colorScheme.surfaceBright
             }
             Row(
                 modifier = itemModifier

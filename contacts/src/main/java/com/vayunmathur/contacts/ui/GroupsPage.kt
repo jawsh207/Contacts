@@ -141,7 +141,7 @@ fun GroupsScreen(
                 item(key = "group-${group.id}") {
                     val attachContacts = isExpanded && contactsInGroup.isNotEmpty()
 
-                    val collapsedColor = MaterialTheme.colorScheme.surfaceVariant
+                    val collapsedColor = MaterialTheme.colorScheme.surfaceBright
                     val expandedColor = MaterialTheme.colorScheme.secondaryContainer
                     val headerColor = animatedColor(
                         if (attachContacts) expandedColor else collapsedColor
@@ -195,7 +195,7 @@ fun GroupsScreen(
                                 Spacer(Modifier.height(2.dp))
                                 GroupedContactSection(
                                     count = contactsInGroup.size,
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    containerColor = MaterialTheme.colorScheme.surfaceBright,
                                     topAttached = true,
                                 ) { idx ->
                                     val contact = contactsInGroup[idx]

@@ -306,7 +306,7 @@ private fun GroupedContactRow(
     index: Int,
     count: Int,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
     content: @Composable () -> Unit,
 ) {
     Surface(
