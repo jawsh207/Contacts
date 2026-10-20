@@ -58,8 +58,20 @@ jobs:
             echo "::warning::No KEYSTORE_BASE64 secret set; APK is signed with a throwaway debug key."
           fi
 
+      # On failure, Gradle's error summary and compiler errors are re-emitted as
+      # annotations so they show on the run page without opening the full log.
       - name: Build release APK
-        run: ./gradlew :contacts:assembleRelease --stacktrace
+        run: |
+          set -o pipefail
+          if ./gradlew :contacts:assembleRelease --console=plain 2>&1 | tee build.log; then
+            exit 0
+          fi
+          grep -E '^e: |^ERROR|Error: |error: ' build.log | head -20 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          summary=$(awk '/What went wrong:/{f=1} /\* Try:/{f=0} f' build.log | head -40 | sed ':a;N;$!ba;s/\n/%0A/g')
+          [ -n "$summary" ] && echo "::error title=Gradle failure::${summary}"
+          exit 1
 
       - uses: actions/upload-artifact@v4
         with:
