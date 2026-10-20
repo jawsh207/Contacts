@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.Contact
-import com.vayunmathur.contacts.data.isSimAccountType
 import com.vayunmathur.contacts.ui.dialogs.MoveDialogHost
 import com.vayunmathur.contacts.util.ContactDetailsUiState
 import com.vayunmathur.contacts.util.ContactPlatforms
@@ -200,14 +199,11 @@ fun ContactDetailsScreen(
                         actions.shareContacts(listOf(contact), "${contact.name.value.replace(' ', '_')}.vcf")
                     },
                 )
-                // A SIM's address book has nowhere to keep a ringtone.
-                if (!isSimAccountType(contact.accountType)) {
-                    Item(
-                        text = stringResource(R.string.set_ringtone),
-                        leadingIcon = { IconVolumeUp() },
-                        onClick = { actions.pickRingtone(contact) },
-                    )
-                }
+                Item(
+                    text = stringResource(R.string.set_ringtone),
+                    leadingIcon = { IconVolumeUp() },
+                    onClick = { actions.pickRingtone(contact) },
+                )
                 Item(
                     text = stringResource(R.string.move_to_account),
                     leadingIcon = { IconMove() },

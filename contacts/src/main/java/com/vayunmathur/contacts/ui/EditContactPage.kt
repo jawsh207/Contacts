@@ -41,7 +41,6 @@ import com.vayunmathur.contacts.data.CDKPhone
 import com.vayunmathur.contacts.data.ContactDetail
 import com.vayunmathur.contacts.data.Email
 import com.vayunmathur.contacts.data.PhoneNumber
-import com.vayunmathur.contacts.data.SIM_ACCOUNT_TYPE
 import com.vayunmathur.contacts.util.ContactViewModel
 import com.vayunmathur.contacts.util.initEditDraft
 import com.vayunmathur.contacts.util.loadLastSelectedAccount
@@ -75,7 +74,6 @@ fun EditContactPage(backStack: NavBackStack<Route>, viewModel: ContactViewModel,
     }
     val draft by viewModel.editDraft.collectAsStateWithLifecycle()
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
-    val simLabels by viewModel.simAccountLabels.collectAsStateWithLifecycle()
 
     val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -85,7 +83,6 @@ fun EditContactPage(backStack: NavBackStack<Route>, viewModel: ContactViewModel,
     }
 
     val currentDraft = draft ?: return
-    val isSimAccount = currentDraft.accountType == SIM_ACCOUNT_TYPE
     // Markdown note editor backed by the shared ODF editor; stored content stays markdown.
     val noteController = key(contactId) {
         com.vayunmathur.library.ui.rememberOdfMarkdownEditorController(initialMarkdown = currentDraft.noteContent) { content ->
@@ -127,47 +124,28 @@ fun EditContactPage(backStack: NavBackStack<Route>, viewModel: ContactViewModel,
                 Spacer(Modifier.height(8.dp))
             }
 
-            // Account chooser for new contacts (SIM accounts appear here as normal accounts)
+            // Account chooser for new contacts
             if (isNewContact) {
-                EditContactAccountSection(currentDraft, accounts, simLabels) { name, type ->
+                EditContactAccountSection(currentDraft, accounts) { name, type ->
                     viewModel.updateEditDraft { it.copy(accountName = name, accountType = type) }
                     viewModel.setLastSelectedAccount(name, type)
                 }
                 Spacer(Modifier.height(16.dp))
-                if (isSimAccount) {
-                    Text(
-                        stringResource(R.string.sim_limited_fields_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(8.dp))
-                }
-            } else if (isSimAccount) {
-                Text(
-                    stringResource(R.string.sim_limited_fields_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
             }
 
             Spacer(Modifier.height(8.dp))
-            if (!isSimAccount) {
-                EditContactPhotoSection(
-                    photo = currentDraft.photo?.photo,
-                    viewModel = viewModel,
-                    onClick = {
-                        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    },
-                    removePhoto = {
-                        viewModel.updateEditDraft { it.copy(photo = null) }
-                    },
-                    sharedKey = editRoute.contactId,
-                )
-                Spacer(Modifier.height(24.dp))
-            }
+            EditContactPhotoSection(
+                photo = currentDraft.photo?.photo,
+                viewModel = viewModel,
+                onClick = {
+                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                removePhoto = {
+                    viewModel.updateEditDraft { it.copy(photo = null) }
+                },
+                sharedKey = editRoute.contactId,
+            )
+            Spacer(Modifier.height(24.dp))
 
 
             // Plain Column rather than FormSection: DetailScaffold already insets its content
@@ -177,7 +155,6 @@ fun EditContactPage(backStack: NavBackStack<Route>, viewModel: ContactViewModel,
             EditContactNameSection(
                 draft = currentDraft,
                 contactId = id,
-                isSimAccount = isSimAccount,
                 onUpdate = { viewModel.updateEditDraft { _ -> it } },
             )
 
@@ -211,52 +188,49 @@ fun EditContactPage(backStack: NavBackStack<Route>, viewModel: ContactViewModel,
                 mobileIndex = mobileIndex,
                 homeEmailIndex = homeEmailIndex,
                 onUpdate = { viewModel.updateEditDraft { _ -> it } },
-                isSimAccount = isSimAccount,
             )
             Spacer(Modifier.height(8.dp))
 
-            if (!isSimAccount) {
-                Spacer(Modifier.height(16.dp))
-                EditContactBirthday(backStack, currentDraft.birthday) { v ->
-                    viewModel.updateEditDraft { it.copy(birthday = v) }
-                }
-                EditContactDateDetails(
-                    backStack = backStack,
-                    details = currentDraft.dates,
-                    onDetailsChange = { list -> viewModel.updateEditDraft { it.copy(dates = list) } },
-                    icon = { DateDetailsAddIcon() },
-                    options = listOf(CDKEvent.TYPE_ANNIVERSARY, CDKEvent.TYPE_OTHER, CDKEvent.TYPE_CUSTOM)
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = stringResource(UiR.string.note),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(4.dp))
-                com.vayunmathur.library.ui.OdfMarkdownEditorField(
-                    controller = noteController,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 96.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                        .padding(12.dp),
-                )
-                Spacer(Modifier.height(16.dp))
-
-                // Last, to match the detail page. Anything on both pages is in the same order on both, so
-                // a value does not have to be hunted for after the morph, and nothing has to travel past
-                // the whole form to reach its counterpart.
-                val allGroups by viewModel.groups.collectAsStateWithLifecycle()
-                EditContactGroupSection(
-                    draft = currentDraft,
-                    allGroups = allGroups,
-                    contactId = editRoute.contactId,
-                    onUpdate = { viewModel.updateEditDraft { _ -> it } },
-                )
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
+            EditContactBirthday(backStack, currentDraft.birthday) { v ->
+                viewModel.updateEditDraft { it.copy(birthday = v) }
             }
+            EditContactDateDetails(
+                backStack = backStack,
+                details = currentDraft.dates,
+                onDetailsChange = { list -> viewModel.updateEditDraft { it.copy(dates = list) } },
+                icon = { DateDetailsAddIcon() },
+                options = listOf(CDKEvent.TYPE_ANNIVERSARY, CDKEvent.TYPE_OTHER, CDKEvent.TYPE_CUSTOM)
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(UiR.string.note),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(4.dp))
+            com.vayunmathur.library.ui.OdfMarkdownEditorField(
+                controller = noteController,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 96.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                    .padding(12.dp),
+            )
+            Spacer(Modifier.height(16.dp))
+
+            // Last, to match the detail page. Anything on both pages is in the same order on both, so
+            // a value does not have to be hunted for after the morph, and nothing has to travel past
+            // the whole form to reach its counterpart.
+            val allGroups by viewModel.groups.collectAsStateWithLifecycle()
+            EditContactGroupSection(
+                draft = currentDraft,
+                allGroups = allGroups,
+                contactId = editRoute.contactId,
+                onUpdate = { viewModel.updateEditDraft { _ -> it } },
+            )
+            Spacer(Modifier.height(16.dp))
 
             Spacer(Modifier.height(16.dp))
         }

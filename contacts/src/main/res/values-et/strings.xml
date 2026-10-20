@@ -98,7 +98,6 @@
     <string name="import_contacts_from_vcf_files">Impordi kontaktid .vcf failist</string>
     <string name="custom_label">Sinu lisatud silt</string>
     <string name="enter_custom_label">Sisesta sinu soovitud silt</string>
-    <string name="sim_limited_fields_hint">SIM-kaardi andmetesse saad kontaktidest salvestada vaid nime, telefoninumbri ja e-posti aadressi.</string>
     <string name="save_failed">Salvestamine ei õnnestunud</string>
     <string name="importing">Impordin…</string>
     <string name="rename_account">Muuda kasutajakonto nime</string>
@@ -114,32 +113,16 @@
     <string name="name_prefix">Tiitel</string>
     <string name="name_suffix">Järelliide</string>
     <string name="name_affix_none">Puudub</string>
-    <string name="sim_name_or_phone_required">Sisesta nimi või telefoninumber</string>
-    <string name="sim_slot_label">SIM-kaart %1$d</string>
     <string name="move_to_account">Tõsta muu kasutajakonto juurde</string>
     <string name="move">Tõsta</string>
     <plurals name="move_to_account_subtitle">
         <item quantity="one">Vali kuhu tahad <xliff:g id="count" example="1">%1$d</xliff:g> kontakti tõsta</item>
         <item quantity="other">Vali kuhu tahad <xliff:g id="count" example="3">%1$d</xliff:g> kontakti tõsta</item>
     </plurals>
-    <string name="move_to_sim_warning_title">Osa teabest ei mahu SIM-kaardile</string>
-    <string name="move_dropped_favorite">lemmik</string>
-    <string name="move_dropped_photo">foto</string>
-    <string name="move_dropped_extra_phones">täiendavad telefoninumbrid</string>
-    <string name="move_dropped_extra_emails">täiendavad e-posti aadressid</string>
-    <string name="move_dropped_addresses">aadressid</string>
-    <string name="move_dropped_dates">kuupäevad</string>
-    <string name="move_dropped_organization">organisatsioon</string>
-    <string name="move_dropped_note">märge</string>
-    <string name="move_dropped_nickname">hüüdnimi</string>
-    <string name="move_dropped_groups">grupid</string>
-    <string name="move_dropped_ringtone">helin</string>
-    <string name="move_anyway">Tõsta ikkagi</string>
     <plurals name="move_success">
         <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> kontakt on tõstetud ümber</item>
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> kontakti on tõstetud ümber</item>
     </plurals>
     <string name="move_failed">Ümbertõstmine ei õnnestunud</string>
     <string name="move_partial_failure"><xliff:g id="moved" example="2">%1$d</xliff:g> on tõstetud ümber, <xliff:g id="failed" example="1">%2$d</xliff:g> puhul ümbertõstmine ei õnnestunud</string>
-    <string name="move_to_sim_warning_body">Vaid nimi, telefon ja e-posti aadress jäävad SIM-kaardile <xliff:g id="sim_label" example="SIM 1">%1$s</xliff:g>. Järgnev läheb kaotsi: <xliff:g id="dropped" example="foto, aadressid">%2$s</xliff:g>.</string>
 </resources>

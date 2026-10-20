@@ -36,7 +36,6 @@ import com.vayunmathur.library.util.sharedContainer
 fun EditContactNameSection(
     draft: ContactViewModel.ContactDraft,
     contactId: Long?,
-    isSimAccount: Boolean,
     onUpdate: (ContactViewModel.ContactDraft) -> Unit,
 ) {
     Column(
@@ -74,22 +73,20 @@ fun EditContactNameSection(
                 }
             },
         )
-        if (!isSimAccount) {
-            LabeledTextField(
-                value = draft.nickname,
-                onValueChange = { v -> onUpdate(draft.copy(nickname = v)) },
-                label = stringResource(R.string.nickname),
-                sharedTextKey = contactId?.let { "contact-nickname-$it" },
-                modifier = Modifier.fillMaxWidth().expandFromLine(),
-            )
-            LabeledTextField(
-                value = draft.company,
-                onValueChange = { v -> onUpdate(draft.copy(company = v)) },
-                label = stringResource(R.string.company),
-                sharedTextKey = contactId?.let { "contact-company-$it" },
-                modifier = Modifier.fillMaxWidth().expandFromLine(),
-            )
-        }
+        LabeledTextField(
+            value = draft.nickname,
+            onValueChange = { v -> onUpdate(draft.copy(nickname = v)) },
+            label = stringResource(R.string.nickname),
+            sharedTextKey = contactId?.let { "contact-nickname-$it" },
+            modifier = Modifier.fillMaxWidth().expandFromLine(),
+        )
+        LabeledTextField(
+            value = draft.company,
+            onValueChange = { v -> onUpdate(draft.copy(company = v)) },
+            label = stringResource(R.string.company),
+            sharedTextKey = contactId?.let { "contact-company-$it" },
+            modifier = Modifier.fillMaxWidth().expandFromLine(),
+        )
     }
 }
 

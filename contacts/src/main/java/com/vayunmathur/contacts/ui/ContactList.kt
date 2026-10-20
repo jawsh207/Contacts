@@ -58,7 +58,6 @@ fun ContactList(
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val groups by viewModel.groups.collectAsStateWithLifecycle()
     val showAccountLabels by viewModel.showAccountLabels.collectAsStateWithLifecycle()
-    val simSlotLabels by viewModel.simSlotLabels.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
     val hasLoadedContacts by viewModel.hasLoadedContacts.collectAsStateWithLifecycle()
@@ -80,7 +79,6 @@ fun ContactList(
             groups = groups,
             searchQuery = searchQuery,
             showAccountLabels = showAccountLabels,
-            accountLabels = simSlotLabels,
             openContactId = when (last) {
                 is Route.ContactDetail -> last.contactId
                 is Route.EditContact -> last.contactId

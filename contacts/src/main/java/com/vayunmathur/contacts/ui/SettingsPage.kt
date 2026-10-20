@@ -73,7 +73,6 @@ fun SettingsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
     val isCalendarSyncEnabled by viewModel.isCalendarSyncEnabled.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val allContactsForExport by viewModel.allContactsForExport.collectAsStateWithLifecycle()
-    val simLabels by viewModel.simAccountLabels.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -262,8 +261,7 @@ fun SettingsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
                 val isHidden = key in hiddenAccounts || legacyKey in hiddenAccounts
                 val isVisible = !isHidden
                 val onDevice = stringResource(R.string.on_device)
-                val simLabel = simLabels[key]
-                val displayName = simLabel ?: account.name.ifEmpty { onDevice }
+                val displayName = account.name.ifEmpty { onDevice }
                 ListItem(
                     content = { Text(displayName) },
                     // The on-device account has no type string: emitting a blank supporting

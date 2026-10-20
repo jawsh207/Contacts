@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import com.vayunmathur.library.log.Log
 import androidx.core.graphics.scale
 import androidx.lifecycle.viewModelScope
-import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.Address
 import com.vayunmathur.contacts.data.CDKEmail
 import com.vayunmathur.contacts.data.CDKEvent
@@ -28,8 +27,6 @@ import com.vayunmathur.contacts.data.Organization
 import com.vayunmathur.contacts.data.PhoneNumber
 import com.vayunmathur.contacts.data.Photo
 import com.vayunmathur.contacts.data.PrefillValue
-import com.vayunmathur.contacts.data.SimContactsDataSource
-import com.vayunmathur.contacts.data.isSimAccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -177,8 +174,8 @@ fun ContactViewModel.addPhoneNumberToContact(
     onComplete: () -> Unit = {}
 ) {
     viewModelScope.launch(Dispatchers.IO) {
-        // Broad catch is deliberate: the dialer flow crosses provider, SIM ADN
-        // and DataStore writes, and must always invoke onComplete.
+        // Broad catch is deliberate: the dialer flow crosses provider and
+        // DataStore writes, and must always invoke onComplete.
         @Suppress("TooGenericExceptionCaught")
         try {
             appendPhoneNumber(contactId, phone, type)
@@ -199,28 +196,7 @@ private suspend fun ContactViewModel.appendPhoneNumber(
         ?: allContactsState.value.find { it.id == contactId }
         ?: contacts.value.find { it.id == contactId }
         ?: return
-    if (isSimAccountType(existing.accountType)) {
-        appendSimPhoneNumber(app, existing, phone)
-    } else {
-        appendProviderPhoneNumber(app, existing, phone, type)
-    }
-}
-
-private suspend fun ContactViewModel.appendSimPhoneNumber(
-    app: Application,
-    existing: Contact,
-    phone: String,
-) {
-    val subId = existing.accountName?.toIntOrNull()
-    if (hasPhoneNumber(existing, phone)) return
-    val name = existing.name.value
-    if (existing.details.phoneNumbers.isEmpty()) {
-        val oldSc = SimContactsDataSource.findBackingSimContact(app, existing)
-        if (oldSc != null) SimContactsDataSource.deleteSimContact(app, oldSc)
-    }
-    // SIM can hold only one number; store the new number as an additional SIM entry
-    SimContactsDataSource.insertSimContact(app, name.ifEmpty { phone }, phone, null, subId)
-    syncFromSystem()
+    appendProviderPhoneNumber(app, existing, phone, type)
 }
 
 private fun ContactViewModel.appendProviderPhoneNumber(
@@ -282,18 +258,9 @@ fun ContactViewModel.setEditDraftPhotoFromBitmap(bitmap: Bitmap) {
 private const val PHOTO_SIZE = 1024
 private const val PHOTO_JPEG_QUALITY = 100
 
-/**
- * Persists the current draft via the unified save path.
- * SIM vs device routing is handled by [saveContact] based on draft.accountType.
- */
+/** Persists the current draft to the contacts provider. */
 fun ContactViewModel.saveEditDraft(onResult: ((Boolean, String?) -> Unit)? = null) {
     val draft = editDraftState.value ?: return
-    // For SIM accounts, validate SIM limits: at least name or phone needed, and SIM can't store extra fields
-    if (isSimAccountType(draft.accountType) && !hasSimNameOrPhone(draft)) {
-        val message = getApplication<Application>().getString(R.string.sim_name_or_phone_required)
-        onResult?.invoke(false, message)
-        return
-    }
     val newContact = buildContactFromDraft(draft)
     viewModelScope.launch {
         val ok = withContext(Dispatchers.IO) { persistContact(newContact) }
@@ -302,24 +269,11 @@ fun ContactViewModel.saveEditDraft(onResult: ((Boolean, String?) -> Unit)? = nul
     }
 }
 
-private fun hasSimNameOrPhone(draft: ContactViewModel.ContactDraft): Boolean {
-    val nameVal = listOfNotNull(
-        draft.namePrefix.ifEmpty { null },
-        draft.firstName.ifEmpty { null },
-        draft.middleName.ifEmpty { null },
-        draft.lastName.ifEmpty { null },
-        draft.nameSuffix.ifEmpty { null }
-    ).joinToString(" ").trim()
-    val phoneVal = draft.phoneNumbers.firstOrNull()?.number?.trim() ?: ""
-    return nameVal.isNotEmpty() || phoneVal.isNotEmpty()
-}
-
 private fun ContactViewModel.buildContactFromDraft(
     draft: ContactViewModel.ContactDraft
 ): Contact {
     val original = editingOriginal
     val details = buildDetailsFromDraft(draft, original)
-    // For existing SIM contacts, keep synthetic id so saveContact can locate old row.
     // The provider requires an account to name both fields or neither, so a draft pointing at
     // a half-renamed account saves to device-local rather than being rejected.
     val accountType = draft.accountType.ifEmpty { null }
@@ -350,19 +304,16 @@ private fun buildDetailsFromDraft(
     val orgs = draftOrg(draft, original)
     val notes = draftNote(draft, original)
     val nicknames = draftNickname(draft, original)
-    // SIM cards can store only name parts, a first phone, and at most a first email.
-    // Defensively strip everything else so SIM saves never persist unsupported rows.
-    val isSimDraft = isSimAccountType(draft.accountType)
     return ContactDetails(
-        phoneNumbers = if (isSimDraft) listOfNotNull(phoneNumbers.firstOrNull()) else phoneNumbers,
-        emails = if (isSimDraft) listOfNotNull(emails.firstOrNull()) else emails,
-        addresses = if (isSimDraft) emptyList() else addresses,
-        dates = if (isSimDraft) emptyList() else datesWithoutBirthday,
-        photos = if (isSimDraft) emptyList() else listOfNotNull(draft.photo),
+        phoneNumbers = phoneNumbers,
+        emails = emails,
+        addresses = addresses,
+        dates = datesWithoutBirthday,
+        photos = listOfNotNull(draft.photo),
         names = listOf(draftName(draft, original)),
-        orgs = if (isSimDraft) emptyList() else orgs,
-        notes = if (isSimDraft) emptyList() else notes,
-        nicknames = if (isSimDraft) emptyList() else nicknames,
+        orgs = orgs,
+        notes = notes,
+        nicknames = nicknames,
         groups = draft.groupMemberships
     )
 }

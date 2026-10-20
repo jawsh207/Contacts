@@ -21,7 +21,7 @@ import com.vayunmathur.library.ui.SelectableDropdownMenuItem
 import com.vayunmathur.library.ui.Text
 
 /**
- * Account chooser for new contacts (SIM accounts appear here as normal accounts).
+ * Account chooser for new contacts.
  *
  * Depends on the ViewModel only for the draft type; the caller owns state updates.
  */
@@ -29,10 +29,9 @@ import com.vayunmathur.library.ui.Text
 fun EditContactAccountSection(
     draft: ContactViewModel.ContactDraft,
     accounts: List<ContactAccount>,
-    simLabels: Map<String, String> = emptyMap(),
     onAccountChange: (String, String) -> Unit,
 ) {
-    AccountChooser(draft.accountName, draft.accountType, accounts, simLabels) { name, type ->
+    AccountChooser(draft.accountName, draft.accountType, accounts) { name, type ->
         onAccountChange(name, type)
     }
 }
@@ -42,7 +41,6 @@ internal fun AccountChooser(
     accountName: String,
     accountType: String,
     accounts: List<ContactAccount>,
-    simLabels: Map<String, String> = emptyMap(),
     onAccountChange: (String, String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -50,7 +48,6 @@ internal fun AccountChooser(
     val currentKey = "${accountType}|${accountName}"
     val displayValue = when {
         accountName.isEmpty() && accountType.isEmpty() -> onDevice
-        simLabels.containsKey(currentKey) -> simLabels[currentKey]!!
         accountName.isNotEmpty() -> accountName
         else -> onDevice
     }
@@ -82,7 +79,7 @@ internal fun AccountChooser(
             }
             accounts.forEach { account ->
                 val key = "${account.type}|${account.name}"
-                val label = simLabels[key] ?: account.name.ifEmpty { onDevice }
+                val label = account.name.ifEmpty { onDevice }
                 SelectableDropdownMenuItem(
                     selected = currentKey == key,
                     onClick = {
@@ -90,7 +87,6 @@ internal fun AccountChooser(
                         expanded = false
                     },
                     text = { Text(when {
-                        simLabels.containsKey(key) -> label
                         account.type.isBlank() -> label
                         else -> stringResource(R.string.account_display_format, label, account.type)
                     }) },

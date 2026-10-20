@@ -110,7 +110,6 @@
     <string name="delete_account">Удалить учетку</string>
     <string name="delete_local_account_confirm">Удалить эту учетку и все ее контакты? Это действие нельзя отменить.</string>
     <string name="account_name_exists">Учетка с таким именем уже существует</string>
-    <string name="sim_limited_fields_hint">В контактах на SIM-карте хранятся только имя, номер телефона и адрес электронной почты.</string>
     <string name="save_failed">Сохранение не удалось</string>
     <string name="importing">Импорт…</string>
     <string name="no_contacts_yet">Пока нет контактов</string>
@@ -120,6 +119,4 @@
     <string name="name_prefix">Префикс</string>
     <string name="name_suffix">Суффикс</string>
     <string name="name_affix_none">Нет</string>
-    <string name="sim_name_or_phone_required">Введите имя или номер телефона</string>
-    <string name="sim_slot_label">SIM %1$d</string>
 </resources>

@@ -8,26 +8,18 @@ import com.vayunmathur.contacts.data.CDKEmail
 import com.vayunmathur.contacts.data.CDKPhone
 import com.vayunmathur.contacts.data.CDKStructuredPostal
 import com.vayunmathur.contacts.data.Contact
-import com.vayunmathur.contacts.data.isSimAccountType
 import com.vayunmathur.library.ui.ExperimentalMaterial3Api
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactItemPick(contact: Contact, mimeType: String?, selectedUris: Set<Uri>, onClick: (Uri) -> Unit) {
-    // SIM-backed synthetic contacts have negative ids and accountType == SIM_ACCOUNT_TYPE.
-    // They have no provider rows, so any URI built from their ids would be bogus:
-    // render the row but never emit a URI for it.
-    val isSimBacked = isSimAccountType(contact.accountType)
     if (mimeType == null || mimeType == ContactsContract.Contacts.CONTENT_ITEM_TYPE || mimeType == ContactsContract.Contacts.CONTENT_TYPE) {
         val uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contact.id)
         ContactItem(
             contact = contact,
             isSelected = uri in selectedUris,
             showAccountLabels = true,
-            onClick = {
-                if (isSimBacked) return@ContactItem
-                onClick(uri)
-            }
+            onClick = { onClick(uri) }
         )
     } else {
         val details = contact.details
@@ -45,8 +37,8 @@ fun ContactItemPick(contact: Contact, mimeType: String?, selectedUris: Set<Uri>,
             onClick = {  },
             dropdownList = relevantList.map { it.value },
             dropdownListClick = { index ->
-                // SIM-backed rows carry Data id 0 (no provider row); never emit those URIs.
-                if (!isSimBacked && relevantList[index].id != 0L) {
+                // A row with Data id 0 has no provider row; never emit its URI.
+                if (relevantList[index].id != 0L) {
                     onClick(itemUris[index])
                 }
             }

@@ -4,54 +4,17 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.data.ContactDetails
-import com.vayunmathur.contacts.data.SimContactsDataSource
-import com.vayunmathur.contacts.data.isSimAccountType
 import com.vayunmathur.library.log.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Fields a SIM move drops, for the warn-before-truncate dialog. */
-enum class SimDroppedField {
-    PHOTO,
-    EXTRA_PHONES,
-    EXTRA_EMAILS,
-    ADDRESSES,
-    DATES,
-    ORGANIZATION,
-    NOTE,
-    NICKNAME,
-    GROUPS,
-    RINGTONE,
-    FAVORITE,
-}
-
 data class TransferResult(val moved: Int, val failed: Int, val groupsDropped: Boolean)
-
-/**
- * Pure helper: which fields of [contact] would not survive a move to a SIM
- * account (SIM ADN rows store only name + one phone + one email).
- */
-fun computeSimLoss(contact: Contact): List<SimDroppedField> {
-    val dropped = mutableListOf<SimDroppedField>()
-    if (contact.details.photos.isNotEmpty()) dropped += SimDroppedField.PHOTO
-    if (contact.details.phoneNumbers.size > 1) dropped += SimDroppedField.EXTRA_PHONES
-    if (contact.details.emails.size > 1) dropped += SimDroppedField.EXTRA_EMAILS
-    if (contact.details.addresses.isNotEmpty()) dropped += SimDroppedField.ADDRESSES
-    if (contact.details.dates.isNotEmpty()) dropped += SimDroppedField.DATES
-    if (contact.details.orgs.any { it.company.isNotBlank() }) dropped += SimDroppedField.ORGANIZATION
-    if (contact.details.notes.any { it.content.isNotBlank() }) dropped += SimDroppedField.NOTE
-    if (contact.details.nicknames.any { it.nickname.isNotBlank() }) dropped += SimDroppedField.NICKNAME
-    if (contact.details.groups.isNotEmpty()) dropped += SimDroppedField.GROUPS
-    if (contact.customRingtone != null) dropped += SimDroppedField.RINGTONE
-    if (contact.isFavorite) dropped += SimDroppedField.FAVORITE
-    return dropped
-}
 
 /**
  * MOVEs [contactIds] to ([destName], [destType]): copies each contact into the
  * destination with fresh data-row ids, then deletes the source only when the
- * insert succeeded. Sequential so SIM ADN insert ordering is deterministic.
+ * insert succeeded.
  * [onResult] is invoked on the main thread.
  */
 fun ContactViewModel.transferContacts(
@@ -105,7 +68,7 @@ private fun isSameAccount(contact: Contact, destName: String, destType: String):
 
 private data class MoveOutcome(val moved: Boolean, val groupsDropped: Boolean)
 
-// Broad catch is deliberate: transfer crosses provider + SIM ADN writes and
+// Broad catch is deliberate: transfer crosses provider writes and
 // must report failure via the outcome rather than crashing the caller.
 @Suppress("TooGenericExceptionCaught")
 private suspend fun ContactViewModel.moveOneContact(
@@ -114,14 +77,7 @@ private suspend fun ContactViewModel.moveOneContact(
     destType: String,
 ): MoveOutcome {
     try {
-        val fromSim = isSimAccountType(contact.accountType)
-        val toSim = isSimAccountType(destType)
-        val inserted = when {
-            !fromSim && !toSim -> copyProviderToProvider(contact, destName, destType)
-            !fromSim && toSim -> copyProviderToSim(contact, destName)
-            fromSim && !toSim -> copySimToProvider(contact, destName, destType)
-            else -> copySimToSim(contact, destName)
-        }
+        val inserted = copyProviderToProvider(contact, destName, destType)
         if (!inserted.ok) return MoveOutcome(false, false)
         deleteTransferSource(contact)
         return MoveOutcome(true, inserted.groupsDropped)
@@ -150,56 +106,11 @@ private suspend fun ContactViewModel.copyProviderToProvider(
     return InsertOutcome(ok, ok)
 }
 
-private suspend fun ContactViewModel.copyProviderToSim(
-    contact: Contact,
-    destSubIdName: String,
-): InsertOutcome {
-    val app = getApplication<Application>()
-    val subId = destSubIdName.toIntOrNull()
-    val name = contact.name.value.trim().ifEmpty {
-        contact.details.phoneNumbers.firstOrNull()?.number?.trim().orEmpty()
-    }
-    val number = contact.details.phoneNumbers.firstOrNull()?.number?.trim().orEmpty()
-    val email = contact.details.emails.firstOrNull()?.address?.trim()?.takeIf { it.isNotEmpty() }
-    if (name.isBlank() && number.isBlank()) return InsertOutcome(false, false)
-    val ok = SimContactsDataSource.insertSimContact(app, name, number, email, subId)
-    return InsertOutcome(ok, contact.details.groups.isNotEmpty() && ok)
-}
-
-private suspend fun ContactViewModel.copySimToProvider(
-    contact: Contact,
-    destName: String,
-    destType: String,
-): InsertOutcome {
-    val app = getApplication<Application>()
-    // Never leak the negative synthetic SIM id into the provider insert.
-    val fresh = contact.zeroedCopy(destName, destType)
-    val withoutGroups = fresh.copy(details = fresh.details.copy(groups = emptyList()))
-    val ok = withoutGroups.save(app, withoutGroups.details, ContactDetails.empty())
-    return InsertOutcome(ok, contact.details.groups.isNotEmpty() && ok)
-}
-
-private suspend fun ContactViewModel.copySimToSim(
-    contact: Contact,
-    destSubIdName: String,
-): InsertOutcome {
-    // Same truncated shape as provider->SIM; source SIM rows never carry the
-    // richer fields, so no loss beyond what is already stored.
-    return copyProviderToSim(contact, destSubIdName)
-}
-
 private suspend fun ContactViewModel.deleteTransferSource(contact: Contact) {
     val app = getApplication<Application>()
-    if (isSimAccountType(contact.accountType)) {
-        val sc = SimContactsDataSource.findBackingSimContact(app, contact)
-        if (sc != null) {
-            SimContactsDataSource.deleteSimContact(app, sc)
-        }
-    } else {
-        // Fresh-read details so the delete path sees current rows.
-        val fresh = runCatching { Contact.getContact(app, contact.id) }.getOrNull() ?: contact
-        Contact.delete(app, fresh)
-    }
+    // Fresh-read details so the delete path sees current rows.
+    val fresh = runCatching { Contact.getContact(app, contact.id) }.getOrNull() ?: contact
+    Contact.delete(app, fresh)
     syncFromSystem()
 }
 

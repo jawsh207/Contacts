@@ -1,18 +1,10 @@
 package com.vayunmathur.contacts.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.Address
@@ -22,14 +14,11 @@ import com.vayunmathur.contacts.data.CDKStructuredPostal
 import com.vayunmathur.contacts.data.ContactDetail
 import com.vayunmathur.contacts.data.Email
 import com.vayunmathur.contacts.data.PhoneNumber
-import com.vayunmathur.contacts.data.SIM_MAX_EMAILS
-import com.vayunmathur.contacts.data.SIM_MAX_PHONE_NUMBERS
 import com.vayunmathur.contacts.util.ContactViewModel
 import com.vayunmathur.library.ui.FormDetailGroup
 import com.vayunmathur.library.ui.IconCall
 import com.vayunmathur.library.ui.IconLocationOn
 import com.vayunmathur.library.ui.IconMail
-import com.vayunmathur.library.ui.OutlinedTextField
 import com.vayunmathur.library.ui.R as UiR
 import com.vayunmathur.library.ui.Text
 
@@ -48,31 +37,11 @@ fun EditContactDetailGroups(
     mobileIndex: Int,
     homeEmailIndex: Int,
     onUpdate: (ContactViewModel.ContactDraft) -> Unit,
-    isSimAccount: Boolean = false,
 ) {
     // The flag slot reserves leading space even when empty, so only offer it once at
     // least one number resolves to a country; otherwise local/empty fields gain a gap.
-    // Hoisted above the SIM early-return so remember stays unconditional.
     val showCountryFlags = remember(draft.phoneNumbers) {
         draft.phoneNumbers.any { getCountryFlagEmoji(it.value).isNotBlank() }
-    }
-    if (isSimAccount) {
-        // A SIM stores one number and one email; drop extras that arrived with a
-        // draft seeded for a non-SIM account (e.g. account switched mid-edit).
-        LaunchedEffect(draft.phoneNumbers.size, draft.emails.size) {
-            if (draft.phoneNumbers.size > SIM_MAX_PHONE_NUMBERS ||
-                draft.emails.size > SIM_MAX_EMAILS
-            ) {
-                onUpdate(
-                    draft.copy(
-                        phoneNumbers = draft.phoneNumbers.take(SIM_MAX_PHONE_NUMBERS),
-                        emails = draft.emails.take(SIM_MAX_EMAILS),
-                    )
-                )
-            }
-        }
-        SimContactFields(draft, onUpdate)
-        return
     }
     val phoneCtx = LocalContext.current
     FormDetailGroup(
@@ -160,52 +129,6 @@ fun EditContactDetailGroups(
         addIcon = { IconLocationOn() },
         expandOnEnter = true,
     )
-}
-
-/**
- * Single phone + email fields for SIM accounts. Plain [OutlinedTextField]s rather than
- * [FormDetailGroup]s: one value each, no type selector, no add-more button.
- */
-@Composable
-internal fun SimContactFields(
-    draft: ContactViewModel.ContactDraft,
-    onUpdate: (ContactViewModel.ContactDraft) -> Unit,
-) {
-    val phone = draft.phoneNumbers.take(SIM_MAX_PHONE_NUMBERS).firstOrNull()
-    val email = draft.emails.take(SIM_MAX_EMAILS).firstOrNull()
-    Column(Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = phone?.value.orEmpty(),
-            onValueChange = { v ->
-                val updated = if (phone != null) {
-                    draft.phoneNumbers.toMutableList().also { l -> l[0] = l[0].withValue(v) }
-                } else {
-                    listOf(ContactDetail.default<PhoneNumber>().withType(CDKPhone.TYPE_MOBILE).withValue(v))
-                }
-                onUpdate(draft.copy(phoneNumbers = updated))
-            },
-            label = { Text(stringResource(R.string.phone)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = email?.value.orEmpty(),
-            onValueChange = { v ->
-                val updated = if (email != null) {
-                    draft.emails.toMutableList().also { l -> l[0] = l[0].withValue(v) }
-                } else {
-                    listOf(ContactDetail.default<Email>().withType(CDKEmail.TYPE_HOME).withValue(v))
-                }
-                onUpdate(draft.copy(emails = updated))
-            },
-            label = { Text(stringResource(UiR.string.email)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
 }
 
 internal fun getCountryFlagEmoji(phoneNumber: String): String {
