@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
@@ -25,23 +25,19 @@ import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.data.ContactDetails
 import com.vayunmathur.contacts.data.formatDisplay
 import com.vayunmathur.contacts.util.ContactPlatforms
-import com.vayunmathur.contacts.util.ContactsActions
 import com.vayunmathur.library.ui.ExternalIntents
 import com.vayunmathur.library.ui.IconCake
 import com.vayunmathur.library.ui.IconCall
 import com.vayunmathur.library.ui.IconChat
 import com.vayunmathur.library.ui.IconDirections
 import com.vayunmathur.library.ui.IconEvent
-import com.vayunmathur.library.ui.IconGroup
 import com.vayunmathur.library.ui.IconLocationOn
 import com.vayunmathur.library.ui.IconMail
-import com.vayunmathur.library.ui.IconVolumeUp
 import com.vayunmathur.library.ui.ListItem
 import com.vayunmathur.library.ui.ListItemDefaults
 import com.vayunmathur.library.ui.MaterialTheme
 import com.vayunmathur.library.ui.R as UiR
 import com.vayunmathur.library.ui.Text
-import com.vayunmathur.library.ui.ringtoneTitle
 import com.vayunmathur.library.ui.staggeredEntrance
 import com.vayunmathur.library.util.sharedContainer
 import kotlinx.coroutines.launch
@@ -52,6 +48,8 @@ internal fun PhonesSection(
     details: ContactDetails,
     platforms: ContactPlatforms,
     arriving: Boolean,
+    startIndex: Int = 0,
+    totalCount: Int = details.phoneNumbers.size,
 ) {
     val context = LocalContext.current
     Column(
@@ -90,7 +88,7 @@ internal fun PhonesSection(
                         platforms = platforms
                     )
                 },
-                shape = groupShape(index, details.phoneNumbers.size),
+                shape = groupShape(startIndex + index, totalCount),
                 modifier = Modifier.sharedContainer("contact-phone-${phone.id}"),
                 sharedTextKey = "contact-phone-${phone.id}-text",
             )
@@ -99,7 +97,12 @@ internal fun PhonesSection(
 }
 
 @Composable
-internal fun EmailsSection(details: ContactDetails, arriving: Boolean) {
+internal fun EmailsSection(
+    details: ContactDetails,
+    arriving: Boolean,
+    startIndex: Int = 0,
+    totalCount: Int = details.emails.size,
+) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.staggeredEntrance(index = 2, arriving = arriving),
@@ -113,7 +116,7 @@ internal fun EmailsSection(details: ContactDetails, arriving: Boolean) {
                 onClick = {
                     ExternalIntents.sendEmail(context, email.address)
                 },
-                shape = groupShape(index, details.emails.size),
+                shape = groupShape(startIndex + index, totalCount),
                 modifier = Modifier.sharedContainer("contact-email-${email.id}"),
                 sharedTextKey = "contact-email-${email.id}-text",
             )
@@ -122,7 +125,11 @@ internal fun EmailsSection(details: ContactDetails, arriving: Boolean) {
 }
 
 @Composable
-internal fun AddressesSection(details: ContactDetails) {
+internal fun AddressesSection(
+    details: ContactDetails,
+    startIndex: Int = 0,
+    totalCount: Int = details.addresses.size,
+) {
     val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         details.addresses.forEachIndexed { index, address ->
@@ -134,7 +141,7 @@ internal fun AddressesSection(details: ContactDetails) {
                 onTrailingIconClick = {
                     ExternalIntents.openMap(context, address.formattedAddress)
                 },
-                shape = groupShape(index, details.addresses.size),
+                shape = groupShape(startIndex + index, totalCount),
             )
         }
     }
@@ -208,35 +215,4 @@ internal fun NoteSection(contact: Contact) {
             )
         }
     }
-}
-
-@Composable
-internal fun GroupsSection(contact: Contact, groups: List<com.vayunmathur.contacts.data.ContactGroup>) {
-    val contactGroups = contactGroupsOf(contact, groups)
-    if (contactGroups.isNotEmpty()) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            contactGroups.forEachIndexed { index, group ->
-                DetailItem(
-                    icon = { IconGroup() },
-                    data = group.name,
-                    label = stringResource(R.string.groups),
-                    shape = groupShape(index, contactGroups.size),
-                    modifier = Modifier.sharedContainer(
-                        "contact-group-${contact.id}-${group.id}"
-                    ),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun RingtoneSection(contact: Contact, actions: ContactsActions) {
-    val context = LocalContext.current
-    DetailItem(
-        icon = { IconVolumeUp() },
-        data = ringtoneTitle(context, contact.customRingtone),
-        label = stringResource(R.string.ringtone),
-        onClick = { actions.pickRingtone(contact) },
-    )
 }

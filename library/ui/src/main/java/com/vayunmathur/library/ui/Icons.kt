@@ -89,6 +89,7 @@ import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.ui.res.painterResource
 import com.vayunmathur.library.R
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -1705,3 +1706,7 @@ fun IconOnline(modifier: Modifier = Modifier, tint: Color = LocalContentColor.cu
 @Composable
 fun IconClock(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
     AppIcon(Icons.Filled.AccessTime, "Clock", modifier, tint)
+
+@Composable
+fun IconLabel(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.AutoMirrored.Filled.Label, "Label", modifier, tint)

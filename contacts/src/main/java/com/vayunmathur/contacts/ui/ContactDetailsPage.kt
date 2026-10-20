@@ -38,6 +38,7 @@ import com.vayunmathur.library.ui.IconMove
 import com.vayunmathur.library.ui.IconShare
 import com.vayunmathur.library.ui.IconStar
 import com.vayunmathur.library.ui.IconStarBorder
+import com.vayunmathur.library.ui.IconVolumeUp
 import com.vayunmathur.library.ui.MaterialTheme
 import com.vayunmathur.library.ui.OverflowMenu
 import com.vayunmathur.library.ui.R as UiR
@@ -199,6 +200,14 @@ fun ContactDetailsScreen(
                         actions.shareContacts(listOf(contact), "${contact.name.value.replace(' ', '_')}.vcf")
                     },
                 )
+                // A SIM's address book has nowhere to keep a ringtone.
+                if (!isSimAccountType(contact.accountType)) {
+                    Item(
+                        text = stringResource(R.string.set_ringtone),
+                        leadingIcon = { IconVolumeUp() },
+                        onClick = { actions.pickRingtone(contact) },
+                    )
+                }
                 Item(
                     text = stringResource(R.string.move_to_account),
                     leadingIcon = { IconMove() },
@@ -231,19 +240,9 @@ fun ContactDetailsScreen(
                 }
             }
 
-            if (details.phoneNumbers.isNotEmpty()) {
+            if (details.hasContactInfo()) {
                 item {
-                    PhonesSection(details, platforms, arriving)
-                }
-            }
-            if (details.emails.isNotEmpty()) {
-                item {
-                    EmailsSection(details, arriving)
-                }
-            }
-            if (details.addresses.isNotEmpty()) {
-                item {
-                    AddressesSection(details)
+                    ContactInfoSection(details, platforms, arriving)
                 }
             }
 
@@ -261,14 +260,7 @@ fun ContactDetailsScreen(
 
             if (details.groups.isNotEmpty()) {
                 item {
-                    GroupsSection(contact, state.groups)
-                }
-            }
-
-            // A SIM's address book has nowhere to keep a ringtone.
-            if (!isSimAccountType(contact.accountType)) {
-                item {
-                    RingtoneSection(contact, actions)
+                    LabelsSection(contact, state.groups)
                 }
             }
         }
