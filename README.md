@@ -6,6 +6,9 @@ restyled to follow Material 3 Expressive more closely (Google Contacts–style l
 - Upstream source revision: see `UPSTREAM_COMMIT`
 - App ID: `io.github.jawsh207.contacts`, so it installs alongside the upstream app
 - License: GPL-3.0, same as upstream (see `LICENSE`)
+- Bundles the Google Sans Flex typeface, unmodified, from [google/fonts](https://github.com/google/fonts/tree/main/ofl/googlesansflex)
+  under the SIL Open Font License 1.1 (`library/ui/src/main/assets/licenses/google_sans_flex_OFL.txt`).
+  Google Sans Flex is a trademark of Google LLC; this project is not affiliated with Google.
 
 ## Building
 
