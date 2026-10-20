@@ -11,7 +11,7 @@ launcherIcon {
 
 android {
     defaultConfig {
-        applicationId = "com.vayunmathur.contacts"
+        applicationId = "io.github.jawsh207.contacts"
     }
 }
 
