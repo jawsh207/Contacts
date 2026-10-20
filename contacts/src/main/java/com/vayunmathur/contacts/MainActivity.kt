@@ -54,10 +54,9 @@ import com.vayunmathur.contacts.ui.EditContactPage
 import com.vayunmathur.contacts.ui.dialogs.EventDeleteConfirmDialog
 import com.vayunmathur.contacts.ui.GroupsPage
 import com.vayunmathur.contacts.ui.HighlightsPage
+import com.vayunmathur.library.ui.IconLabel
 import com.vayunmathur.library.ui.IconStar
-import com.vayunmathur.library.ui.IconGroup
 import com.vayunmathur.library.ui.IconPerson
-import com.vayunmathur.library.ui.IconSettings
 import com.vayunmathur.contacts.ui.ImportVcfScreen
 import com.vayunmathur.contacts.ui.InsertOrEditContactScreen
 import com.vayunmathur.contacts.ui.SettingsPage
@@ -481,6 +480,10 @@ fun Navigation(
         if (pending != null && pending.shouldPushOnto(backStack)) {
             backStack.add(pending)
         }
+        // Settings is a page opened from Organize, not a tab, so a settings launch pushes it.
+        if (startOnSettings && backStack.last() != Route.Settings) {
+            backStack.add(Route.Settings)
+        }
     }
 
     // Clear import URIs when leaving ImportVcf screen
@@ -513,7 +516,6 @@ fun Navigation(
         backStack = backStack,
         tabsCallbacks = tabsCallbacks,
         groupsExpandId = groupsExpandId,
-        startOnSettings = startOnSettings,
         goBack = ::goBack,
     )
 }
@@ -524,7 +526,6 @@ private fun NavGraphEntries(
     backStack: NavBackStack<Route>,
     tabsCallbacks: TabsCallbacks,
     groupsExpandId: Long?,
-    startOnSettings: Boolean,
     goBack: () -> Unit,
 ) {
     MainNavigation(backStack) {
@@ -535,8 +536,11 @@ private fun NavGraphEntries(
                 onContactClick = tabsCallbacks.onContactClick,
                 onAddContactClick = tabsCallbacks.onAddContactClick,
                 initialGroupsExpandId = groupsExpandId,
-                startOnSettings = startOnSettings,
             )
+        }
+
+        entry<Route.Settings> {
+            SettingsPage(viewModel, backStack)
         }
 
         entry<Route.ContactDetail>(metadata = ListDetailPage() + MorphPage()) { key ->
@@ -689,15 +693,11 @@ private fun ContactsTabs(
     onContactClick: (com.vayunmathur.contacts.data.Contact) -> Unit,
     onAddContactClick: () -> Unit,
     initialGroupsExpandId: Long? = null,
-    startOnSettings: Boolean = false,
 ) {
-    // Tab order: Contacts, Highlights, Groups, Settings.
-    val startPage = when {
-        startOnSettings -> 3
-        initialGroupsExpandId != null -> 2
-        else -> 0
-    }
-    val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 4 })
+    // Tab order matches Google Contacts: Contacts, Highlights, Organize. Settings is a page
+    // opened from Organize rather than a tab.
+    val startPage = if (initialGroupsExpandId != null) 2 else 0
+    val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 3 })
     val tabs = listOf(
         PagerTab(stringResource(UiR.string.contacts), { IconPerson() }) {
             ContactList(
@@ -710,11 +710,8 @@ private fun ContactsTabs(
         PagerTab(stringResource(R.string.highlights), { IconStar() }) {
             HighlightsPage(viewModel, backStack)
         },
-        PagerTab(stringResource(R.string.groups), { IconGroup() }) {
+        PagerTab(stringResource(R.string.organize), { IconLabel() }) {
             GroupsPage(viewModel, backStack, initialGroupsExpandId)
-        },
-        PagerTab(stringResource(com.vayunmathur.library.ui.R.string.settings), { IconSettings() }) {
-            SettingsPage(viewModel, backStack)
         },
     )
     TabbedPagerScaffold(tabs = tabs, pagerState = pagerState, tabStyle = TabStyle.BottomNav)

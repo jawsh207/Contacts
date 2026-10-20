@@ -26,7 +26,7 @@
     <!-- Fallback account name meaning local on-device storage, not synced -->
     <string name="on_device">On-Device</string>
     <!-- TopAppBar title for creating new contact -->
-    <string name="add_contact">Add contact</string>
+    <string name="add_contact">Create contact</string>
     <!-- TopAppBar title for editing existing contact -->
     <string name="edit_contact">Edit contact</string>
     <!-- Text field label for first/given name -->
@@ -170,25 +170,25 @@
 
     <!-- Bottom navigation -->
     <!-- Bottom nav label: groups tab -->
-    <string name="groups">Groups</string>
+    <string name="groups">Labels</string>
     <!-- Two-pane hint for groups screen on tablets -->
-    <string name="select_group_hint">Select a group to view contacts</string>
+    <string name="select_group_hint">Select a label to view contacts</string>
 
     <!-- Groups management -->
     <!-- Dialog title and action to add selected contacts to a group -->
-    <string name="add_to_group">Add to Group</string>
+    <string name="add_to_group">Add to label</string>
     <!-- Dialog title and button to create new group -->
-    <string name="add_group">Add Group</string>
+    <string name="add_group">Create label</string>
     <!-- Hint text for group name input field -->
-    <string name="enter_group_name">Enter group name</string>
+    <string name="enter_group_name">Label name</string>
     <!-- Dialog title for deleting a group -->
-    <string name="delete_group_title">Delete group</string>
+    <string name="delete_group_title">Delete label</string>
     <!-- Confirmation message for deleting group, contacts not deleted -->
-    <string name="delete_group_confirm">Are you sure you want to delete this group? The contacts will not be deleted.</string>
+    <string name="delete_group_confirm">Delete this label? The contacts in it won\'t be deleted.</string>
 
     <!-- Import VCF screen and common toasts -->
     <!-- Empty state for groups screen when no groups exist -->
-    <string name="no_groups_found">No groups found. Create one in the Groups tab.</string>
+    <string name="no_groups_found">No labels found. Create one in the Organize tab.</string>
     <!-- Settings row and header: import .vcf file for contacts -->
     <string name="import_vcf_file">Import .vcf file</string>
     <!-- Import flow: option to import into existing account -->
@@ -243,9 +243,9 @@
     <!-- Supporting text under no_contacts_yet, pointing at the add button -->
     <string name="no_contacts_yet_message">Tap the add button to create your first contact.</string>
     <!-- Groups tab, shown when the user has not created any group -->
-    <string name="no_groups_yet">No groups yet</string>
+    <string name="no_groups_yet">No labels yet</string>
     <!-- Supporting text under no_groups_yet, pointing at the add button -->
-    <string name="no_groups_yet_message">Tap the add button to group contacts together.</string>
+    <string name="no_groups_yet_message">Tap the add button to create a label.</string>
 
     <!-- Move contacts between accounts (#814) -->
     <!-- Dialog title and toolbar action for moving contacts to another account -->
@@ -270,7 +270,7 @@
     <string name="move_dropped_organization">organization</string>
     <string name="move_dropped_note">note</string>
     <string name="move_dropped_nickname">nickname</string>
-    <string name="move_dropped_groups">groups</string>
+    <string name="move_dropped_groups">labels</string>
     <string name="move_dropped_ringtone">ringtone</string>
     <string name="move_dropped_favorite">favorite</string>
     <!-- Confirm button label for the SIM warning: keep moving despite dropped fields -->
@@ -298,4 +298,17 @@
     <string name="birthday_turns_age">Turns %d</string>
     <string name="no_highlights_yet">Nothing to highlight yet</string>
     <string name="no_highlights_yet_message">Star contacts to keep them here. Birthdays in the next 30 days show up here too.</string>
+
+    <!-- Contact page: title of the card holding phones, emails and addresses -->
+    <string name="contact_info">Contact info</string>
+    <!-- Contact page overflow menu: pick this contact's ringtone -->
+    <string name="set_ringtone">Set ringtone</string>
+    <!-- Settings: label for the first/last name sort choice -->
+    <string name="sort_by">Sort by</string>
+    <!-- Bottom nav label for the tab holding labels and management tools, as in Google Contacts -->
+    <string name="organize">Organize</string>
+    <!-- Organize tab: section heading above the Settings entry -->
+    <string name="fix_and_manage">Fix &amp; manage</string>
+    <!-- Organize tab: supporting text under the Settings entry -->
+    <string name="settings_summary">Import, export, accounts and display</string>
 </resources>

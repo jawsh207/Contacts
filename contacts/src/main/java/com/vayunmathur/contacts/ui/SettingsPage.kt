@@ -40,6 +40,7 @@ import com.vayunmathur.library.ui.MaterialTheme
 import com.vayunmathur.library.ui.OverflowMenu
 import com.vayunmathur.library.ui.Switch
 import com.vayunmathur.library.ui.Text
+import com.vayunmathur.library.ui.TopAppBar
 import com.vayunmathur.library.ui.appBarScrollBehavior
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,14 +124,23 @@ fun SettingsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
         }
     }
 
+    val scrollBehavior = appBarScrollBehavior()
     LazyListScaffold(
+        // Its own page, opened from Organize, rather than a bottom tab.
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(UiR.string.settings)) },
+                navigationIcon = { IconNavigation(backStack) },
+                scrollBehavior = scrollBehavior,
+            )
+        },
         horizontalPadding = 16.dp,
         floatingActionButton = {
             FloatingActionButton(onClick = { backStack.add(Route.AddAccountDialog) }) {
                 IconAdd()
             }
         },
-        scrollBehavior = appBarScrollBehavior(),
+        scrollBehavior = scrollBehavior,
     ) {
             item {
                 Text(
@@ -185,6 +195,8 @@ fun SettingsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+                val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
+                SortBySetting(sortMode, viewModel::setSortMode)
                 val showAccountLabels by viewModel.showAccountLabels.collectAsStateWithLifecycle()
                 ListItem(
                     content = { Text(stringResource(R.string.show_account_labels)) },

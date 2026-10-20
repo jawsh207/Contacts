@@ -25,7 +25,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.R
-import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.util.ContactListUiState
 import com.vayunmathur.contacts.util.ContactSorting.ContactSortMode
 import com.vayunmathur.contacts.util.ContactSorting.sectionKey
@@ -38,7 +37,6 @@ import com.vayunmathur.library.ui.ExperimentalMaterial3Api
 import com.vayunmathur.library.ui.FloatingActionButton
 import com.vayunmathur.library.ui.IconAdd
 import com.vayunmathur.library.ui.IconButton
-import com.vayunmathur.library.ui.IconCheck
 import com.vayunmathur.library.ui.IconClose
 import com.vayunmathur.library.ui.IconDelete
 import com.vayunmathur.library.ui.IconGroup
@@ -48,7 +46,6 @@ import com.vayunmathur.library.ui.IconShare
 import com.vayunmathur.library.ui.LazyListScaffold
 import com.vayunmathur.library.ui.LoadingState
 import com.vayunmathur.library.ui.MaterialTheme
-import com.vayunmathur.library.ui.OverflowMenu
 import com.vayunmathur.library.ui.PopVisibility
 import com.vayunmathur.library.ui.Surface
 import com.vayunmathur.library.ui.SwappedTopBar
@@ -183,27 +180,6 @@ fun ContactListScreen(
                                 }
                         )
                     },
-                    actions = {
-                        IconButton(onClick = { actions.shareContacts(contacts, "all_contacts.vcf") }) {
-                            IconShare()
-                        }
-                        OverflowMenu {
-                            Item(
-                                text = stringResource(R.string.first_name),
-                                trailingIcon = if (sortMode == ContactSortMode.FirstName) {
-                                    { IconCheck() }
-                                } else null,
-                                onClick = { onSortModeChange(ContactSortMode.FirstName) },
-                            )
-                            Item(
-                                text = stringResource(R.string.last_name),
-                                trailingIcon = if (sortMode == ContactSortMode.LastName) {
-                                    { IconCheck() }
-                                } else null,
-                                onClick = { onSortModeChange(ContactSortMode.LastName) },
-                            )
-                        }
-                    }
                 )
                 }
             }

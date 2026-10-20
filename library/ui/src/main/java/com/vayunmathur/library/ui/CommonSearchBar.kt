@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -41,9 +44,13 @@ fun CommonSearchBar(
         onSearch = { focusManager.clearFocus() },
         expanded = false,
         onExpandedChange = {},
+        // Filled, fully rounded container, matching Google Contacts' search bar. The input
+        // field draws no container of its own.
         modifier = modifier
             .fillMaxWidth()
-            .padding(padding),
+            .padding(padding)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         placeholder = { Text(placeholder) },
         leadingIcon = {
             IconSearch()
