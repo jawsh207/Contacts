@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Kontakty</string>
+    <string name="contact_not_found">Kontakt nie znaleziony</string>
+    <string name="name_nickname_format"><xliff:g id="name" example="John Doe">%1$s</xliff:g> (<xliff:g id="nickname" example="Johnny">%2$s</xliff:g>)</string>
+    <string name="contact_photo_description">Zdjęcie <xliff:g id="contact_name" example="John Doe">%1$s</xliff:g></string>
+    <string name="share_contact">Udostępnij kontakt</string>
+    <string name="about_name">O <xliff:g id="first_name" example="John">%1$s</xliff:g></string>
+    <string name="birthday">Urodziny</string>
+    <string name="note">Notatka</string>
+    <string name="favorites">Ulubione</string>
+    <string name="export_contacts">Eksportuj wszystkie kontakty</string>
+    <string name="on_device">Na urządzeniu</string>
+    <string name="add_contact">Dodaj kontakt</string>
+    <string name="edit_contact">Edytuj kontakt</string>
+    <string name="first_name">Imię</string>
+    <string name="middle_name">Drugie imię</string>
+    <string name="last_name">Nazwisko</string>
+    <string name="nickname">Pseudonim</string>
+    <string name="company">Firma</string>
+    <string name="account">Konto</string>
+    <string name="dates">Daty</string>
+    <string name="phone">Telefon</string>
+    <string name="email">Email</string>
+    <string name="addresses">Adresy</string>
+    <string name="contact_photo">Zdjęcie kontaktu</string>
+    <string name="add_picture">Dodaj zdjęcie</string>
+    <string name="change_picture">Zmień</string>
+    <string name="remove_picture">Usuń</string>
+    <string name="visible_accounts">Widoczne konta</string>
+    <string name="add_contacts_account">Dodaj konto kontaktów</string>
+    <string name="enter_account_name">Wprowadź nazwę nowego konta lokalnego:</string>
+    <string name="account_name">Nazwa konta</string>
+    <string name="delete_contact_title">Usuń kontakt</string>
+    <string name="delete_contact_confirm">Czy na pewno chcesz usunąć ten kontakt? Tej czynności nie można cofnąć.</string>
+    <string name="grant_contacts_permission">Proszę zezwolić na dostęp do kontaktów</string>
+    <string name="select_contact_hint">Wybierz kontakt, aby wyświetlić szczegóły</string>
+    <string name="import_contacts">Importuj kontakty</string>
+    <string name="action_call">Zadzwoń</string>
+    <string name="action_message">Wiadomość</string>
+    <string name="action_video">Wideo</string>
+    <string name="add_date">Dodaj datę</string>
+    <string name="remove_email">Usuń email</string>
+    <string name="remove_address">Usuń adres</string>
+    <string name="remove_phone">Usuń telefon</string>
+    <string name="account_display_format"><xliff:g id="account_name" example="Personal">%1$s</xliff:g> (<xliff:g id="account_type" example="com.google">%2$s</xliff:g>)</string>
+    <string name="add_address">Dodaj adres</string>
+    <string name="add_phone">Dodaj telefon</string>
+    <string name="delete_contact_name_confirm">Czy na pewno chcesz usunąć „<xliff:g id="contact_name" example="John Doe">%1$s</xliff:g>”? Tej operacji nie można cofnąć.</string>
+    <string name="add_email">Dodaj email</string>
+    <string name="calendar_sync">Synchronizacja kalendarza</string>
+    <string name="sync_contacts_calendar">Pokaż urodziny w kalendarzu</string>
+    <string name="contacts_calendar_name">Kontakty</string>
+    <string name="anniversary">Rocznica</string>
+    <string name="backup_and_export">Kopia zapasowa i eksport</string>
+    <string name="grant_calendar_permissions">Udziel uprawnień do kalendarza</string>
+    <string name="delete_selected_contacts_title">Usuń wybrane kontakty</string>
+    <string name="selected_count">Zaznaczono: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="show_account_labels">Pokaż konta kontaktów</string>
+    <string name="display">Wyświetl</string>
+    <string name="search_contacts">Szukaj kontakty</string>
+    <string name="include_year">Uwzględnij rok</string>
+    <string name="contacts">Kontakty</string>
+    <string name="groups">Grupy</string>
+    <string name="select_group_hint">Wybierz grupę, aby wyświetlić kontakty</string>
+    <string name="add_to_group">Dodaj do grupy</string>
+    <string name="add_group">Dodaj grupę</string>
+    <string name="enter_group_name">Wprowadź nazwę grupy</string>
+    <string name="delete_group_title">Usuń grupę</string>
+    <string name="delete_group_confirm">Czy na pewno chcesz usunąć tę grupę? Kontakty nie zostaną usunięte.</string>
+    <string name="system_default">Domyślne systemowe</string>
+    <string name="signal">Signal</string>
+    <string name="whatsapp">WhatsApp</string>
+    <string name="telegram">Telegram</string>
+    <string name="google_meet">Google Meet</string>
+    <string name="no_groups_found">Nie znaleziono grup. Utwórz grupę w zakładce Grupy.</string>
+    <string name="import_vcf_file">Importuj plik .vcf</string>
+    <string name="import_to_existing_account">Importuj do istniejącego konta</string>
+    <string name="create_new_account_option">Utwórz nowe konto</string>
+    <string name="no_contacts_found">Nie znaleziono kontaktów</string>
+    <string name="select_account">Wybierz konto</string>
+    <string name="no_name">(Bez nazwy)</string>
+    <string name="add_number_to_contact">Dodaj numer do kontaktu</string>
+    <string name="create_new_contact">Utwórz nowy kontakt</string>
+    <string name="crop_photo">Przytnij zdjęcie</string>
+    <string name="import_contacts_from_vcf_files">Importuj kontakty z plików .vcf</string>
+    <plurals name="import_summary_contacts">
+        <item quantity="one"><xliff:g id="count" example="10">%1$d</xliff:g> kontakt gotowy do importu</item>
+        <item quantity="few"><xliff:g id="count" example="10">%1$d</xliff:g> kontakty gotowe do zaimportowania</item>
+        <item quantity="many"><xliff:g id="count" example="10">%1$d</xliff:g> kontaktów gotowych do zaimportowania</item>
+        <item quantity="other"><xliff:g id="count" example="10">%1$d</xliff:g> kontaktów gotowych do zaimportowania</item>
+    </plurals>
+    <plurals name="delete_selected_contacts_confirm">
+        <item quantity="one">Czy na pewno chcesz usunąć <xliff:g id="count" example="5">%1$d</xliff:g> zaznaczony kontakt? Tej czynności nie można cofnąć.</item>
+        <item quantity="few">Czy na pewno chcesz usunąć <xliff:g id="count" example="5">%1$d</xliff:g> zaznaczone kontakty? Tej czynności nie można cofnąć.</item>
+        <item quantity="many">Czy na pewno chcesz usunąć <xliff:g id="count" example="5">%1$d</xliff:g> zaznaczonych kontaktów? Tej czynności nie można cofnąć.</item>
+        <item quantity="other">Czy na pewno chcesz usunąć <xliff:g id="count" example="5">%1$d</xliff:g> zaznaczonych kontaktów? Tej czynności nie można cofnąć.</item>
+    </plurals>
+    <plurals name="contacts_count">
+        <item quantity="one"><xliff:g id="count" example="42">%1$d</xliff:g> kontakt</item>
+        <item quantity="few"><xliff:g id="count" example="42">%1$d</xliff:g> kontakty</item>
+        <item quantity="many"><xliff:g id="count" example="42">%1$d</xliff:g> kontaktów</item>
+        <item quantity="other"><xliff:g id="count" example="42">%1$d</xliff:g> kontaktów</item>
+    </plurals>
+    <string name="custom_label">Niestandardowa etykieta</string>
+    <string name="enter_custom_label">Wprowadź niestandardową etykietę</string>
+    <string name="sim_limited_fields_hint">Kontakty na karcie SIM przechowują tylko imię, numer telefonu i adres e-mail.</string>
+    <string name="save_failed">Nie udało się zapisać</string>
+    <string name="importing">Importowanie…</string>
+    <string name="rename_account">Zmień nazwę konta</string>
+    <string name="delete_account">Usuń konto</string>
+    <string name="delete_local_account_confirm">Usunąć to konto i wszystkie kontakty? Tego nie da się cofnąć.</string>
+    <string name="account_name_exists">Konto o takiej nazwie już istnieje</string>
+    <string name="ringtone">Dzwonek</string>
+    <string name="select_ringtone">Wybierz dzwonek</string>
+    <string name="no_contacts_yet">Nie masz jeszcze żadnych kontaktów</string>
+    <string name="no_contacts_yet_message">Dotknij przycisk Dodaj, aby utworzyć pierwszy kontakt.</string>
+    <string name="no_groups_yet">Nie ma jeszcze żadnych grup</string>
+    <string name="no_groups_yet_message">Dotknij przycisk Dodaj, aby tworzyć grupy kontaktów.</string>
+    <string name="name_prefix">Zwrot grzecznościowy</string>
+    <string name="name_suffix">Tytuł pokoleniowy</string>
+    <string name="name_affix_none">Brak</string>
+    <string name="sim_name_or_phone_required">Wprowadź nazwę lub numer telefonu</string>
+    <string name="sim_slot_label">SIM %1$d</string>
+    <string name="move_to_account">Przenieś do konta</string>
+    <string name="move">Przenieś</string>
+    <plurals name="move_to_account_subtitle">
+        <item quantity="one">Wybierz, dokąd przenieść <xliff:g id="count" example="1">%1$d</xliff:g> kontakt</item>
+        <item quantity="few">Wybierz, dokąd przenieść <xliff:g id="count" example="3">%1$d</xliff:g> kontakty</item>
+        <item quantity="many">Wybierz, dokąd przenieść <xliff:g id="count" example="5">%1$d</xliff:g> kontaktów</item>
+        <item quantity="other">Wybierz, dokąd przenieść <xliff:g id="count" example="5">%1$d</xliff:g> kontaktów</item>
+    </plurals>
+    <string name="move_to_sim_warning_title">Niektóre informacje nie zmieszczą się na karcie SIM</string>
+    <string name="move_to_sim_warning_body">Na karcie <xliff:g id="sim_label" example="SIM 1">%1$s</xliff:g> są zapisywane tylko nazwa, telefon i e-mail. Następujące dane zostaną utracone: <xliff:g id="dropped" example="photo, addresses">%2$s</xliff:g>.</string>
+    <string name="move_dropped_photo">zdjęcie</string>
+    <string name="move_dropped_extra_phones">dodatkowe numery telefonów</string>
+    <string name="move_dropped_extra_emails">dodatkowe adresy e-mail</string>
+    <string name="move_dropped_addresses">adresy</string>
+    <string name="move_dropped_dates">daty</string>
+    <string name="move_dropped_organization">organizacja</string>
+    <string name="move_dropped_note">notatka</string>
+    <string name="move_dropped_nickname">pseudonim</string>
+    <string name="move_dropped_groups">grupy</string>
+    <string name="move_dropped_ringtone">dzwonek</string>
+    <string name="move_dropped_favorite">ulubione</string>
+    <string name="move_anyway">Przenieś mimo to</string>
+    <plurals name="move_success">
+        <item quantity="one">Przeniesiono <xliff:g id="count" example="1">%1$d</xliff:g> kontakt</item>
+        <item quantity="few">Przeniesiono <xliff:g id="count" example="3">%1$d</xliff:g> kontakty</item>
+        <item quantity="many">Przeniesiono <xliff:g id="count" example="5">%1$d</xliff:g> kontaktów</item>
+        <item quantity="other">Przeniesiono <xliff:g id="count" example="5">%1$d</xliff:g> kontaktów</item>
+    </plurals>
+    <string name="move_partial_failure">Przeniesiono: <xliff:g id="moved" example="2">%1$d</xliff:g>, nie przeniesiono: <xliff:g id="failed" example="1">%2$d</xliff:g></string>
+    <string name="move_failed">Błąd przenoszenia</string>
+</resources>

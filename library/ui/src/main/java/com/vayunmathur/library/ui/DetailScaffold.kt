@@ -1,0 +1,286 @@
+package com.vayunmathur.library.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import com.vayunmathur.library.util.NavBackStack
+import com.vayunmathur.library.util.NavKey
+
+/**
+ * The scaffold for a detail screen - one whose body is a vertically scrolling
+ * stack of blocks rather than a flat list (album header + tracks, a config's
+ * fields, a contact's cards).
+ *
+ * [ListPage] covers list screens and [AppScaffold] covers everything with a bar
+ * and free-form content; this fills the gap that every detail screen was closing
+ * by hand: `AppScaffold { pad -> Column(fillMaxSize().padding(pad)
+ * .padding(horizontal = 16.dp).verticalScroll(...), spacedBy(12.dp)) { ... } }`.
+ * The horizontal inset ([paneContentMargin], [Spacing.lg] on phones and wider on
+ * expanded widths) and the gap between blocks ([Spacing.md])
+ * are normalised here so detail screens stop drifting apart.
+ *
+ * The content lambda runs in a [ColumnScope] that is already scrolling; use
+ * [DetailLazyColumn] instead when the body is itself a long list that should
+ * lazily compose.
+ */
+@Composable
+fun DetailScaffold(
+    title: String,
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    navigationIcon: (@Composable () -> Unit)? = null,
+    alignment: AppBarAlignment = AppBarAlignment.Start,
+    size: AppBarSize = AppBarSize.Small,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomBar: @Composable () -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit,
+) = AppScaffold(
+    title = title,
+    modifier = modifier,
+    onNavigateBack = onNavigateBack,
+    onClose = onClose,
+    navigationIcon = navigationIcon,
+    alignment = alignment,
+    size = size,
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+    bottomBar = bottomBar,
+) { pad ->
+    DetailColumn(pad, fillHeight = false, content)
+}
+
+/** [DetailScaffold] with a title slot, for a styled or truncated heading. */
+@Composable
+fun DetailScaffold(
+    title: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    navigationIcon: (@Composable () -> Unit)? = null,
+    alignment: AppBarAlignment = AppBarAlignment.Start,
+    size: AppBarSize = AppBarSize.Small,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomBar: @Composable () -> Unit = {},
+    fillHeight: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) = AppScaffold(
+    title = title,
+    modifier = modifier,
+    onNavigateBack = onNavigateBack,
+    onClose = onClose,
+    navigationIcon = navigationIcon,
+    alignment = alignment,
+    size = size,
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+    bottomBar = bottomBar,
+) { pad ->
+    DetailColumn(pad, fillHeight, content)
+}
+
+/** [DetailScaffold] for a screen that owns a back stack, wiring the back button to it. */
+@Composable
+fun <T : NavKey> DetailScaffold(
+    title: String,
+    backStack: NavBackStack<T>,
+    modifier: Modifier = Modifier,
+    onClose: (() -> Unit)? = null,
+    navigationIcon: (@Composable () -> Unit)? = null,
+    alignment: AppBarAlignment = AppBarAlignment.Start,
+    size: AppBarSize = AppBarSize.Small,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomBar: @Composable () -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit,
+) = DetailScaffold(
+    title = title,
+    modifier = modifier,
+    onNavigateBack = { backStack.pop() },
+    onClose = onClose,
+    navigationIcon = navigationIcon,
+    alignment = alignment,
+    size = size,
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+    bottomBar = bottomBar,
+    content = content,
+)
+
+/**
+ * The detail scaffold whose body is a lazily composed list - album track lists,
+ * long grouped detail screens. Same bars and insets as [DetailScaffold], but the
+ * scaffold padding is forwarded as the list's `contentPadding` (with the
+ * horizontal margin folded in) so items can scroll under the bars.
+ */
+@Composable
+fun DetailLazyColumn(
+    title: String,
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null,
+    alignment: AppBarAlignment = AppBarAlignment.Start,
+    size: AppBarSize = AppBarSize.Small,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomBar: @Composable () -> Unit = {},
+    content: LazyListScope.() -> Unit,
+) = AppScaffold(
+    title = title,
+    modifier = modifier,
+    onNavigateBack = onNavigateBack,
+    alignment = alignment,
+    size = size,
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+    bottomBar = bottomBar,
+) { pad ->
+    DetailList(pad, content)
+}
+
+/** [DetailLazyColumn] with a title slot. */
+@Composable
+fun DetailLazyColumn(
+    title: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    onNavigateBack: (() -> Unit)? = null,
+    alignment: AppBarAlignment = AppBarAlignment.Start,
+    size: AppBarSize = AppBarSize.Small,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomBar: @Composable () -> Unit = {},
+    content: LazyListScope.() -> Unit,
+) = AppScaffold(
+    title = title,
+    modifier = modifier,
+    onNavigateBack = onNavigateBack,
+    alignment = alignment,
+    size = size,
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+    bottomBar = bottomBar,
+) { pad ->
+    DetailList(pad, content)
+}
+
+/** [DetailLazyColumn] for a screen that owns a back stack. */
+@Composable
+fun <T : NavKey> DetailLazyColumn(
+    title: String,
+    backStack: NavBackStack<T>,
+    modifier: Modifier = Modifier,
+    alignment: AppBarAlignment = AppBarAlignment.Start,
+    size: AppBarSize = AppBarSize.Small,
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomBar: @Composable () -> Unit = {},
+    content: LazyListScope.() -> Unit,
+) = DetailLazyColumn(
+    title = title,
+    modifier = modifier,
+    onNavigateBack = { backStack.pop() },
+    alignment = alignment,
+    size = size,
+    actions = actions,
+    scrollBehavior = scrollBehavior,
+    bottomBar = bottomBar,
+    content = content,
+)
+
+@Composable
+private fun DetailColumn(
+    pad: PaddingValues,
+    fillHeight: Boolean,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (!fillHeight) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(pad)
+                .padding(horizontal = paneContentMargin())
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            content = content,
+        )
+        return
+    }
+    // Constrain the scrolling column to be at least as tall as the viewport so a
+    // weighted child in [content] can fill the empty space below the blocks (and
+    // still scroll once the content outgrows the screen).
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(pad),
+    ) {
+        val minContentHeight = maxHeight
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = paneContentMargin())
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = minContentHeight),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun DetailList(pad: PaddingValues, content: LazyListScope.() -> Unit) {
+    val direction = LocalLayoutDirection.current
+    val margin = paneContentMargin()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = pad.calculateStartPadding(direction) + margin,
+            end = pad.calculateEndPadding(direction) + margin,
+            top = pad.calculateTopPadding(),
+            bottom = pad.calculateBottomPadding(),
+        ),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        content = content,
+    )
+}
+
+/**
+ * A titled sub-block inside a [DetailScaffold] - an optional [titleSmall]
+ * heading over its content. Pass a null [title] for an untitled group.
+ */
+@Composable
+fun DetailSection(
+    title: String?,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        if (title != null) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        content()
+    }
+}
