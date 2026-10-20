@@ -102,7 +102,6 @@ class MainActivity : MaActivity() {
                             Manifest.permission.READ_CONTACTS,
                             Manifest.permission.WRITE_CONTACTS,
                             Manifest.permission.CALL_PHONE,
-                            Manifest.permission.READ_PHONE_STATE
                         )
                     )
                 )

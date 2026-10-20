@@ -12,12 +12,12 @@ _Install: ./install contacts (dev by default)._
 - Rust: no / screenshotTest: yes
 
 ## Overview
-**Purpose:** Offline system contacts app — Google Contacts replacement minus cloud sync; handles system pick/view/edit/create intents, vCard import/export, SIM contacts, groups.
+**Purpose:** Offline system contacts app — Google Contacts replacement minus cloud sync; handles system pick/view/edit/create intents, vCard import/export, groups.
 **Key features:**
 - List/detail/edit with groups, favorites, photo crop, birthdays/dates, per-account storage via `auth/Authenticator`
-- vCard import/export + SIM import; quick actions into WhatsApp/Telegram; assistant read/add via `intents/`
+- vCard import/export; quick actions into WhatsApp/Telegram; assistant read/add via `intents/`
 - Optional calendar birthday sync (`CalendarSyncHelper` + `CalendarWorker`); everysync is the sync story, not this app
-**Architecture / data-flow:** `ui/` list/detail/edit pages (+ `ui/dialogs/`) → `util/ContactViewModel` (+ split `Accounts`/`Draft` helpers, `ContactsUiContract`) → `data/` models over the system contacts provider (`Contact`/`ContactGroup`, `ContactPrefill`, `SimContacts`); persistence is the provider, not Room — there is no database here.
+**Architecture / data-flow:** `ui/` list/detail/edit pages (+ `ui/dialogs/`) → `util/ContactViewModel` (+ split `Accounts`/`Draft` helpers, `ContactsUiContract`) → `data/` models over the system contacts provider (`Contact`/`ContactGroup`, `ContactPrefill`, `AccountTypes`); persistence is the provider, not Room — there is no database here.
 **Entry points + reading order:** `MainActivity.kt` → `ui/ContactListScreen.kt` → `ui/ContactDetailsPage.kt` → `ui/EditContactPage.kt` → `util/ContactViewModel.kt` → `data/Contact.kt`.
 **Gotchas:**
 - `util/` is NOT a closed package root — the `util/`→closed-roots migration is pending; don't add more files there
@@ -32,7 +32,7 @@ _Install: ./install contacts (dev by default)._
 - com/vayunmathur/contacts/data/Contact.kt
 - com/vayunmathur/contacts/data/ContactGroup.kt
 - com/vayunmathur/contacts/data/ContactPrefill.kt
-- com/vayunmathur/contacts/data/SimContacts.kt
+- com/vayunmathur/contacts/data/AccountTypes.kt
 ### util/ — ViewModel + helpers (pending migration to closed roots)
 - com/vayunmathur/contacts/util/ContactViewModel.kt
 - com/vayunmathur/contacts/util/ContactViewModelAccounts.kt

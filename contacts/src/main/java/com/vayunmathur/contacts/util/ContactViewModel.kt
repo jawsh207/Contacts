@@ -34,11 +34,7 @@ import com.vayunmathur.contacts.data.Organization
 import com.vayunmathur.contacts.data.PhoneNumber
 import com.vayunmathur.contacts.data.Photo
 import com.vayunmathur.contacts.data.PrefillValue
-import com.vayunmathur.contacts.data.SIM_ACCOUNT_TYPE
 import com.vayunmathur.contacts.data.LOCAL_ACCOUNT_TYPE
-import com.vayunmathur.contacts.data.SimContact
-import com.vayunmathur.contacts.data.SimContactsDataSource
-import com.vayunmathur.contacts.data.isSimAccountType
 import com.vayunmathur.contacts.data.isDefaultLocalAccount
 import com.vayunmathur.contacts.data.isLocalAccountType
 import com.vayunmathur.library.util.DataStoreUtils
@@ -88,7 +84,7 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
     internal val dataStore = DataStoreUtils.getInstance(application)
 
     // Provider-backed in-memory contact list (no local DB). Populated by
-    // syncFromSystem() from the system Contacts provider + SIM ADN and refreshed via the
+    // syncFromSystem() from the system Contacts provider and refreshed via the
     // ContentObserver registered in init.
     internal val allContactsState = MutableStateFlow<List<Contact>>(emptyList())
 
@@ -175,15 +171,6 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
             normalizedToken != token &&
             haystack.contains(normalizedToken)
     }
-
-    // Virtual SIM account display labels: key is "type|name" -> "SIM N — Carrier"
-    internal val simAccountLabelsState = MutableStateFlow<Map<String, String>>(emptyMap())
-    val simAccountLabels: StateFlow<Map<String, String>> = simAccountLabelsState.asStateFlow()
-
-    // Short form of the above ("SIM N", no carrier) for the storage badge on a contact row, which
-    // has room for a name but not a name plus a carrier.
-    internal val simSlotLabelsState = MutableStateFlow<Map<String, String>>(emptyMap())
-    val simSlotLabels: StateFlow<Map<String, String>> = simSlotLabelsState.asStateFlow()
 
     val groups: StateFlow<List<ContactGroup>> = callbackFlow {
         val resolver = getApplication<Application>().contentResolver
@@ -346,8 +333,8 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
     }
 
     internal suspend fun syncFromSystem() = withContext(Dispatchers.IO) {
-        // Broad catch is deliberate: sync crosses the contacts provider, SIM ADN
-        // and DataStore, and a failed refresh must mark load complete rather
+        // Broad catch is deliberate: sync crosses the contacts provider and
+        // DataStore, and a failed refresh must mark load complete rather
         // than crashing the collector.
         @Suppress("TooGenericExceptionCaught")
         try {
@@ -361,25 +348,8 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun refreshContactsFromSystem() {
         val app = getApplication<Application>()
-        val device = com.vayunmathur.contacts.data.Contact.getAllContacts(app)
-        val sim = SimContactsDataSource.simContactsAsContacts(app)
-        allContactsState.value = device + sim
-        // Refresh SIM account labels for UI (type|name -> display)
-        val infos = SimContactsDataSource.getSimSubscriptionInfos(app)
-        val labels = infos.associate { info ->
-            val acc = ContactAccount(SimContactsDataSource.accountNameFor(info), SIM_ACCOUNT_TYPE)
-            "${acc.type}|${acc.name}" to
-                SimContactsDataSource.getSimAccountDisplayLabel(app, info)
-        }
-        simAccountLabelsState.value = labels
-        simSlotLabelsState.value = simSlotLabelsFor(infos)
-        // Also refresh the accounts list to include current SIM accounts (in case SIM inserted/removed)
-        // Do it by launching loadAccounts() if needed; but we can update accountsState directly
-        // to avoid double query. However loadAccounts() also merges DataStore saved accounts,
-        // so we trigger it.
-        // Use a direct call to avoid extra launch overhead: we are already on IO, but
-        // loadAccounts() launches its own coroutine, so just trigger it.
-    // To keep accounts in sync, refresh directly: already on IO via syncFromSystem().
+        allContactsState.value = com.vayunmathur.contacts.data.Contact.getAllContacts(app)
+        // Keep the accounts list in step with the contacts; already on IO via syncFromSystem().
         loadAccountsInternal()
     }
 
@@ -387,37 +357,11 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         return findContact(contactId)
     }
 
-    /** Builds the fallback [SimContact] when no ADN row backs [contact]. */
-    private fun fallbackSimContact(contact: com.vayunmathur.contacts.data.Contact): SimContact {
-        val phone = contact.details.phoneNumbers.firstOrNull()?.number ?: ""
-        val email = contact.details.emails.firstOrNull()?.address
-        return SimContact(
-            -1,
-            contact.name.value,
-            phone,
-            email,
-            contact.accountName?.toIntOrNull()
-        )
-    }
-
     override fun deleteContact(contact: com.vayunmathur.contacts.data.Contact) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (isSimAccountType(contact.accountType)) {
-                deleteSimBackedContact(contact)
-            } else {
-                deleteProviderContact(contact)
-            }
-            // The system-contacts ContentObserver picks up device deletes and re-syncs; SIM path already synced.
+            // The system-contacts ContentObserver picks up the delete and re-syncs.
+            deleteProviderContact(contact)
         }
-    }
-
-    private suspend fun deleteSimBackedContact(contact: com.vayunmathur.contacts.data.Contact) {
-        val app = getApplication<Application>()
-        val sc = SimContactsDataSource.findBackingSimContact(app, contact)
-            ?: fallbackSimContact(contact)
-        val subId = sc.subscriptionId ?: contact.accountName?.toIntOrNull()
-        SimContactsDataSource.deleteSimContact(app, sc.copy(subscriptionId = subId))
-        syncFromSystem()
     }
 
     private suspend fun deleteProviderContact(contact: com.vayunmathur.contacts.data.Contact) {
@@ -452,13 +396,9 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch(Dispatchers.IO) { persistContact(contact) }
     }
 
-    /** Writes [contact] to the SIM or the contacts provider. Returns false if the write failed. */
-    internal suspend fun persistContact(contact: com.vayunmathur.contacts.data.Contact): Boolean {
-        if (isSimAccountType(contact.accountType)) {
-            return persistSimContact(contact)
-        }
-        return persistProviderContact(contact)
-    }
+    /** Writes [contact] to the contacts provider. Returns false if the write failed. */
+    internal suspend fun persistContact(contact: com.vayunmathur.contacts.data.Contact): Boolean =
+        persistProviderContact(contact)
 
     // ---------------------------------------------------------------------
     // Base64 photo decode cache.

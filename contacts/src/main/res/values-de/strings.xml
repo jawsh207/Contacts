@@ -230,8 +230,6 @@
     <string name="custom_label">Benutzerdefiniertes Label</string>
     <!-- Placeholder / description for entering custom label -->
     <string name="enter_custom_label">Labelname</string>
-    <!-- SIM contacts (now virtual accounts) -->
-    <string name="sim_limited_fields_hint">SIM-Kontakte speichern nur Name, Telefon und E-Mail.</string>
     <string name="save_failed">Speichern fehlgeschlagen</string>
     <string name="importing">Importiert…</string>
     <!-- Empty states -->

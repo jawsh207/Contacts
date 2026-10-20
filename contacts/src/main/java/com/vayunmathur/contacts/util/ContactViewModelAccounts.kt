@@ -7,11 +7,8 @@ import com.vayunmathur.library.log.Log
 import androidx.lifecycle.viewModelScope
 import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.data.LOCAL_ACCOUNT_TYPE
-import com.vayunmathur.contacts.data.SIM_ACCOUNT_TYPE
-import com.vayunmathur.contacts.data.SimContactsDataSource
 import com.vayunmathur.contacts.data.isDefaultLocalAccount
 import com.vayunmathur.contacts.data.isLocalAccountType
-import com.vayunmathur.contacts.data.isSimAccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -87,8 +84,7 @@ internal suspend fun ContactViewModel.loadAccountsInternal() {
     migrateLegacyAccounts()
     val savedAccounts = loadSavedAccounts()
     migrateHiddenAccountKeys()
-    refreshSimAccounts(app)
-    sortAccountsIntoState((accountSet + savedAccounts + simAccountsOf(app)).toList())
+    sortAccountsIntoState((accountSet + savedAccounts).toList())
 }
 
 private suspend fun ContactViewModel.queryProviderAccounts(
@@ -125,37 +121,9 @@ private suspend fun ContactViewModel.queryProviderAccounts(
     return accountSet
 }
 
-// Virtual SIM accounts
-private suspend fun ContactViewModel.refreshSimAccounts(app: Application) {
-    val simInfos = SimContactsDataSource.getSimSubscriptionInfos(app)
-    val simLabels = simInfos.associate { info ->
-        val acc = ContactAccount(SimContactsDataSource.accountNameFor(info), SIM_ACCOUNT_TYPE)
-        "${acc.type}|${acc.name}" to SimContactsDataSource.getSimAccountDisplayLabel(app, info)
-    }
-    simAccountLabelsState.value = simLabels
-    simSlotLabelsState.value = simSlotLabelsFor(simInfos)
-}
-
-private fun simAccountsOf(app: Application): List<ContactAccount> {
-    val simInfos = SimContactsDataSource.getSimSubscriptionInfos(app)
-    return simInfos.map { info ->
-        ContactAccount(SimContactsDataSource.accountNameFor(info), SIM_ACCOUNT_TYPE)
-    }
-}
-
 private fun ContactViewModel.sortAccountsIntoState(all: List<ContactAccount>) {
-    // Sort: SIM accounts by display label, others by name
     val collator = ContactSorting.collator()
-    accountsState.value = all.sortedWith(
-        compareBy(collator) { acc -> sortKeyFor(acc) }
-    )
-}
-
-private fun ContactViewModel.sortKeyFor(acc: ContactAccount): String {
-    if (acc.type == SIM_ACCOUNT_TYPE) {
-        return simAccountLabelsState.value["${acc.type}|${acc.name}"] ?: acc.name
-    }
-    return acc.name
+    accountsState.value = all.sortedWith(compareBy(collator) { it.name })
 }
 
 fun ContactViewModel.loadAccounts() {

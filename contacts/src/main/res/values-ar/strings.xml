@@ -111,7 +111,6 @@
     <string name="import_contacts_from_vcf_files">استيراد جهات الاتصال من ملفات .vcf</string>
     <string name="custom_label">تسمية مخصصة</string>
     <string name="enter_custom_label">أدخل تسمية مخصصة</string>
-    <string name="sim_limited_fields_hint">جهات اتصال بطاقة SIM تُخزِّن فقط الاسم، الهاتف، والبريد الإلكتروني.</string>
     <string name="save_failed">فشل الحفظ</string>
     <string name="importing">جارٍ الاستيراد…</string>
     <string name="account_display_format"><xliff:g id="account_name" example="Personal">%1$s</xliff:g> (<xliff:g id="account_type" example="com.google">%2$s</xliff:g>)</string>

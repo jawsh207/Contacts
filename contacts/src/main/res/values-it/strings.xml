@@ -106,7 +106,6 @@
     <string name="import_contacts_from_vcf_files">Importa contatti da file .vcf</string>
     <string name="custom_label">Etichetta personalizzata</string>
     <string name="enter_custom_label">Inserisci etichetta personalizzata</string>
-    <string name="sim_limited_fields_hint">I contatti della SIM memorizzano solamente nome, numero di telefono e email.</string>
     <string name="save_failed">Salvataggio non riuscito</string>
     <string name="importing">Importazione…</string>
     <string name="no_contacts_yet">Nessun contatto presente</string>

@@ -6,7 +6,6 @@ import android.provider.ContactsContract
 import com.vayunmathur.library.log.Log
 import androidx.lifecycle.viewModelScope
 import com.vayunmathur.contacts.data.Contact
-import com.vayunmathur.contacts.data.isSimAccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -25,11 +24,7 @@ import kotlinx.coroutines.launch
  */
 fun ContactViewModel.addContactsToGroup(contactIds: List<Long>, groupId: Long) {
     viewModelScope.launch(Dispatchers.IO) {
-        // Filter out SIM contacts (they don't support groups)
-        val deviceIds = contactIds.filter { id ->
-            val c = allContactsState.value.find { it.id == id }
-            c == null || !isSimAccountType(c.accountType)
-        }
+        val deviceIds = contactIds
         if (deviceIds.isEmpty()) return@launch
         val resolver = getApplication<Application>().contentResolver
         val ops = ArrayList<ContentProviderOperation>()

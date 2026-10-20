@@ -4,8 +4,6 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.data.ContactDetails
-import com.vayunmathur.contacts.data.SimContactsDataSource
-import com.vayunmathur.contacts.data.isSimAccountType
 import com.vayunmathur.library.log.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,42 +66,17 @@ fun ContactViewModel.importVcfContacts(
     viewModelScope.launch {
         withContext(Dispatchers.IO) {
             // Broad catch is deliberate: bulk import crosses the contacts
-            // provider, SIM ADN and VCF parsing, and must report failure
+            // provider and VCF parsing, and must report failure
             // via onDone rather than crashing the import screen.
             @Suppress("TooGenericExceptionCaught")
             try {
-                if (isSimAccountType(accountType)) {
-                    importVcfToSim(app, contacts, accountName)
-                    // Refresh unified list
-                    withContext(Dispatchers.Main) { loadContacts() }
-                } else {
-                    importVcfToProvider(app, contacts, accountName, accountType)
-                }
+                importVcfToProvider(app, contacts, accountName, accountType)
             } catch (e: Exception) {
                 Log.error("ContactViewModel", "Error importing contacts", e)
             }
         }
         loadContacts()
         onDone()
-    }
-}
-
-private suspend fun ContactViewModel.importVcfToSim(
-    app: Application,
-    contacts: List<Contact>,
-    accountName: String,
-) {
-    val subId = accountName.toIntOrNull()
-    contacts.forEach { contact ->
-        val name = contact.name.value.trim().ifEmpty {
-            contact.details.phoneNumbers.firstOrNull()?.number ?: ""
-        }
-        val number = contact.details.phoneNumbers.firstOrNull()?.number?.trim() ?: ""
-        val email = contact.details.emails.firstOrNull()?.address?.trim()
-            ?.takeIf { it.isNotEmpty() }
-        if (name.isNotBlank() || number.isNotBlank()) {
-            SimContactsDataSource.insertSimContact(app, name, number, email, subId)
-        }
     }
 }
 
