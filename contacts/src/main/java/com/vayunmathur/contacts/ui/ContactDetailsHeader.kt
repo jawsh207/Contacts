@@ -123,8 +123,8 @@ fun ActionButtonsRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (phoneNumbers.isNotEmpty()) {
             var callNumber by remember(phoneNumbers) { mutableStateOf(phoneNumbers.first().number) }
@@ -138,6 +138,7 @@ fun ActionButtonsRow(
             var showVideoDropdown by remember { mutableStateOf(false) }
 
             ActionButton(
+                modifier = Modifier.weight(1f),
                 icon = { IconCall() },
                 label = stringResource(UiR.string.call),
                 action = {
@@ -195,6 +196,7 @@ fun ActionButtonsRow(
                 }
             )
             ActionButton(
+                modifier = Modifier.weight(1f),
                 icon = { IconSms() },
                 label = stringResource(R.string.action_message),
                 action = {
@@ -265,6 +267,7 @@ fun ActionButtonsRow(
                 ).count { it }
 
                 ActionButton(
+                    modifier = Modifier.weight(1f),
                     icon = { IconVideoCamera() },
                     label = stringResource(R.string.action_video),
                     action = {
@@ -325,7 +328,11 @@ fun ActionButtonsRow(
             }
         }
         if (email != null) {
-            ActionButton(icon = { IconMail() }, label = stringResource(UiR.string.email)) {
+            ActionButton(
+                modifier = Modifier.weight(1f),
+                icon = { IconMail() },
+                label = stringResource(UiR.string.email),
+            ) {
                 val intent = Intent(Intent.ACTION_SENDTO)
                 intent.data = "mailto:$email".toUri()
                 ExternalIntents.launch(context, intent)

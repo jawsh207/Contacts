@@ -227,8 +227,10 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
     val isCalendarSyncEnabled: StateFlow<Boolean> = dataStore.booleanFlow("calendar_sync_enabled")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    val showAccountLabels: StateFlow<Boolean> = dataStore.booleanFlow("show_account_labels")
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+    // Off unless the user turns it on in Settings: Google Contacts doesn't badge every row
+    // with its storage account, and the label crowds the Expressive card rows.
+    val showAccountLabels: StateFlow<Boolean> = dataStore.booleanFlow("show_account_labels", false)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /**
      * Which name field leads the list ordering. Unknown stored values (e.g. from a newer

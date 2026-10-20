@@ -111,7 +111,8 @@ fun GroupsScreen(state: GroupsUiState, actions: ContactsActions, expandGroupId: 
                 IconAdd()
             }
         },
-        horizontalPadding = 8.dp,
+        // Same side margins as the Contacts tab so the cards line up when swiping between tabs.
+        horizontalPadding = 16.dp,
         verticalArrangement = Arrangement.spacedBy(4.dp),
         scrollBehavior = appBarScrollBehavior(),
     ) {
