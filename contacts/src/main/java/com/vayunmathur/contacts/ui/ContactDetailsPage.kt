@@ -33,11 +33,14 @@ import com.vayunmathur.library.ui.ExperimentalMaterial3Api
 import com.vayunmathur.library.ui.IconButton
 import com.vayunmathur.library.ui.IconDelete
 import com.vayunmathur.library.ui.IconEdit
+import com.vayunmathur.library.ui.IconMoreVert
 import com.vayunmathur.library.ui.IconMove
 import com.vayunmathur.library.ui.IconShare
 import com.vayunmathur.library.ui.IconStar
 import com.vayunmathur.library.ui.IconStarBorder
 import com.vayunmathur.library.ui.MaterialTheme
+import com.vayunmathur.library.ui.OverflowMenu
+import com.vayunmathur.library.ui.R as UiR
 import com.vayunmathur.library.ui.Text
 import com.vayunmathur.library.ui.appBarScrollBehavior
 import com.vayunmathur.library.ui.ringtonePickerIntent
@@ -187,16 +190,25 @@ fun ContactDetailsScreen(
             IconButton(onClick = { actions.editContact(contact.id) }) {
                 IconEdit()
             }
-            IconButton(onClick = {
-                actions.shareContacts(listOf(contact), "${contact.name.value.replace(' ', '_')}.vcf")
-            }) {
-                IconShare()
-            }
-            IconButton(onClick = { actions.moveContacts(listOf(contact.id)) }) {
-                IconMove()
-            }
-            IconButton(onClick = { actions.confirmDeleteContact(contact) }) {
-                IconDelete()
+            // Like Google Contacts, only star and edit stay in the bar; the rest live in ⋮.
+            OverflowMenu(icon = { IconMoreVert() }) {
+                Item(
+                    text = stringResource(UiR.string.share),
+                    leadingIcon = { IconShare() },
+                    onClick = {
+                        actions.shareContacts(listOf(contact), "${contact.name.value.replace(' ', '_')}.vcf")
+                    },
+                )
+                Item(
+                    text = stringResource(R.string.move_to_account),
+                    leadingIcon = { IconMove() },
+                    onClick = { actions.moveContacts(listOf(contact.id)) },
+                )
+                Item(
+                    text = stringResource(UiR.string.delete),
+                    leadingIcon = { IconDelete() },
+                    onClick = { actions.confirmDeleteContact(contact) },
+                )
             }
         },
         scrollBehavior = appBarScrollBehavior(),
