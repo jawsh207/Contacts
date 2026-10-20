@@ -54,7 +54,7 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
             contact = contact,
             decodePhoto = decodePhoto,
             modifier = Modifier
-                .size(100.dp)
+                .size(112.dp)
                 .sharedContent("contact-avatar-${contact.id}"),
             initialsStyle = MaterialTheme.typography.headlineLarge,
         )
@@ -87,8 +87,9 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
             parts.forEach { (slot, text) ->
                 Text(
                     text = text,
+                    // Regular weight, as in Google Contacts: the size carries the emphasis.
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Normal,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.sharedText("contact-$slot-${contact.id}"),
                 )
@@ -97,7 +98,8 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
         if (contact.nickname.nickname.isNotBlank()) {
             Text(
                 text = contact.nickname.nickname,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.sharedText("contact-nickname-${contact.id}"),
             )
@@ -105,7 +107,7 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
         Text(
             text = contact.org.company,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.sharedText("contact-company-${contact.id}")
         )

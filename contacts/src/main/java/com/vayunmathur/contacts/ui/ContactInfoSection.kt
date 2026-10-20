@@ -1,15 +1,9 @@
 package com.vayunmathur.contacts.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.data.ContactDetails
@@ -19,7 +13,6 @@ import com.vayunmathur.library.ui.IconLabel
 import com.vayunmathur.library.ui.ListItem
 import com.vayunmathur.library.ui.ListItemDefaults
 import com.vayunmathur.library.ui.MaterialTheme
-import com.vayunmathur.library.ui.Surface
 import com.vayunmathur.library.ui.Text
 import com.vayunmathur.library.util.sharedContainer
 
@@ -28,8 +21,9 @@ internal fun ContactDetails.hasContactInfo(): Boolean =
     phoneNumbers.isNotEmpty() || emails.isNotEmpty() || addresses.isNotEmpty()
 
 /**
- * Google Contacts' "Contact info" card: a titled card holding every phone number, email and
- * address, drawn as one segmented group rather than a separate card per kind.
+ * Google Contacts' "Contact info" card: one titled card holding every phone number, email and
+ * address, rather than a separate card per kind. The rows share the card's colour, so the card
+ * reads as a single surface; their own shapes only show in the press ripple.
  */
 @Composable
 internal fun ContactInfoSection(
@@ -39,22 +33,10 @@ internal fun ContactInfoSection(
 ) {
     val phones = details.phoneNumbers.size
     val emails = details.emails.size
-    // The title is the group's first segment, so it shares the card's rounded top.
+    // Indexed as one group (the title counts as the first segment), so a row's ripple is
+    // rounded only where the row meets the card's own corners.
     val total = 1 + phones + emails + details.addresses.size
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = groupShape(0, total),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-        ) {
-            Text(
-                text = stringResource(R.string.contact_info),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
-            )
-        }
+    GroupedSection(title = stringResource(R.string.contact_info)) {
         if (phones > 0) PhonesSection(details, platforms, arriving, startIndex = 1, totalCount = total)
         if (emails > 0) EmailsSection(details, arriving, startIndex = 1 + phones, totalCount = total)
         if (details.addresses.isNotEmpty()) {
