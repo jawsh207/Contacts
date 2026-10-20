@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- API 33+ night twin of Theme.General: dark parent plus icon_preferred, mirroring
+         values-night/themes.xml with the icon forced on. -->
+    <style name="Theme.General" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowSoftInputMode">stateUnchanged</item>
+        <item name="android:windowSplashScreenBackground">?android:attr/colorBackground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+    </style>
+</resources>

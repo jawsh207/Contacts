@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.General" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSoftInputMode">stateUnchanged</item>
+        <!-- System splash (API 31+): explicit single-color background per mode, white disc
+             behind the black launcher glyph, and icon forced on API 33+ where the default
+             behavior can otherwise show an empty splash. -->
+        <item name="android:windowSplashScreenBackground">?android:attr/colorBackground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
+        <!-- windowSplashScreenBehavior is API 33+; it lives in values-v33/themes.xml. -->
+    </style>
+</resources>

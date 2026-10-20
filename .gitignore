@@ -1,0 +1,95 @@
+*.iml
+.gradle
+/local.properties
+/.idea/shelf
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+.llms
+.idea
+build/
+release/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.kotlin/
+*.env
+distribution_apks/
+.venv/
+__pycache__/
+scratch/LiteRT-LM/
+
+# Issue #321 reproduction PDFs (potential copyright; harness reads them locally,
+# see pdf/src/main/rust/src/issue321_tests.rs). Not committed.
+issue321_pdfs/
+apk-analysis
+
+# Personal / private app modules (kept out of the public repo)
+/personal/
+
+# Offline map assets and zone downloads (large binary, R2-hosted)
+*.pmtiles
+**/*.pmtiles
+zones/
+v4.pmtiles
+zone_*.pmtiles
+*.pmtiles.download
+
+# Network capture artifacts
+reverse-engineering/
+# APK decompilation / protocol analysis workspace (contains third-party decompiled
+# code and pulled APKs; kept local only, not committed)
+analysis/
+**/rust/target/
+tmp/
+target/
+dist/
+
+# Nutrition database asset — large binary, regenerate with scripts/generate_food_db.py
+health/src/main/assets/food.bin
+health/src/main/assets/food.bin.br
+health/src/main/assets/food.bin.meta.json
+health/src/main/assets/staging.db
+
+# Medical catalogue asset — large binary, regenerate with scripts/generate_med_db.py.
+# Holds both the RxNorm medication and ICD-10-CM condition terminologies. The vaccine half of
+# that script writes health/src/main/assets/cvx.json, which is small enough to commit and is
+# deliberately not ignored.
+health/src/main/assets/catalog.db
+health/src/main/assets/catalog.db.br
+health/src/main/assets/catalog.db.meta.json
+
+# Built by scripts/generate_places_db.py from GeoNames cities1000. Same deal
+# as the health catalogue: generated at build time, never committed.
+weather/src/main/assets/places.db
+weather/src/main/assets/places.db.br
+weather/src/main/assets/places.db.meta.json
+
+# Compose preview screenshot rendering (common-conventions-preview-metadata). These PNGs
+# are an intermediate: the `metadata` task copies them into metadata_data/photos/<module>,
+# which is what is committed and what release.sh reads. Committing them too would store
+# every listing image twice. Remove this ignore if you ever want
+# `validate<Variant>ScreenshotTest` to act as UI regression testing.
+**/src/screenshotTest*/reference/
+
+# Supertonic 3's TTS bundle is **committed**, unlike the two above, and deliberately: without it a
+# fresh checkout builds a :speech APK with no voices, and the TTS engine then advertises no
+# languages (SupertonicBundle.isPresent is false) rather than failing on the first utterance. A
+# checkout that silently ships a mute app is worse than 107 MiB of history.
+#
+# Rebuild it byte for byte with `python scripts/ml/fetch_supertonic.py`, which pins the upstream
+# revision and every ONNX SHA-256, and commit the result if it changes.
+
+# Apple WPS scraping experiment (research scratch: crawler DBs, samples, artifacts)
+wtfps-experiment/
+wtfps/
+planet_out/
+waterh_analysis
+renpho_analysis
+
+.aider*

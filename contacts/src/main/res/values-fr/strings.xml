@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Contacts</string>
+    <string name="contact_not_found">Contact non trouvé</string>
+    <string name="name_nickname_format">%1$s (%2$s)</string>
+    <string name="contact_photo_description">Photo de %1$s</string>
+    <string name="share_contact">Partager le contact</string>
+    <string name="about_name">À propos de %1$s</string>
+    <string name="birthday">Anniversaire</string>
+    <string name="note">Note</string>
+    <string name="favorites">Favoris</string>
+    <string name="export_contacts">Exporter tous les contacts</string>
+    <string name="on_device">Sur l\'appareil</string>
+    <string name="add_contact">Ajouter un contact</string>
+    <string name="edit_contact">Éditer le contact</string>
+    <string name="first_name">Prénom</string>
+    <string name="middle_name">Deuxième prénom</string>
+    <string name="last_name">Nom de famille</string>
+    <string name="nickname">Surnom</string>
+    <string name="company">Entreprise</string>
+    <string name="account">Compte</string>
+    <string name="account_display_format"><xliff:g id="account_name" example="Personal">%1$s</xliff:g> (<xliff:g id="account_type" example="com.google">%2$s</xliff:g>)</string>
+    <string name="add_phone">Ajouter un numéro de téléphone</string>
+    <string name="remove_phone">Supprimer le numéro de téléphone</string>
+    <string name="add_email">Ajouter une adresse e-mail</string>
+    <string name="remove_email">Supprimer l\'adresse e-mail</string>
+    <string name="add_address">Ajouter une adresse</string>
+    <string name="remove_address">Supprimer l\'adresse</string>
+    <string name="add_date">Ajouter une date</string>
+    <string name="dates">Dates</string>
+    <string name="phone">Numéro de téléphone</string>
+    <string name="email">E-mail</string>
+    <string name="addresses">Adresses</string>
+    <string name="contact_photo">Photo du contact</string>
+    <string name="add_picture">Ajouter une photo</string>
+    <string name="change_picture">Modifier</string>
+    <string name="remove_picture">Retirer</string>
+    <string name="visible_accounts">Comptes visibles</string>
+    <string name="add_contacts_account">Ajouter un compte de contacts</string>
+    <string name="enter_account_name">Entrer un nom pour le nouveau compte local :</string>
+    <string name="account_name">Nom du compte</string>
+    <string name="delete_contact_title">Supprimer le contact</string>
+    <string name="select_contact_hint">Sélectionnez un contact pour voir ses détails</string>
+    <string name="import_contacts">Importer des contacts</string>
+    <string name="action_call">Appeler</string>
+    <string name="action_message">Envoyer un message</string>
+    <string name="action_video">Démarrer un appel vidéo</string>
+    <string name="calendar_sync">Synchroniser le calendrier</string>
+    <string name="sync_contacts_calendar">Afficher les anniversaires dans le calendrier</string>
+    <string name="contacts_calendar_name">Contacts</string>
+    <string name="anniversary">Anniversaire</string>
+    <string name="backup_and_export">Sauvegarde et exportation</string>
+    <string name="grant_calendar_permissions">Autoriser l\'accès au calendrier</string>
+    <string name="delete_selected_contacts_title">Supprimer les contacts sélectionnés</string>
+    <string name="selected_count"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionné(s)</string>
+    <string name="display">Affichage</string>
+    <string name="show_account_labels">Afficher les comptes de contact</string>
+    <string name="delete_contact_confirm">Voulez-vous vraiment supprimer ce contact ? Cette action est irréversible.</string>
+    <string name="delete_contact_name_confirm">Voulez-vous vraiment supprimer \"<xliff:g id="contact_name" example="John Doe">%1$s</xliff:g>\" ? Cette action est irréversible.</string>
+    <string name="grant_contacts_permission">Veuillez autoriser l\'accès aux contacts</string>
+    <plurals name="delete_selected_contacts_confirm">
+        <item quantity="one">Voulez-vous vraiment supprimer le <xliff:g id="count" example="5">%1$d</xliff:g> contact sélectionné ? Cette action est irréversible.</item>
+        <item quantity="many">Voulez-vous vraiment supprimer les <xliff:g id="count" example="5">%1$d</xliff:g> contacts sélectionnés ? Cette action est irréversible.</item>
+        <item quantity="other">Voulez-vous vraiment supprimer les <xliff:g id="count" example="5">%1$d</xliff:g> contacts sélectionnés ? Cette action est irréversible.</item>
+    </plurals>
+    <string name="search_contacts">Rechercher un contact</string>
+    <string name="include_year">Inclure l\'année</string>
+    <string name="system_default">Préférence système</string>
+    <string name="signal">Signal</string>
+    <string name="whatsapp">WhatsApp</string>
+    <string name="telegram">Telegram</string>
+    <string name="google_meet">Google Meet</string>
+    <string name="contacts">Contacts</string>
+    <string name="groups">Groupes</string>
+    <string name="select_group_hint">Sélectionnez un groupe pour afficher ses contacts</string>
+    <string name="add_to_group">Ajouter au groupe</string>
+    <string name="add_group">Ajouter un groupe</string>
+    <string name="enter_group_name">Entrer le nom du groupe</string>
+    <string name="delete_group_title">Supprimer le groupe</string>
+    <string name="delete_group_confirm">Voulez-vous vraiment supprimer ce groupe ? Les contacts du groupe ne seront pas supprimés.</string>
+    <string name="no_groups_found">Aucun groupe trouvé. Créez-en un dans l\'onglet Groupes.</string>
+    <plurals name="contacts_count">
+        <item quantity="one"><xliff:g id="count" example="42">%1$d</xliff:g> contact</item>
+        <item quantity="many"><xliff:g id="count" example="42">%1$d</xliff:g> contacts</item>
+        <item quantity="other"><xliff:g id="count" example="42">%1$d</xliff:g> contacts</item>
+    </plurals>
+    <string name="select_account">Sélectionner un compte</string>
+    <string name="import_vcf_file">Importer un fichier .vcf</string>
+    <string name="import_to_existing_account">Importer vers un compte existant</string>
+    <string name="create_new_account_option">Créer un nouveau compte</string>
+    <string name="no_contacts_found">Aucun contact trouvé</string>
+    <plurals name="import_summary_contacts">
+        <item quantity="one"><xliff:g id="count" example="10">%1$d</xliff:g> contact prêt à être importé</item>
+        <item quantity="many"><xliff:g id="count" example="10">%1$d</xliff:g> contacts prêts à être importés</item>
+        <item quantity="other"><xliff:g id="count" example="10">%1$d</xliff:g> contacts prêts à être importés</item>
+    </plurals>
+    <string name="add_number_to_contact">Ajouter un numéro à un contact</string>
+    <string name="create_new_contact">Créer un nouveau contact</string>
+    <string name="no_name">(Sans nom)</string>
+    <string name="crop_photo">Recadrer la photo</string>
+    <string name="import_contacts_from_vcf_files">Importer des contacts depuis des fichiers .vcf</string>
+    <string name="custom_label">Libellé personnalisé</string>
+    <string name="enter_custom_label">Saisir un libellé personnalisé</string>
+    <string name="rename_account">Renommer le compte</string>
+    <string name="delete_account">Supprimer le compte</string>
+    <string name="delete_local_account_confirm">Supprimer ce compte et tous les contacts associés ? Cette action est irréversible.</string>
+    <string name="account_name_exists">Un compte portant le même nom existe déjà</string>
+    <string name="sim_limited_fields_hint">Seuls le nom, téléphone et courriel sont enregistrés pour les contacts sur la carte SIM.</string>
+    <string name="save_failed">Échec de l\'enregistrement</string>
+    <string name="importing">En cours d\'importation…</string>
+</resources>

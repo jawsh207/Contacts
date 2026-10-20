@@ -1,0 +1,100 @@
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
+plugins {
+    id("com.android.library")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("dev.detekt")
+}
+
+// Static analysis (./check runs `:module:detekt`). Rules live in the committed
+// root detekt.yml; findings fail the task (no ignoreFailures).
+// Config-cache compatible: the config file is resolved here, never a Project.
+detekt {
+    config.setFrom(files(rootDir.resolve("detekt.yml")))
+}
+
+val libs = the<org.gradle.accessors.dm.LibrariesForLibs>()
+
+configure<com.android.build.api.dsl.LibraryExtension> {
+    buildFeatures {
+        compose = true
+    }
+
+    namespace = "com.vayunmathur${path.replace(":", ".").replace("-", "")}"
+    compileSdk {
+        // compose 1.13.0-beta01 (BOM 2026.09.00) needs platform 37.1+.
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
+
+    defaultConfig {
+        minSdk = 31
+    }
+
+    lint {
+        // Toast is banned repo-wide. Apps also catch this transitively via
+        // checkDependencies, but failing here gives faster feedback when
+        // working inside a library module.
+        // FileLength caps Kotlin file size, same as apps: split first.
+        // DirectAndroidLog keeps all logging on the repo facade.
+        fatal += listOf("ToastUsage", "FileLength", "DirectAndroidLog")
+        // Lint sweep (warn-then-error): mirror the app warnings so
+        // library modules surface marker-shape drift without failing the build.
+        warning += listOf("ExceptionMarkerFormat", "TodoEvasion", "CommentedOutCode")
+    }
+}
+
+dependencies {
+    // Repo-specific lint checks (currently: no Toast).
+    lintChecks(project(":lint-rules"))
+
+    // Repo-wide logging facade (com.vayunmathur.library.log.Log). Direct
+    // android.util.Log use is banned by the DirectAndroidLog lint check.
+    // Self-excluded: this convention also applies to :library:log itself, and a
+    // module depending on itself is a task-graph cycle (bundleLibCompileToJar
+    // <-> compileJavaWithJavac). Configuration-time branch, cache-safe.
+    if (project.path != ":library:log") {
+        implementation(project(":library:log"))
+    }
+
+    // AndroidX Core & Lifecycle
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.activity.compose)
+
+    // Compose UI (BOM Managed)
+    implementation(platform(libs.androidx.compose.bom))
+
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.material3)
+
+    // Kotlin Serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.test.junit)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions.optIn.addAll(
+        "androidx.compose.material3.ExperimentalMaterial3Api",
+        "androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+        "androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
+    )
+}
+
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}
+
+// Reproducible builds: log SOURCE_DATE_EPOCH if present for verification
+providers.environmentVariable("SOURCE_DATE_EPOCH").orNull?.let {
+    logger.lifecycle("Reproducible build: SOURCE_DATE_EPOCH=$it")
+}
