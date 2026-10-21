@@ -12,8 +12,11 @@ import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.CDKEvent
 import com.vayunmathur.contacts.data.Contact
 import com.vayunmathur.contacts.data.hasYear
-import com.vayunmathur.library.ui.R as UiR
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
@@ -24,7 +27,13 @@ import com.vayunmathur.contacts.data.Event as ContactEvent
 object CalendarSyncHelper {
     private const val ACCOUNT_NAME = "Contacts"
     private const val ACCOUNT_TYPE = "io.github.jawsh207.contacts"
-    private const val CALENDAR_NAME = "Contacts"
+    private const val CALENDAR_NAME = "Contact Birthdays"
+
+    /** Dated birthdays get one event per year, this many years back... */
+    private const val BIRTHDAY_YEARS_BEHIND = 1
+    /** ...and this many ahead; the hourly rebuild keeps the window rolling forward. */
+    private const val BIRTHDAY_YEARS_AHEAD = 5
+    private const val LEAP_DAY = 29
     private const val CALENDAR_COLOR_ARGB = 0xFF4285F4
     private const val MILLIS_PER_DAY = 24 * 60 * 60 * 1000L
     private const val NO_YEAR_ANCHOR_YEAR = 2000
@@ -65,6 +74,8 @@ object CalendarSyncHelper {
             calendarIds.drop(1).forEach { extraId ->
                 deleteCalendarById(context, syncAdapterUri, extraId)
             }
+            // Calendars created by earlier builds were called "Contacts"; rename in place.
+            renameCalendar(context, syncAdapterUri, calendarIds[0])
             return calendarIds[0]
         }
 
@@ -126,7 +137,7 @@ object CalendarSyncHelper {
             put(CalendarContract.Calendars.OWNER_ACCOUNT, ACCOUNT_NAME)
             put(
                 CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
-                context.getString(UiR.string.contacts)
+                context.getString(R.string.calendar_name)
             )
             put(CalendarContract.Calendars.NAME, CALENDAR_NAME)
             put(CalendarContract.Calendars.CALENDAR_COLOR, CALENDAR_COLOR_ARGB.toInt())
@@ -157,6 +168,26 @@ object CalendarSyncHelper {
         } catch (e: IllegalArgumentException) {
             Log.error("CalendarSyncHelper", "Error creating calendar", e)
             -1L
+        }
+    }
+
+    // Broad catch is deliberate: calendar providers vary by OEM and a failed
+    // rename must not block syncing.
+    @Suppress("TooGenericExceptionCaught")
+    private fun renameCalendar(context: Context, syncAdapterUri: Uri, calendarId: Long) {
+        try {
+            val values = ContentValues().apply {
+                put(CalendarContract.Calendars.NAME, CALENDAR_NAME)
+                put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, context.getString(R.string.calendar_name))
+            }
+            context.contentResolver.update(
+                syncAdapterUri,
+                values,
+                "${CalendarContract.Calendars._ID} = ?",
+                arrayOf(calendarId.toString())
+            )
+        } catch (e: Exception) {
+            Log.error("CalendarSyncHelper", "Error renaming calendar", e)
         }
     }
 
@@ -223,6 +254,7 @@ object CalendarSyncHelper {
     private fun isCalendarDateType(type: Int): Boolean =
         type == CDKEvent.TYPE_BIRTHDAY || type == CDKEvent.TYPE_ANNIVERSARY
 
+    @OptIn(ExperimentalTime::class)
     private fun buildAddEventOperations(
         context: Context,
         calendarId: Long,
@@ -231,52 +263,83 @@ object CalendarSyncHelper {
         eventUri: android.net.Uri
     ): List<ContentProviderOperation> {
         val originalDate = dateEvent.startDate
-        val deviceTimeZone = TimeZone.currentSystemDefault()
+        val isBirthday = dateEvent.type == CDKEvent.TYPE_BIRTHDAY
+        val name = contact.name.value
 
-        val eventTypeStr = if (dateEvent.type == CDKEvent.TYPE_BIRTHDAY) {
-            context.getString(R.string.birthday)
-        } else {
-            context.getString(R.string.anniversary)
+        // A dated birthday is one event per year, each titled with the age turned that year
+        // (as in Highlights): a single yearly repeating event can't change its title.
+        if (isBirthday && originalDate.hasYear) {
+            val thisYear = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.year
+            val title = "\uD83C\uDF82 " + context.getString(R.string.birthday_card_title, name)
+            return ((thisYear - BIRTHDAY_YEARS_BEHIND)..(thisYear + BIRTHDAY_YEARS_AHEAD))
+                .filter { year -> year > originalDate.year }
+                .map { year ->
+                    val age = year - originalDate.year
+                    eventInsert(
+                        eventUri, calendarId, contact,
+                        title = "$title · " + context.getString(R.string.birthday_turns_age, age),
+                        date = occurrenceIn(originalDate, year),
+                        repeatsYearly = false,
+                    )
+                }
         }
 
-        // Title deliberately omits age: a single FREQ=YEARLY instance is reused every
-        // year, so any embedded age would go stale after the first occurrence.
-        val title = "${contact.name.value}: $eventTypeStr"
-
-        val hasYear = originalDate.hasYear
+        // Undated birthdays and anniversaries: one yearly repeating event, no age.
+        val title = if (isBirthday) {
+            "\uD83C\uDF82 " + context.getString(R.string.birthday_card_title, name)
+        } else {
+            "$name: ${context.getString(R.string.anniversary)}"
+        }
         // RRULE makes the DTSTART year irrelevant (only month/day recur), so for
         // no-year dates (year 1604 sentinel) normalize to a leap year (2000). This
         // ensures Feb-29 no-year birthdays still recur instead of collapsing to an
         // invalid date. For dates with a real year, keep the original year so the
-        // first instance lands correctly; Feb 29 then fires on leap years only.
-        // NOTE: a yearly RRULE starting Feb 29 fires only on leap years on most
-        // providers — accepted as correct rather than shifting to Feb 28, which
-        // would show the birthday on the wrong day in leap years.
-        val anchorYear = if (hasYear) originalDate.year else NO_YEAR_ANCHOR_YEAR
+        // first instance lands correctly.
+        val anchorYear = if (originalDate.hasYear) originalDate.year else NO_YEAR_ANCHOR_YEAR
         val anchorDate = try {
             LocalDate(anchorYear, originalDate.month, originalDate.day)
         } catch (_: IllegalArgumentException) {
             return emptyList()
         }
+        return listOf(eventInsert(eventUri, calendarId, contact, title, anchorDate, repeatsYearly = true))
+    }
 
+    /** [date]'s month and day in [year]; Feb 29 falls on Feb 28 in common years, as in Highlights. */
+    private fun occurrenceIn(date: LocalDate, year: Int): LocalDate {
+        val isLeapDay = date.month == Month.FEBRUARY && date.day == LEAP_DAY
+        val leapYear = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+        return LocalDate(year, date.month, if (isLeapDay && !leapYear) LEAP_DAY - 1 else date.day)
+    }
+
+    private fun eventInsert(
+        eventUri: Uri,
+        calendarId: Long,
+        contact: Contact,
+        title: String,
+        date: LocalDate,
+        repeatsYearly: Boolean,
+    ): ContentProviderOperation {
+        val deviceTimeZone = TimeZone.currentSystemDefault()
         // All-day events must be anchored at local midnight in the device timezone.
         // Using 00:00 UTC shifts the displayed day for negative-offset zones (US).
-        val startMillis = anchorDate.atTime(MIDNIGHT_HOUR, MIDNIGHT_MINUTE)
+        val startMillis = date.atTime(MIDNIGHT_HOUR, MIDNIGHT_MINUTE)
             .toInstant(deviceTimeZone)
             .toEpochMilliseconds()
-
-        return listOf(
-            ContentProviderOperation.newInsert(eventUri)
-                .withValue(CalendarContract.Events.CALENDAR_ID, calendarId)
-                .withValue(CalendarContract.Events.TITLE, title)
-                .withValue(CalendarContract.Events.DTSTART, startMillis)
-                .withValue(CalendarContract.Events.DTEND, startMillis + MILLIS_PER_DAY)
-                .withValue(CalendarContract.Events.ALL_DAY, 1)
-                .withValue(CalendarContract.Events.EVENT_TIMEZONE, deviceTimeZone.id)
+        val op = ContentProviderOperation.newInsert(eventUri)
+            .withValue(CalendarContract.Events.CALENDAR_ID, calendarId)
+            .withValue(CalendarContract.Events.TITLE, title)
+            .withValue(CalendarContract.Events.DTSTART, startMillis)
+            .withValue(CalendarContract.Events.ALL_DAY, 1)
+            .withValue(CalendarContract.Events.EVENT_TIMEZONE, deviceTimeZone.id)
+            .withValue(CalendarContract.Events.SYNC_DATA1, contact.id.toString())
+        if (repeatsYearly) {
+            // Recurring events take a DURATION rather than a DTEND.
+            op.withValue(CalendarContract.Events.DURATION, "P1D")
                 .withValue(CalendarContract.Events.RRULE, "FREQ=YEARLY")
-                .withValue(CalendarContract.Events.SYNC_DATA1, contact.id.toString())
-                .build()
-        )
+        } else {
+            op.withValue(CalendarContract.Events.DTEND, startMillis + MILLIS_PER_DAY)
+        }
+        return op.build()
     }
     
     // Broad catch is deliberate: calendar providers vary by OEM and any
