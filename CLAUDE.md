@@ -9,7 +9,10 @@ When the user says "Build release", publish a new release:
 1. Collect the changes since the last release: `git log --format=%s <last release commit>..main`
    (the last release is the newest `v*` tag on GitHub, or the `release` branch).
 2. In `version.txt`, raise line 1 (version code, today's date as YYYYMMDD, or +1 if that is not
-   higher) and line 2 (version name: minor bump for features, patch bump for fixes only).
+   higher) and line 2 (version name, always three parts MAJOR.MINOR.PATCH: every release bumps
+   the patch number, e.g. 1.2.1 → 1.2.2, whatever it contains; the minor or major number changes
+   only when the user asks for it, resetting the parts after it to 0). The release after 1.2 is
+   1.2.1.
 3. Add a `## <version name>` section at the top of `CHANGELOG.md` (one line per bullet or paragraph, no hard wraps) describing the changes in plain,
    user-facing words, grouped by area. This becomes the notes on the Releases page.
 4. Commit, push `main`, then `git push origin main:release`. (Tag pushes are blocked from Claude's
