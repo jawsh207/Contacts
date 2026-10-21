@@ -63,7 +63,6 @@ fun ContactList(
     val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
     val hasLoadedContacts by viewModel.hasLoadedContacts.collectAsStateWithLifecycle()
     val myInfo by viewModel.myInfo.collectAsStateWithLifecycle()
-    val context = androidx.compose.ui.platform.LocalContext.current
     val shareTitle = stringResource(com.vayunmathur.library.ui.R.string.share)
 
     val last = backStack.last()
