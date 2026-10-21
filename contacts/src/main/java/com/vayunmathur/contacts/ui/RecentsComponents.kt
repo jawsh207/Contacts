@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.RecentEntry
 import com.vayunmathur.contacts.data.RecentKind
 import com.vayunmathur.contacts.util.ContactsActions
+import com.vayunmathur.library.ui.ExternalIntents
 import com.vayunmathur.library.ui.IconCallMade
 import com.vayunmathur.library.ui.IconCallMissed
 import com.vayunmathur.library.ui.IconCallReceived
@@ -33,11 +35,13 @@ private val KIND_ICON_SIZE = 16.dp
 /**
  * One Recents row, as in Google Contacts: the contact's photo and name, then a small icon for
  * what happened (missed, outgoing or incoming call, received or sent text, or viewed), the
- * message text or a label cut to one line, and how long ago. Tapping opens the contact.
+ * message text or a label cut to one line, and how long ago. Tapping a call opens the dialer
+ * with its number, a text opens the conversation in the messaging app, and a view the contact.
  */
 @Composable
 internal fun RecentRow(entry: RecentEntry, actions: ContactsActions) {
     val contact = entry.contact
+    val context = LocalContext.current
     val isMissed = entry.kind == RecentKind.CALL_MISSED
     val detailColor = if (isMissed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
     val ago = DateUtils.getRelativeTimeSpanString(
@@ -47,7 +51,7 @@ internal fun RecentRow(entry: RecentEntry, actions: ContactsActions) {
         DateUtils.FORMAT_ABBREV_RELATIVE,
     ).toString()
     ListItem(
-        modifier = Modifier.clickable { actions.openContact(contact) },
+        modifier = Modifier.clickable { openRecent(context, entry, actions) },
         supportingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RecentKindIcon(entry.kind, detailColor)
@@ -90,4 +94,15 @@ private fun RecentKind.labelRes(): Int = when (this) {
     RecentKind.CALL_MISSED -> R.string.recent_call_missed
     RecentKind.MESSAGE_RECEIVED -> R.string.recent_message_received
     RecentKind.MESSAGE_SENT -> R.string.recent_message_sent
+}
+
+private fun openRecent(context: android.content.Context, entry: RecentEntry, actions: ContactsActions) {
+    val number = entry.address
+    val opened = number != null && when (entry.kind) {
+        RecentKind.CALL_INCOMING, RecentKind.CALL_OUTGOING, RecentKind.CALL_MISSED ->
+            ExternalIntents.dial(context, number)
+        RecentKind.MESSAGE_RECEIVED, RecentKind.MESSAGE_SENT -> ExternalIntents.sendSms(context, number)
+        RecentKind.VIEWED -> false
+    }
+    if (!opened) actions.openContact(entry.contact)
 }
