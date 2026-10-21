@@ -321,6 +321,33 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Contacts opened in this app, newest first, for Highlights' Recents. Stays on the device. */
+    val recentViews: StateFlow<List<com.vayunmathur.contacts.data.RecentView>> =
+        dataStore.stringFlow(RECENT_VIEWS_KEY)
+            .map { com.vayunmathur.contacts.data.decodeRecentViews(it) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun recordRecentView(contactId: Long) {
+        viewModelScope.launch {
+            dataStore.updateString(RECENT_VIEWS_KEY) { stored ->
+                com.vayunmathur.contacts.data.addRecentView(
+                    com.vayunmathur.contacts.data.decodeRecentViews(stored),
+                    contactId,
+                    System.currentTimeMillis(),
+                )
+            }
+        }
+    }
+
+    /** Whether Recents also reads the call log and SMS. Off until the user opts in. */
+    val includeCallsAndMessagesInRecents: StateFlow<Boolean> =
+        dataStore.booleanFlow(RECENTS_CALLS_MESSAGES_KEY, false)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun setIncludeCallsAndMessagesInRecents(enabled: Boolean) {
+        viewModelScope.launch { dataStore.setBoolean(RECENTS_CALLS_MESSAGES_KEY, enabled) }
+    }
+
     fun setShowAccountLabels(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setBoolean("show_account_labels", enabled)
@@ -463,3 +490,6 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         return raw.filter { it.isDigit() || it == '+' }.trim()
     }
 }
+
+private const val RECENT_VIEWS_KEY = "recent_views"
+private const val RECENTS_CALLS_MESSAGES_KEY = "recents_calls_messages"

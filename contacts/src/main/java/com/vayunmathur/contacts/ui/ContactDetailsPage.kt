@@ -63,6 +63,8 @@ fun ContactDetailsPage(
     showBackButton: Boolean = true
 ) {
     val context = LocalContext.current
+    // Feeds Highlights' Recents; kept in the app's own storage.
+    LaunchedEffect(contactId) { viewModel.recordRecentView(contactId) }
     val contactsList by viewModel.contacts.collectAsStateWithLifecycle()
     val contactFromFlow by remember { viewModel.contactFlow(contactId) }.collectAsStateWithLifecycle(initialValue = null)
     val contactFromProvider by produceState<Contact?>(initialValue = null, contactId, contactsList.size) {

@@ -196,6 +196,8 @@ fun SettingsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
                 )
                 val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
                 SortBySetting(sortMode, viewModel::setSortMode)
+                val recentsCallsMessages by viewModel.includeCallsAndMessagesInRecents.collectAsStateWithLifecycle()
+                RecentsSetting(recentsCallsMessages, viewModel::setIncludeCallsAndMessagesInRecents)
                 val showAccountLabels by viewModel.showAccountLabels.collectAsStateWithLifecycle()
                 ListItem(
                     content = { Text(stringResource(R.string.show_account_labels)) },
