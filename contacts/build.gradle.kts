@@ -16,10 +16,10 @@ android {
         resValues = true
     }
     defaultConfig {
-        applicationId = "io.github.jawsh207.contacts"
+        applicationId = "app.jawsh.contacts"
         // Account type for the app's local accounts and birthday calendar: always the
         // application id, so the dev build below doesn't share the release build's.
-        resValue("string", "account_type", "io.github.jawsh207.contacts")
+        resValue("string", "account_type", "app.jawsh.contacts")
     }
     buildTypes {
         // Test builds from CI: their own app id, name and signing key, so they install
@@ -27,7 +27,7 @@ android {
         getByName("dev") {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            resValue("string", "account_type", "io.github.jawsh207.contacts.dev")
+            resValue("string", "account_type", "app.jawsh.contacts.dev")
         }
     }
 }
