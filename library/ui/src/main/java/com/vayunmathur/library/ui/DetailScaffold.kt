@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -141,6 +142,7 @@ fun DetailLazyColumn(
     actions: @Composable RowScope.() -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior,
     bottomBar: @Composable () -> Unit = {},
+    topBarColors: TopAppBarColors? = null,
     content: LazyListScope.() -> Unit,
 ) = AppScaffold(
     title = title,
@@ -151,6 +153,7 @@ fun DetailLazyColumn(
     actions = actions,
     scrollBehavior = scrollBehavior,
     bottomBar = bottomBar,
+    topBarColors = topBarColors,
 ) { pad ->
     DetailList(pad, content)
 }

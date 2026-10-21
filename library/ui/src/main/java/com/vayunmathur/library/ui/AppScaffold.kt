@@ -3,6 +3,7 @@ package com.vayunmathur.library.ui
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -66,6 +67,7 @@ fun AppScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: (@Composable () -> Unit)? = null,
+    topBarColors: TopAppBarColors? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) = AppScaffold(
     title = { Text(title) },
@@ -81,6 +83,7 @@ fun AppScaffold(
     floatingActionButton = floatingActionButton,
     bottomBar = bottomBar,
     snackbarHost = snackbarHost,
+    topBarColors = topBarColors,
     content = content,
 )
 
@@ -105,6 +108,8 @@ fun AppScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: (@Composable () -> Unit)? = null,
+    /** Overrides the small top bar's colours, e.g. transparent over a header backdrop. */
+    topBarColors: TopAppBarColors? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val resolvedNavigationIcon = resolveNavigationIcon(navigationIcon, onClose, onNavigateBack)
@@ -119,6 +124,7 @@ fun AppScaffold(
                 alignment = alignment,
                 size = size,
                 scrollBehavior = scrollBehavior,
+                colors = topBarColors,
             )
         },
         floatingActionButton = floatingActionButton,
@@ -177,7 +183,9 @@ private fun AppTopBar(
     alignment: AppBarAlignment,
     size: AppBarSize,
     scrollBehavior: TopAppBarScrollBehavior,
+    colors: TopAppBarColors? = null,
 ) {
+    val barColors = colors ?: TopAppBarDefaults.topAppBarColors()
     val titleAlignment = when (alignment) {
         AppBarAlignment.Start -> Alignment.Start
         AppBarAlignment.Center -> Alignment.CenterHorizontally
@@ -187,10 +195,12 @@ private fun AppTopBar(
             AppBarAlignment.Start -> TopAppBar(
                 title = title, navigationIcon = navigationIcon,
                 actions = actions, scrollBehavior = scrollBehavior,
+                colors = barColors,
             )
             AppBarAlignment.Center -> CenterAlignedTopAppBar(
                 title = title, navigationIcon = navigationIcon,
                 actions = actions, scrollBehavior = scrollBehavior,
+                colors = barColors,
             )
         }
         AppBarSize.MediumFlexible -> MediumFlexibleTopAppBar(
