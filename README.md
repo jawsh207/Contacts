@@ -4,7 +4,7 @@ A personal fork of the Contacts app from [vayun-mathur/Modern-Apps](https://gith
 restyled to follow Material 3 Expressive more closely (Google Contacts–style layout).
 
 - Upstream source revision: see `UPSTREAM_COMMIT`
-- App ID: `io.github.jawsh207.contacts`, so it installs alongside the upstream app
+- App ID: `app.jawsh.contacts`, so it installs alongside the upstream app
 - License: GPL-3.0, same as upstream (see `LICENSE`)
 - Bundles the Google Sans Flex typeface, unmodified, from [google/fonts](https://github.com/google/fonts/tree/main/ofl/googlesansflex)
   under the SIL Open Font License 1.1 (`library/ui/src/main/assets/licenses/google_sans_flex_OFL.txt`).
@@ -18,8 +18,8 @@ GitHub Actions builds two kinds of APK, each signed with its own key:
 
 | | When | App | Artifact |
 | --- | --- | --- | --- |
-| **Test build** | every push to `main`, PRs, manual runs | "Contacts Dev" (`io.github.jawsh207.contacts.dev`) | `contacts-dev-apk` on the run page |
-| **Release** | pushing a version tag, e.g. `git tag v1.0 && git push origin v1.0` | "Contacts" (`io.github.jawsh207.contacts`) | attached to a GitHub Release |
+| **Test build** | every push to `main`, PRs, manual runs | "Contacts Dev" (`app.jawsh.contacts.dev`) | `contacts-dev-apk` on the run page |
+| **Release** | pushing a version tag, e.g. `git tag v1.0 && git push origin v1.0` | "Contacts" (`app.jawsh.contacts`) | attached to a GitHub Release |
 
 Because they use different app ids, a test build and a release install side by side. Each run's
 page shows the APK's signing certificate SHA-256, so you can check it never changes.
