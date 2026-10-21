@@ -309,7 +309,7 @@
     <string name="your_info">Your info</string>
     <string name="your_info_add">Add your info</string>
     <string name="your_info_qr">QR code with your contact info</string>
-    <string name="your_info_qr_hint">Scan with a phone camera to save your contact</string>
+    <string name="your_info_qr_hint">Show this code to share your contact info. Others can scan it with their phone camera to save it.</string>
     <string name="your_info_add_photo">Add photo</string>
     <string name="your_info_remove_photo">Remove photo</string>
     <!-- Your info editor: where the info is saved -->
