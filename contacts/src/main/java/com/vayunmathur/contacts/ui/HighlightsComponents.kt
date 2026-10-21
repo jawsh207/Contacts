@@ -84,8 +84,8 @@ internal fun FavoritesRow(favorites: List<Contact>, actions: ContactsActions) {
 }
 
 /**
- * A "For you" birthday card, as in Google Contacts: the contact's photo, "🎂 Name's birthday",
- * when it is, and Call / Message buttons when they have a number.
+ * A "For you" birthday card, as in Google Contacts: the contact's photo, "Name's birthday",
+ * when it is, a large cake on the right, and Call / Message buttons when they have a number.
  */
 @Composable
 internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) {
@@ -108,12 +108,18 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = "🎂 " + stringResource(R.string.birthday_card_title, contact.name.value),
+                        text = stringResource(R.string.birthday_card_title, contact.name.value),
                         style = MaterialTheme.typography.titleLarge,
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(birthdayWhenText(birthday), style = MaterialTheme.typography.bodyLarge)
                 }
+                // A large cake on the right, where Google's card has its party illustration.
+                Text(
+                    text = "🎂",
+                    style = MaterialTheme.typography.displayMedium,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
             }
             if (number != null) {
                 Spacer(Modifier.height(16.dp))
