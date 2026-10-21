@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.R
+import com.vayunmathur.library.ui.IconMergeDuplicates
 import com.vayunmathur.library.ui.IconSettings
 import com.vayunmathur.library.ui.ListItem
 import com.vayunmathur.library.ui.ListItemDefaults
@@ -55,6 +56,35 @@ internal fun OrganizeSettingsRow(onOpenSettings: () -> Unit) {
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         ) {
             Text(stringResource(UiR.string.settings), style = MaterialTheme.typography.titleLarge)
+        }
+    }
+}
+
+/** Organize's way into Merge duplicates, with how many suggestions there are. */
+@Composable
+internal fun OrganizeMergeRow(suggestions: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceBright,
+    ) {
+        ListItem(
+            supportingContent = {
+                Text(
+                    if (suggestions > 0) {
+                        pluralStringResource(R.plurals.merge_duplicates_summary, suggestions, suggestions)
+                    } else {
+                        stringResource(R.string.merge_duplicates_none)
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (suggestions > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            leadingContent = { IconMergeDuplicates(tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        ) {
+            Text(stringResource(R.string.merge_duplicates), style = MaterialTheme.typography.titleLarge)
         }
     }
 }

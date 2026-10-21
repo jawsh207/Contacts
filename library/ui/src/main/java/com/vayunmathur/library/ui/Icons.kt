@@ -78,6 +78,7 @@ import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.ChangeHistory
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Diamond
@@ -1788,3 +1789,8 @@ fun IconCallMade(modifier: Modifier = Modifier, tint: Color = LocalContentColor.
 @Composable
 fun IconCallReceived(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
     AppIcon(Icons.AutoMirrored.Filled.CallReceived, "Incoming call", modifier, tint)
+
+/** Organize's Merge duplicates, after Google Contacts' "Merge & fix". */
+@Composable
+fun IconMergeDuplicates(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.AutoFixHigh, "Merge duplicates", modifier, tint)

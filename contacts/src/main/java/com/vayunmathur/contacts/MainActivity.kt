@@ -55,6 +55,7 @@ import com.vayunmathur.contacts.ui.dialogs.EventDeleteConfirmDialog
 import com.vayunmathur.contacts.ui.GroupsPage
 import com.vayunmathur.contacts.ui.HighlightsPage
 import com.vayunmathur.contacts.ui.MyInfoPage
+import com.vayunmathur.contacts.ui.MergeDuplicatesPage
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.vayunmathur.library.ui.IconOrganize
@@ -550,6 +551,10 @@ private fun NavGraphEntries(
             MyInfoPage(viewModel, backStack)
         }
 
+        entry<Route.MergeDuplicates> {
+            MergeDuplicatesPage(viewModel, backStack)
+        }
+
         entry<Route.ContactDetail>(metadata = ListDetailPage() + MorphPage()) { key ->
             ContactDetailsPage(
                 viewModel = viewModel,
@@ -739,6 +744,9 @@ sealed interface Route: NavKey {
     /** "Your info": the user's own card and its QR code. */
     @Serializable
     object MyInfo : Route
+
+    @Serializable
+    object MergeDuplicates : Route
 
     @Serializable
     object ContactsList : Route

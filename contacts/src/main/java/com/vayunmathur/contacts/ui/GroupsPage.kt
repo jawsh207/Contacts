@@ -66,6 +66,7 @@ fun GroupsPage(
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val hasLoadedContacts by viewModel.hasLoadedContacts.collectAsStateWithLifecycle()
     val visibleContacts by viewModel.visibleContacts.collectAsStateWithLifecycle()
+    val duplicateSets by viewModel.duplicateSets.collectAsStateWithLifecycle()
 
     // Membership is already part of every contact, so the rows are derived here rather
     // than collected per group — a stateless screen cannot subscribe to one flow per row.
@@ -84,6 +85,8 @@ fun GroupsPage(
         },
         expandGroupId = expandGroupId,
         onOpenSettings = { backStack.add(Route.Settings) },
+        onOpenMergeDuplicates = { backStack.add(Route.MergeDuplicates) },
+        duplicateCount = duplicateSets.size,
         contactCount = visibleContacts.size.takeIf { hasLoadedContacts },
         onSearch = onSearch,
     )
@@ -103,6 +106,9 @@ fun GroupsScreen(
     actions: ContactsActions,
     expandGroupId: Long? = null,
     onOpenSettings: () -> Unit = {},
+    onOpenMergeDuplicates: () -> Unit = {},
+    /** Merge duplicates suggestions, shown on its row. */
+    duplicateCount: Int = 0,
     /** Contacts in visible accounts, for the summary card; null while still loading. */
     contactCount: Int? = null,
     onSearch: () -> Unit = {},
@@ -238,6 +244,7 @@ fun GroupsScreen(
             }
 
             item(key = "manage-header") { OrganizeSectionHeader(stringResource(R.string.fix_and_manage)) }
+            item(key = "manage-merge") { OrganizeMergeRow(duplicateCount, onOpenMergeDuplicates) }
             item(key = "manage-settings") { OrganizeSettingsRow(onOpenSettings) }
     }
 

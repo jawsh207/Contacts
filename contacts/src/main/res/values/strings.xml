@@ -316,4 +316,28 @@
     <string name="your_info_profile_note">Saved to your Android profile (\"Me\"), which other apps with access to your contacts can also read.</string>
     <!-- Name of the calendar that birthday and anniversary sync creates -->
     <string name="calendar_name">Contact Birthdays</string>
+    <!-- Organize: the Merge duplicates entry and page -->
+    <string name="merge_duplicates">Merge duplicates</string>
+    <plurals name="merge_duplicates_summary">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> suggestion</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> suggestions</item>
+    </plurals>
+    <string name="merge_duplicates_none">No duplicates found</string>
+    <string name="merge_duplicates_intro">Contacts in the same account with the same name, phone number or email. Merging keeps every number, email and detail in one contact and removes the copies.</string>
+    <string name="merge">Merge</string>
+    <string name="merge_all">Merge all</string>
+    <string name="merge_all_title">Merge all duplicates?</string>
+    <plurals name="merge_all_message">
+        <item quantity="one">The contacts in <xliff:g id="count" example="1">%1$d</xliff:g> suggestion will be combined, and the copies removed.</item>
+        <item quantity="other">The contacts in all <xliff:g id="count" example="3">%1$d</xliff:g> suggestions will be combined, and the copies removed.</item>
+    </plurals>
+    <string name="merge_keeps">Merges into <xliff:g id="name" example="Alex Kim">%1$s</xliff:g></string>
+    <string name="merged_into">Merged into <xliff:g id="name" example="Alex Kim">%1$s</xliff:g></string>
+    <plurals name="merged_sets">
+        <item quantity="one">Merged <xliff:g id="count" example="1">%1$d</xliff:g> duplicate</item>
+        <item quantity="other">Merged <xliff:g id="count" example="3">%1$d</xliff:g> duplicates</item>
+    </plurals>
+    <string name="merge_failed">Some contacts couldn\'t be merged</string>
+    <string name="no_duplicates_title">No duplicates</string>
+    <string name="no_duplicates_message">Contacts that look like the same person will show up here.</string>
 </resources>
