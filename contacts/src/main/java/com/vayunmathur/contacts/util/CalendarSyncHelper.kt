@@ -26,7 +26,8 @@ import com.vayunmathur.contacts.data.Event as ContactEvent
 
 object CalendarSyncHelper {
     private const val ACCOUNT_NAME = "Contacts"
-    private const val ACCOUNT_TYPE = "io.github.jawsh207.contacts"
+    // The application id, which differs between the release and dev builds (see build.gradle.kts).
+    private const val ACCOUNT_TYPE = com.vayunmathur.contacts.BuildConfig.APPLICATION_ID
     private const val CALENDAR_NAME = "Contact Birthdays"
 
     /** Dated birthdays get one event per year, this many years back... */

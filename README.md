@@ -14,31 +14,34 @@ restyled to follow Material 3 Expressive more closely (Google Contacts–style l
 
 ## Building
 
-Every push to `main` builds a release APK with GitHub Actions. Download it from the
-**contacts-apk** artifact on the run's page under the Actions tab.
+GitHub Actions builds two kinds of APK, each signed with its own key:
+
+| | When | App | Artifact |
+| --- | --- | --- | --- |
+| **Test build** | every push to `main`, PRs, manual runs | "Contacts Dev" (`io.github.jawsh207.contacts.dev`) | `contacts-dev-apk` on the run page |
+| **Release** | pushing a version tag, e.g. `git tag v1.0 && git push origin v1.0` | "Contacts" (`io.github.jawsh207.contacts`) | attached to a GitHub Release |
+
+Because they use different app ids, a test build and a release install side by side. Each run's
+page shows the APK's signing certificate SHA-256, so you can check it never changes.
 
 To build locally (JDK 21 and the Android SDK required):
 
 ```sh
-./gradlew :contacts:assembleRelease
+./gradlew :contacts:assembleDev       # test build
+./gradlew :contacts:assembleRelease   # release
 ```
 
-### Stable signing key (recommended)
+### Signing keys
 
-Without a key, each CI build is signed with a throwaway debug key, so a new build can't
-be installed over an older one without uninstalling first. To fix that, create a keystore
-once and add it as repository secrets (Settings → Secrets and variables → Actions):
-
-```sh
-keytool -genkeypair -v -keystore release.jks -alias contacts -keyalg RSA -keysize 4096 -validity 10000
-base64 -w0 release.jks   # value for KEYSTORE_BASE64
-```
+Set as repository secrets (Settings → Secrets and variables → Actions):
 
 | Secret | Value |
 | --- | --- |
-| `KEYSTORE_BASE64` | base64 of `release.jks` |
-| `KEYSTORE_PASSWORD` | keystore password |
-| `KEY_ALIAS` | `contacts` |
-| `KEY_PASSWORD` | key password |
+| `DEV_KEYSTORE_BASE64` | base64 of the dev keystore (alias `contacts-dev`) |
+| `DEV_KEYSTORE_PASSWORD` | its password (store and key) |
+| `RELEASE_KEYSTORE_BASE64` | base64 of the release keystore (alias `contacts`) |
+| `RELEASE_KEYSTORE_PASSWORD` | its password (store and key) |
 
-Keep `release.jks` and its passwords somewhere safe and out of this repo.
+A test build without the dev key falls back to a throwaway key (and says so); a release without
+the release key fails rather than publish an unsigned APK. Keep both keystores and passwords
+somewhere safe and out of this repo: a lost key means the installed app can't be updated.

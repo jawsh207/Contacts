@@ -1,8 +1,16 @@
 name: Build APK
 
+# Two kinds of build, each with its own signing key:
+#   - Test builds: every push to main (and PRs / manual runs). The `dev` variant
+#     ("Contacts Dev", app id io.github.jawsh207.contacts.dev), always signed with the dev
+#     key so each one installs over the last.
+#   - Releases: pushing a version tag such as v1.0. The `release` variant, signed with the
+#     separate release key, attached to a GitHub Release.
+
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -16,6 +24,10 @@ jobs:
     # ubuntu-latest image (Ubuntu 26) may not.
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    permissions:
+      contents: write   # to publish GitHub Releases for version tags
+    env:
+      IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -35,35 +47,45 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Optional stable signing key. Without these secrets the APK is signed with the
-      # runner's throwaway debug key, so each build would need an uninstall before it
-      # can be installed over the previous one.
-      - name: Set up release signing
+      # Picks the key for this kind of build. A release must have its key; a test build
+      # without the dev key falls back to a throwaway one and says so.
+      - name: Set up signing
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          DEV_KEYSTORE_BASE64: ${{ secrets.DEV_KEYSTORE_BASE64 }}
+          DEV_KEYSTORE_PASSWORD: ${{ secrets.DEV_KEYSTORE_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            {
-              echo "ORG_GRADLE_PROJECT_RELEASE_STORE_FILE=$RUNNER_TEMP/release.jks"
-              echo "ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD"
-              echo "ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS=$KEY_ALIAS"
-              echo "ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD=$KEY_PASSWORD"
-            } >> "$GITHUB_ENV"
-            echo "Using release signing key from secrets."
+          if [ "$IS_RELEASE" = "true" ]; then
+            KEY="$RELEASE_KEYSTORE_BASE64"; PASS="$RELEASE_KEYSTORE_PASSWORD"; ALIAS=contacts
+            if [ -z "$KEY" ]; then
+              echo "::error::RELEASE_KEYSTORE_BASE64 is not set; refusing to publish an unsigned release."
+              exit 1
+            fi
+            echo "VARIANT=release" >> "$GITHUB_ENV"
           else
-            echo "::warning::No KEYSTORE_BASE64 secret set; APK is signed with a throwaway debug key."
+            KEY="$DEV_KEYSTORE_BASE64"; PASS="$DEV_KEYSTORE_PASSWORD"; ALIAS=contacts-dev
+            echo "VARIANT=dev" >> "$GITHUB_ENV"
+          fi
+          if [ -n "$KEY" ]; then
+            echo "$KEY" | base64 -d > "$RUNNER_TEMP/signing.jks"
+            {
+              echo "ORG_GRADLE_PROJECT_RELEASE_STORE_FILE=$RUNNER_TEMP/signing.jks"
+              echo "ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD=$PASS"
+              echo "ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS=$ALIAS"
+              echo "ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD=$PASS"
+            } >> "$GITHUB_ENV"
+          else
+            echo "::warning::No DEV_KEYSTORE_BASE64 secret set; this test build is signed with a throwaway key."
           fi
 
       # On failure, Gradle's error summary and compiler errors are re-emitted as
       # annotations so they show on the run page without opening the full log.
-      - name: Build release APK
+      - name: Build APK
         run: |
           set -o pipefail
-          if ./gradlew :contacts:assembleRelease --console=plain 2>&1 | tee build.log; then
+          TASK=":contacts:assemble${VARIANT^}"
+          if ./gradlew "$TASK" --console=plain 2>&1 | tee build.log; then
             exit 0
           fi
           grep -E '^e: |^ERROR|Error: |error: ' build.log | head -20 | while IFS= read -r line; do
@@ -73,17 +95,24 @@ jobs:
           [ -n "$summary" ] && echo "::error title=Gradle failure::${summary}"
           exit 1
 
-      # Prints the signing certificate's SHA-256 on the run page. With the release key set up
-      # it is the same on every build, which is what lets a new APK install over the last one.
+      # Prints the signing certificate's SHA-256 on the run page, so it is easy to confirm
+      # every build of a kind is signed with the same key.
       - name: Show signing certificate
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          APK=$(ls contacts/build/outputs/apk/release/*.apk | head -1)
+          APK=$(ls contacts/build/outputs/apk/$VARIANT/*.apk | head -1)
           FP=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | sed 's/.*: //')
-          echo "::notice title=Signing certificate SHA-256::$FP"
+          echo "::notice title=${VARIANT} signing certificate SHA-256::$FP"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: contacts-apk
-          path: contacts/build/outputs/apk/release/*.apk
+          name: contacts-${{ env.VARIANT }}-apk
+          path: contacts/build/outputs/apk/${{ env.VARIANT }}/*.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: env.IS_RELEASE == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: contacts/build/outputs/apk/release/*.apk
+          generate_release_notes: true

@@ -12,8 +12,23 @@ launcherIcon {
 }
 
 android {
+    buildFeatures {
+        resValues = true
+    }
     defaultConfig {
         applicationId = "io.github.jawsh207.contacts"
+        // Account type for the app's local accounts and birthday calendar: always the
+        // application id, so the dev build below doesn't share the release build's.
+        resValue("string", "account_type", "io.github.jawsh207.contacts")
+    }
+    buildTypes {
+        // Test builds from CI: their own app id, name and signing key, so they install
+        // alongside a real release instead of conflicting with it.
+        getByName("dev") {
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "account_type", "io.github.jawsh207.contacts.dev")
+        }
     }
 }
 
