@@ -2,7 +2,7 @@ name: Build APK
 
 # Two kinds of build, each with its own signing key:
 #   - Test builds: every push to main (and PRs / manual runs). The `dev` variant
-#     ("Contacts Dev", app id app.jawsh.contacts.dev), always signed with the dev
+#     ("Contacts Dev", app id app.people.contacts.dev), always signed with the dev
 #     key so each one installs over the last.
 #   - Releases: pushing a version tag such as v1.0. The `release` variant, signed with the
 #     separate release key, attached to a GitHub Release.
