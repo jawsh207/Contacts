@@ -1,43 +1,45 @@
 package com.vayunmathur.contacts.ui
 
-import android.content.Intent
 import android.text.format.DateUtils
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.RecentEntry
 import com.vayunmathur.contacts.data.RecentKind
 import com.vayunmathur.contacts.util.ContactsActions
-import com.vayunmathur.library.ui.ExternalIntents
-import com.vayunmathur.library.ui.IconPerson
+import com.vayunmathur.library.ui.IconCallMade
+import com.vayunmathur.library.ui.IconCallMissed
+import com.vayunmathur.library.ui.IconCallReceived
+import com.vayunmathur.library.ui.IconChatBubble
+import com.vayunmathur.library.ui.IconSend
+import com.vayunmathur.library.ui.IconVisible
 import com.vayunmathur.library.ui.ListItem
 import com.vayunmathur.library.ui.ListItemDefaults
 import com.vayunmathur.library.ui.MaterialTheme
 import com.vayunmathur.library.ui.Text
 
+private val KIND_ICON_SIZE = 16.dp
+
 /**
- * One Recents row, as in Google Contacts: photo, name (or the number, for someone not in the
- * address book), and what happened when, e.g. "Missed call · 2 hr. ago". Tapping a contact
- * opens it; tapping an unknown number opens it in the dialer.
+ * One Recents row, as in Google Contacts: the contact's photo and name, then a small icon for
+ * what happened (missed, outgoing or incoming call, received or sent text, or viewed), the
+ * message text or a label cut to one line, and how long ago. Tapping opens the contact.
  */
 @Composable
 internal fun RecentRow(entry: RecentEntry, actions: ContactsActions) {
-    val context = LocalContext.current
     val contact = entry.contact
-    val title = contact?.name?.value?.ifBlank { null }
-        ?: entry.number?.let { formatPhoneNumber(it) }
-        ?: ""
+    val isMissed = entry.kind == RecentKind.CALL_MISSED
+    val detailColor = if (isMissed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
     val ago = DateUtils.getRelativeTimeSpanString(
         entry.timestamp,
         System.currentTimeMillis(),
@@ -45,42 +47,39 @@ internal fun RecentRow(entry: RecentEntry, actions: ContactsActions) {
         DateUtils.FORMAT_ABBREV_RELATIVE,
     ).toString()
     ListItem(
-        modifier = Modifier.clickable {
-            when {
-                contact != null -> actions.openContact(contact)
-                entry.number != null ->
-                    ExternalIntents.launch(context, Intent(Intent.ACTION_DIAL, "tel:${entry.number}".toUri()))
-            }
-        },
+        modifier = Modifier.clickable { actions.openContact(contact) },
         supportingContent = {
-            Text(
-                text = "${stringResource(entry.kind.labelRes())} · $ago",
-                color = if (entry.kind == RecentKind.CALL_MISSED) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        leadingContent = {
-            if (contact != null) {
-                ContactAvatar(contact, actions::decodePhoto, Modifier.size(40.dp))
-            } else {
-                UnknownNumberAvatar()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RecentKindIcon(entry.kind, detailColor)
+                Spacer(Modifier.width(6.dp))
+                // Shrinks and ellipsizes first, so the time after it always stays visible.
+                Text(
+                    text = entry.snippet ?: stringResource(entry.kind.labelRes()),
+                    color = detailColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Text(text = " · $ago", color = detailColor, maxLines = 1)
             }
         },
+        leadingContent = { ContactAvatar(contact, actions::decodePhoto, Modifier.size(40.dp)) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     ) {
-        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(contact.name.value, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
 @Composable
-private fun UnknownNumberAvatar() {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        IconPerson(tint = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun RecentKindIcon(kind: RecentKind, tint: Color) {
+    val modifier = Modifier.size(KIND_ICON_SIZE)
+    when (kind) {
+        RecentKind.CALL_MISSED -> IconCallMissed(modifier, tint)
+        RecentKind.CALL_OUTGOING -> IconCallMade(modifier, tint)
+        RecentKind.CALL_INCOMING -> IconCallReceived(modifier, tint)
+        RecentKind.MESSAGE_RECEIVED -> IconChatBubble(modifier, tint)
+        RecentKind.MESSAGE_SENT -> IconSend(modifier, tint)
+        RecentKind.VIEWED -> IconVisible(modifier, tint)
     }
 }
 

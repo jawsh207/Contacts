@@ -13,9 +13,10 @@ import com.vayunmathur.library.ui.Switch
 import com.vayunmathur.library.ui.Text
 
 /**
- * Opt-in for showing recent calls and texts in Highlights' Recents. Turning it on asks for call
- * log and SMS access; it only stays on if both are granted. Recently viewed contacts show in
- * Recents either way.
+ * Switches Highlights' Recents between its two sources: off (the default) shows contacts
+ * recently viewed in this app, which needs no permissions; on shows calls and texts from saved
+ * contacts instead. Turning it on asks for call log and SMS access and only stays on if both
+ * are granted.
  */
 @Composable
 fun RecentsSetting(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {

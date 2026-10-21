@@ -309,6 +309,9 @@ import androidx.compose.material.icons.filled.Assistant
 import androidx.compose.material.icons.outlined.Assistant
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.automirrored.filled.CallMissed
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.CallReceived
 
 /**
  * App-facing icon set. Every shared icon is rendered from `material-icons-extended`
@@ -1771,3 +1774,17 @@ fun IconHighlights(selected: Boolean, modifier: Modifier = Modifier, tint: Color
 @Composable
 fun IconOrganize(selected: Boolean, modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
     AppIcon(if (selected) Icons.Filled.Book else Icons.Outlined.Book, "Organize", modifier, tint)
+
+// --- Recents (call direction) ---
+
+@Composable
+fun IconCallMissed(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.AutoMirrored.Filled.CallMissed, "Missed call", modifier, tint)
+
+@Composable
+fun IconCallMade(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.AutoMirrored.Filled.CallMade, "Outgoing call", modifier, tint)
+
+@Composable
+fun IconCallReceived(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.AutoMirrored.Filled.CallReceived, "Incoming call", modifier, tint)
