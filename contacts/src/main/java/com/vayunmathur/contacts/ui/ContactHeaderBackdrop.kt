@@ -11,6 +11,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -27,6 +28,9 @@ import kotlin.math.roundToInt
 
 /** Size of the round photo on the contact page (about 44% of a phone's width, as in Google's). */
 internal val PROFILE_AVATAR_SIZE = 180.dp
+
+/** Width of the page-coloured ring around the round photo, separating it from the backdrop. */
+internal val PROFILE_AVATAR_RING = 6.dp
 
 /** [ProfileHeader]'s own padding above the photo. */
 private val PROFILE_HEADER_TOP_PADDING = 16.dp
@@ -48,7 +52,7 @@ private const val HERO_GAP_FRACTION = 0.46f
  * The contact page header in Google Contacts' style: the contact's photo, enlarged and blurred,
  * fills the full width from the top of the screen (behind the see-through top bar) down to a
  * hard edge through the middle of the round photo, which straddles that edge. A contact
- * without a photo gets a wash of their avatar colour in the same place.
+ * without a photo gets a gradient of their avatar colour instead, fading down into the page.
  *
  * The header is a list item inset by the page margins and pushed below the top bar, so the
  * backdrop is laid out larger than the item and shifted up and out by those amounts. Being
@@ -63,7 +67,7 @@ internal fun ProfileHeaderWithBackdrop(contact: Contact, decodePhoto: ((String) 
         (TopAppBarDefaults.TopAppBarExpandedHeight + BACKDROP_OVERDRAW).roundToPx()
     }
     val photoHalfPx = with(density) {
-        (PROFILE_HEADER_TOP_PADDING + PROFILE_AVATAR_SIZE / 2).roundToPx()
+        (PROFILE_HEADER_TOP_PADDING + PROFILE_AVATAR_RING + PROFILE_AVATAR_SIZE / 2).roundToPx()
     }
 
     Layout(
@@ -117,7 +121,12 @@ private fun HeaderBackdrop(contact: Contact, decodePhoto: ((String) -> Bitmap?)?
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(avatarColorsFor(contact.id).container)
+                    // The contact's colour at the top, fading down into the page.
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(avatarColorsFor(contact.id).container, MaterialTheme.colorScheme.background)
+                        )
+                    )
             )
         }
     }

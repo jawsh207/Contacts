@@ -1,6 +1,7 @@
 package com.vayunmathur.contacts.ui
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +56,9 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
             contact = contact,
             decodePhoto = decodePhoto,
             modifier = Modifier
-                .size(PROFILE_AVATAR_SIZE)
+                .size(PROFILE_AVATAR_SIZE + PROFILE_AVATAR_RING * 2)
+                .background(MaterialTheme.colorScheme.background, CircleShape)
+                .padding(PROFILE_AVATAR_RING)
                 .sharedContent("contact-avatar-${contact.id}"),
             initialsStyle = MaterialTheme.typography.displayLarge,
         )
