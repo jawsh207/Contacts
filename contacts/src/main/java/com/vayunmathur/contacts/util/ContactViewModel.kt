@@ -55,9 +55,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -325,22 +323,34 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // The Me profile, read once per process as the starting point for "Your info".
-    private val meProfileState = MutableStateFlow<com.vayunmathur.contacts.data.MyInfo?>(null)
-    @Volatile private var meProfileLoaded = false
+    private val myInfoState = MutableStateFlow<com.vayunmathur.contacts.data.MyInfo?>(null)
 
-    /** "Your info": what the user saved, else Android's Me profile, else null. */
-    val myInfo: StateFlow<com.vayunmathur.contacts.data.MyInfo?> = combine(
-        dataStore.stringFlow(MY_INFO_KEY).map<String, String?> { it }.onStart { emit(null) },
-        meProfileState,
-    ) { stored, me ->
-        stored?.let {
-            runCatching { Json.decodeFromString<com.vayunmathur.contacts.data.MyInfo>(it) }.getOrNull()
-        } ?: me
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    /**
+     * "Your info": Android's Me profile in the contacts provider, the device-wide card other
+     * apps can read too. Null when the profile is empty. Re-read on every contacts sync.
+     */
+    val myInfo: StateFlow<com.vayunmathur.contacts.data.MyInfo?> = myInfoState.asStateFlow()
 
+    /** Writes [info] to the Me profile, then re-reads it so the UI shows what was stored. */
     fun saveMyInfo(info: com.vayunmathur.contacts.data.MyInfo) {
-        viewModelScope.launch { dataStore.setString(MY_INFO_KEY, Json.encodeToString(info)) }
+        viewModelScope.launch(Dispatchers.IO) {
+            val app = getApplication<Application>()
+            com.vayunmathur.contacts.data.MeProfileSource.write(app, info)
+            myInfoState.value = com.vayunmathur.contacts.data.MeProfileSource.read(app)
+        }
+    }
+
+    /**
+     * Earlier builds kept "Your info" in app storage. Moves such a copy into the Me profile
+     * (only if the profile is still empty, so a newer profile always wins), then clears it.
+     */
+    private suspend fun migrateStoredMyInfo(app: Application) {
+        val stored = dataStore.getStringAwait(LEGACY_MY_INFO_KEY)?.takeIf { it.isNotBlank() } ?: return
+        val legacy = runCatching { Json.decodeFromString<com.vayunmathur.contacts.data.MyInfo>(stored) }.getOrNull()
+        if (legacy != null && !legacy.isEmpty && com.vayunmathur.contacts.data.MeProfileSource.read(app) == null) {
+            com.vayunmathur.contacts.data.MeProfileSource.write(app, legacy)
+        }
+        dataStore.setString(LEGACY_MY_INFO_KEY, "")
     }
 
     /** Contacts opened in this app, newest first, for Highlights' Recents. Stays on the device. */
@@ -398,10 +408,8 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun refreshContactsFromSystem() {
         val app = getApplication<Application>()
         allContactsState.value = com.vayunmathur.contacts.data.Contact.getAllContacts(app)
-        if (!meProfileLoaded) {
-            meProfileLoaded = true
-            meProfileState.value = com.vayunmathur.contacts.data.MeProfileSource.read(app)
-        }
+        migrateStoredMyInfo(app)
+        myInfoState.value = com.vayunmathur.contacts.data.MeProfileSource.read(app)
         // Keep the accounts list in step with the contacts; already on IO via syncFromSystem().
         loadAccountsInternal()
     }
@@ -518,5 +526,5 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
 }
 
 private const val RECENT_VIEWS_KEY = "recent_views"
-private const val MY_INFO_KEY = "my_info"
+private const val LEGACY_MY_INFO_KEY = "my_info"
 private const val RECENTS_CALLS_MESSAGES_KEY = "recents_calls_messages"

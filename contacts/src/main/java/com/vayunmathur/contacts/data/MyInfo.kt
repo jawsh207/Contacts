@@ -1,5 +1,7 @@
 package com.vayunmathur.contacts.data
 
+import android.content.ContentProviderOperation
+import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,8 +12,8 @@ import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
 
 /**
- * The user's own card ("Your info"): what the QR code and Share hand out. Kept in the app's
- * own storage; first filled from Android's "Me" profile when that has anything.
+ * The user's own card ("Your info"): what the QR code and Share hand out. Read from and written
+ * to Android's "Me" profile (see [MeProfileSource]), so it is the same card other apps see.
  */
 @Serializable
 data class MyInfo(
@@ -60,21 +62,130 @@ fun encodeMyPhoto(bitmap: Bitmap): String {
 }
 
 /**
- * Android's "Me" profile in the contacts provider: the closest thing to the device owner's
- * card that a regular app may read (the system user photo itself is only readable by system
- * apps). Read once as the starting point for [MyInfo].
+ * Android's "Me" profile in the contacts provider: the device owner's own card, readable and
+ * writable with the contacts permissions (the system user photo itself is only readable by
+ * system apps). Profile rows live in a separate database; the provider routes requests there
+ * by URI or by the profile's raw contact id.
  */
 object MeProfileSource {
+
+    private val MANAGED_MIME_TYPES = listOf(
+        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE,
+        ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
+        ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
+        ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE,
+        ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE,
+    )
+
+    /**
+     * Replaces the profile's name, first number, first email, company and photo with [info],
+     * creating the profile if there is none. Other profile data is left alone. False on failure.
+     */
+    fun write(context: Context, info: MyInfo): Boolean {
+        val ops = ArrayList<ContentProviderOperation>()
+        val rawId = profileRawContactId(context)
+        if (rawId == null) {
+            ops += ContentProviderOperation.newInsert(ContactsContract.Profile.CONTENT_RAW_CONTACTS_URI)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
+                .build()
+        } else {
+            managedDataIds(context, rawId).forEach { id ->
+                ops += ContentProviderOperation
+                    .newDelete(ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI, id))
+                    .build()
+            }
+        }
+        fun insert(mimeType: String, vararg values: Pair<String, Any?>) {
+            val op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            if (rawId == null) op.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            else op.withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId)
+            op.withValue(ContactsContract.Data.MIMETYPE, mimeType)
+            values.forEach { (key, value) -> op.withValue(key, value) }
+            ops += op.build()
+        }
+        val kinds = ContactsContract.CommonDataKinds
+        if (info.name.isNotBlank()) {
+            insert(kinds.StructuredName.CONTENT_ITEM_TYPE, kinds.StructuredName.DISPLAY_NAME to info.name.trim())
+        }
+        if (info.phone.isNotBlank()) {
+            insert(
+                kinds.Phone.CONTENT_ITEM_TYPE,
+                kinds.Phone.NUMBER to info.phone.trim(),
+                kinds.Phone.TYPE to kinds.Phone.TYPE_MOBILE,
+            )
+        }
+        if (info.email.isNotBlank()) {
+            insert(
+                kinds.Email.CONTENT_ITEM_TYPE,
+                kinds.Email.ADDRESS to info.email.trim(),
+                kinds.Email.TYPE to kinds.Email.TYPE_HOME,
+            )
+        }
+        if (info.company.isNotBlank()) {
+            insert(
+                kinds.Organization.CONTENT_ITEM_TYPE,
+                kinds.Organization.COMPANY to info.company.trim(),
+                kinds.Organization.TYPE to kinds.Organization.TYPE_WORK,
+            )
+        }
+        info.photo?.let { encoded ->
+            insert(kinds.Photo.CONTENT_ITEM_TYPE, kinds.Photo.PHOTO to Base64.decode(encoded, Base64.DEFAULT))
+        }
+        return try {
+            context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
+            true
+        } catch (e: android.content.OperationApplicationException) {
+            Log.error("MyInfo", "Could not save the Me profile", e)
+            false
+        } catch (e: android.os.RemoteException) {
+            Log.error("MyInfo", "Could not save the Me profile", e)
+            false
+        } catch (e: SecurityException) {
+            Log.error("MyInfo", "No permission to save the Me profile", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            Log.error("MyInfo", "Could not save the Me profile", e)
+            false
+        }
+    }
+
+    private fun profileRawContactId(context: Context): Long? =
+        context.contentResolver.query(
+            ContactsContract.Profile.CONTENT_RAW_CONTACTS_URI,
+            arrayOf(ContactsContract.RawContacts._ID),
+            "${ContactsContract.RawContacts.DELETED} = 0",
+            null,
+            null,
+        )?.use { if (it.moveToFirst()) it.getLong(0) else null }
+
+    /** Ids of the profile raw contact's rows that [write] replaces. */
+    private fun managedDataIds(context: Context, rawId: Long): List<Long> {
+        val ids = mutableListOf<Long>()
+        context.contentResolver.query(
+            profileDataUri(),
+            arrayOf(ContactsContract.Data._ID, ContactsContract.Data.MIMETYPE, ContactsContract.Data.RAW_CONTACT_ID),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                if (cursor.getLong(2) == rawId && cursor.getString(1) in MANAGED_MIME_TYPES) ids += cursor.getLong(0)
+            }
+        }
+        return ids
+    }
+
+    private fun profileDataUri() = ContactsContract.Profile.CONTENT_URI.buildUpon()
+        .appendEncodedPath(ContactsContract.Contacts.Data.CONTENT_DIRECTORY)
+        .build()
 
     /** The profile's name, first number and email, company and photo; null if there is none. */
     fun read(context: Context): MyInfo? = try {
         val resolver = context.contentResolver
         var info = MyInfo()
-        val dataUri = ContactsContract.Profile.CONTENT_URI.buildUpon()
-            .appendEncodedPath(ContactsContract.Contacts.Data.CONTENT_DIRECTORY)
-            .build()
         resolver.query(
-            dataUri,
+            profileDataUri(),
             arrayOf(ContactsContract.Data.MIMETYPE, ContactsContract.Data.DATA1),
             null, null, null,
         )?.use { cursor ->

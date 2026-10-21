@@ -312,4 +312,6 @@
     <string name="your_info_qr_hint">Scan with a phone camera to save your contact</string>
     <string name="your_info_add_photo">Add photo</string>
     <string name="your_info_remove_photo">Remove photo</string>
+    <!-- Your info editor: where the info is saved -->
+    <string name="your_info_profile_note">Saved to your Android profile (\"Me\"), which other apps with access to your contacts can also read.</string>
 </resources>
