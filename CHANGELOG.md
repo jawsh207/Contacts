@@ -2,6 +2,14 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.1
+
+**Organize tab**
+- New Merge duplicates, under Labels: finds contacts in the same account with the same name, phone number or email, and merges each set into one contact that keeps every distinct number, email and detail. Merge suggestions one at a time or all at once, or dismiss the ones that aren't duplicates.
+
+**Your info**
+- The text under the QR code now explains that you show the code to share your contact info.
+
 ## 1.0
 
 First release of this fork of the Contacts app from vayun-mathur/Modern-Apps, restyled after Google Contacts.
