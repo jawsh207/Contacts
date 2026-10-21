@@ -20,14 +20,13 @@ enum class RecentKind {
     MESSAGE_SENT,
 }
 
-/** One person's latest activity, as shown in Highlights' Recents. */
+/** One saved contact's latest activity, as shown in Highlights' Recents. */
 data class RecentEntry(
-    /** The matching contact, or null for a number that is not in the address book. */
-    val contact: Contact?,
-    /** The raw number for calls and texts; null for a viewed contact. */
-    val number: String?,
+    val contact: Contact,
     val timestamp: Long,
     val kind: RecentKind,
+    /** The text of a message, for a one-line preview; null for calls and views. */
+    val snippet: String? = null,
 )
 
 /** A contact opened in this app, and when. */
@@ -66,8 +65,9 @@ object RecentActivitySource {
         granted(context, Manifest.permission.READ_CALL_LOG) && granted(context, Manifest.permission.READ_SMS)
 
     /**
-     * Recent activity merged from [views] and, when [includeCallsAndMessages], the call log and
-     * SMS: one entry per person (or per unknown number) at their latest activity, newest first.
+     * Recents, one entry per saved contact at their latest activity, newest first. With
+     * [includeCallsAndMessages] it is built from the call log and SMS; otherwise from [views],
+     * the contacts recently opened in this app. Numbers not in the address book are ignored.
      * Runs provider queries; call off the main thread.
      */
     fun load(
@@ -77,17 +77,18 @@ object RecentActivitySource {
         includeCallsAndMessages: Boolean,
     ): List<RecentEntry> {
         val events = mutableListOf<RecentEntry>()
-        views.forEach { view ->
-            contactsById[view.contactId]?.let { events += RecentEntry(it, null, view.timestamp, RecentKind.VIEWED) }
-        }
         if (includeCallsAndMessages) {
             val lookup = NumberLookup(context, contactsById)
             if (granted(context, Manifest.permission.READ_CALL_LOG)) events += recentCalls(context, lookup)
             if (granted(context, Manifest.permission.READ_SMS)) events += recentMessages(context, lookup)
+        } else {
+            views.forEach { view ->
+                contactsById[view.contactId]?.let { events += RecentEntry(it, view.timestamp, RecentKind.VIEWED) }
+            }
         }
         return events
             .sortedByDescending { it.timestamp }
-            .distinctBy { it.contact?.id?.toString() ?: "n:" + it.number?.filter { c -> c.isDigit() } }
+            .distinctBy { it.contact.id }
             .take(MAX_RECENT_ENTRIES)
     }
 
@@ -98,13 +99,14 @@ object RecentActivitySource {
             CallLog.Calls.CONTENT_URI,
             arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.DATE, CallLog.Calls.TYPE),
             "${CallLog.Calls.DATE} DESC",
-        ) { number, date, type ->
+        ) { number, date, type, _ ->
+            val contact = lookup.contactFor(number) ?: return@query
             val kind = when (type) {
                 CallLog.Calls.OUTGOING_TYPE -> RecentKind.CALL_OUTGOING
                 CallLog.Calls.MISSED_TYPE, CallLog.Calls.REJECTED_TYPE -> RecentKind.CALL_MISSED
                 else -> RecentKind.CALL_INCOMING
             }
-            out += RecentEntry(lookup.contactFor(number), number, date, kind)
+            out += RecentEntry(contact, date, kind)
         }
         return out
     }
@@ -114,26 +116,32 @@ object RecentActivitySource {
         query(
             context,
             Telephony.Sms.CONTENT_URI,
-            arrayOf(Telephony.Sms.ADDRESS, Telephony.Sms.DATE, Telephony.Sms.TYPE),
+            arrayOf(Telephony.Sms.ADDRESS, Telephony.Sms.DATE, Telephony.Sms.TYPE, Telephony.Sms.BODY),
             "${Telephony.Sms.DATE} DESC",
-        ) { address, date, type ->
+        ) { address, date, type, body ->
             val kind = when (type) {
                 Telephony.Sms.MESSAGE_TYPE_INBOX -> RecentKind.MESSAGE_RECEIVED
                 Telephony.Sms.MESSAGE_TYPE_SENT -> RecentKind.MESSAGE_SENT
                 else -> return@query
             }
-            out += RecentEntry(lookup.contactFor(address), address, date, kind)
+            val contact = lookup.contactFor(address) ?: return@query
+            // One line is all the row shows; collapse line breaks so the preview reads cleanly.
+            val snippet = body?.replace(Regex("\\s+"), " ")?.trim()?.takeIf { it.isNotEmpty() }
+            out += RecentEntry(contact, date, kind, snippet)
         }
         return out
     }
 
-    /** Reads up to [PROVIDER_ROWS] (address, date, type) rows; logs and returns nothing on failure. */
+    /**
+     * Reads up to [PROVIDER_ROWS] (address, date, type[, text]) rows; logs and returns nothing on
+     * failure. The fourth column, when projected, is passed as [onRow]'s text.
+     */
     private inline fun query(
         context: Context,
         uri: Uri,
         projection: Array<String>,
         sortOrder: String,
-        onRow: (address: String, date: Long, type: Int) -> Unit,
+        onRow: (address: String, date: Long, type: Int, text: String?) -> Unit,
     ) {
         try {
             context.contentResolver.query(uri, projection, null, null, sortOrder)?.use { cursor ->
@@ -141,7 +149,8 @@ object RecentActivitySource {
                 while (rows < PROVIDER_ROWS && cursor.moveToNext()) {
                     rows++
                     val address = cursor.getString(0)?.takeIf { it.isNotBlank() } ?: continue
-                    onRow(address, cursor.getLong(1), cursor.getInt(2))
+                    val text = if (projection.size > 3) cursor.getString(3) else null
+                    onRow(address, cursor.getLong(1), cursor.getInt(2), text)
                 }
             }
         } catch (e: SecurityException) {
