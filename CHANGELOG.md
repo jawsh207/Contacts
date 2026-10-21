@@ -2,6 +2,12 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2
+
+**Highlights tab**
+- Tapping a call in Recents opens the dialer with that number filled in, and tapping a text opens the conversation in your messaging app. Recently viewed contacts still open the contact.
+- Fixed: calls and texts with contacts that had been merged no longer disappear from Recents.
+
 ## 1.1
 
 **Organize tab**
