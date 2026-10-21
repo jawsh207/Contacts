@@ -26,6 +26,12 @@ interface LauncherIconExtension {
      * padding. The translate is derived so the glyph stays centered.
      */
     val scale: Property<Double>
+
+    /**
+     * True when the app ships its own launcher icon resources (ic_launcher, its foreground and
+     * @color/ic_launcher_background) instead of generating one from [symbol].
+     */
+    val custom: Property<Boolean>
 }
 
 // Downloads the outlined Material Symbol at [ref], wraps its path in the standard

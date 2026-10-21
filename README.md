@@ -9,6 +9,8 @@ restyled to follow Material 3 Expressive more closely (Google Contacts–style l
 - Bundles the Google Sans Flex typeface, unmodified, from [google/fonts](https://github.com/google/fonts/tree/main/ofl/googlesansflex)
   under the SIL Open Font License 1.1 (`library/ui/src/main/assets/licenses/google_sans_flex_OFL.txt`).
   Google Sans Flex is a trademark of Google LLC; this project is not affiliated with Google.
+- Launcher icon: the contact-card glyph from [GrapheneOS Contacts](https://github.com/GrapheneOS/platform_packages_apps_Contacts)
+  (Apache 2.0), recolored white on Common Teal (`#009193`).
 
 ## Building
 
