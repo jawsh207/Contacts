@@ -74,6 +74,7 @@ val appVersionCode: Int =
 // wired into every variant's generated res.
 val launcherIcon = extensions.create("launcherIcon", LauncherIconExtension::class.java).apply {
     scale.convention(0.435)
+    custom.convention(false)
 }
 val materialSymbolsRef = "819d78680a849ceef4c78f863d8753e3160b7c89"
 val materialSymbolsCache = File(gradle.gradleUserHomeDir, "material-symbols-cache")
@@ -102,6 +103,8 @@ extensions.configure<com.android.build.api.variant.ApplicationAndroidComponentsE
         }
     }
     onVariants { variant ->
+        // An app with its own icon resources opts out; generating as well would collide.
+        if (launcherIcon.custom.get()) return@onVariants
         val gen = tasks.register(
             "generate${variant.name.replaceFirstChar { it.uppercase() }}LauncherIcon",
             GenerateLauncherIconTask::class.java,

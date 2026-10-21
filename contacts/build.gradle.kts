@@ -6,7 +6,9 @@ plugins {
 }
 
 launcherIcon {
-    symbol = "person"
+    // Ships its own icon: GrapheneOS Contacts' contact-card glyph in white on Common Teal
+    // (#009193); see res/mipmap-anydpi and res/drawable/ic_launcher_foreground.xml.
+    custom = true
 }
 
 android {
