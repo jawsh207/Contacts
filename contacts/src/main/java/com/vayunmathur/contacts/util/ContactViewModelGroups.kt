@@ -5,7 +5,12 @@ import android.content.ContentProviderOperation
 import android.provider.ContactsContract
 import com.vayunmathur.library.log.Log
 import androidx.lifecycle.viewModelScope
+import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.Contact
+import com.vayunmathur.contacts.data.DuplicateSet
+import com.vayunmathur.contacts.data.mergeDuplicateSet
+import com.vayunmathur.contacts.data.primaryOf
+import com.vayunmathur.library.util.AppMessages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -123,4 +128,36 @@ internal fun ContactViewModel.contactFlow(contactId: Long): Flow<Contact?> {
     return contacts.map { list ->
         list.find { it.id == contactId } ?: allContactsState.value.find { it.id == contactId }
     }
+}
+
+/**
+ * Merges each of [sets] into its [primaryOf] contact, then deletes the rest. A set whose save
+ * fails is left untouched, so nothing is deleted without its details being kept first.
+ */
+fun ContactViewModel.mergeDuplicates(sets: List<DuplicateSet>) {
+    viewModelScope.launch(Dispatchers.IO) {
+        val app = getApplication<Application>()
+        var merged = 0
+        sets.forEach { set ->
+            val primary = primaryOf(set)
+            val others = set.contacts.filter { it.id != primary.id }
+            if (persistContact(mergeDuplicateSet(primary, others))) {
+                others.forEach { deleteProviderContact(it) }
+                merged++
+            }
+        }
+        syncFromSystem()
+        val message = when {
+            merged == sets.size && sets.size == 1 ->
+                app.getString(R.string.merged_into, primaryOf(sets.first()).name.value)
+            merged == sets.size -> app.resources.getQuantityString(R.plurals.merged_sets, merged, merged)
+            else -> app.getString(R.string.merge_failed)
+        }
+        AppMessages.show(message)
+    }
+}
+
+/** Hides [set] from Merge duplicates; it comes back only if its contacts change. */
+fun ContactViewModel.dismissDuplicates(set: DuplicateSet) {
+    dataStore.addStringToSet(DISMISSED_DUPLICATES_KEY, set.key)
 }

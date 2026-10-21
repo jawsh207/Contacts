@@ -371,6 +371,14 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Likely duplicates among visible contacts, for Organize's Merge duplicates. */
+    val duplicateSets: StateFlow<List<com.vayunmathur.contacts.data.DuplicateSet>> = combine(
+        visibleContacts,
+        dataStore.stringSetFlow(DISMISSED_DUPLICATES_KEY),
+    ) { visible, dismissed -> com.vayunmathur.contacts.data.findDuplicateSets(visible, dismissed) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT), emptyList())
+
     /** Whether Recents also reads the call log and SMS. Off until the user opts in. */
     val includeCallsAndMessagesInRecents: StateFlow<Boolean> =
         dataStore.booleanFlow(RECENTS_CALLS_MESSAGES_KEY, false)
@@ -425,7 +433,7 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private suspend fun deleteProviderContact(contact: com.vayunmathur.contacts.data.Contact) {
+    internal suspend fun deleteProviderContact(contact: com.vayunmathur.contacts.data.Contact) {
         val app = getApplication<Application>()
         com.vayunmathur.contacts.data.Contact.delete(app, contact)
         if (isCalendarSyncEnabled.value) {
@@ -527,4 +535,5 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
 
 private const val RECENT_VIEWS_KEY = "recent_views"
 private const val LEGACY_MY_INFO_KEY = "my_info"
+internal const val DISMISSED_DUPLICATES_KEY = "dismissed_duplicates"
 private const val RECENTS_CALLS_MESSAGES_KEY = "recents_calls_messages"
