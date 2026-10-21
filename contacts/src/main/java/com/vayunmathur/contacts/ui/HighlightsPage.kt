@@ -3,6 +3,12 @@ package com.vayunmathur.contacts.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.vayunmathur.contacts.data.RecentEntry
+import com.vayunmathur.contacts.data.RecentActivitySource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -38,10 +44,25 @@ fun HighlightsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, 
     val favorites = remember(contacts) {
         contacts.filter { it.isFavorite }.sortedBy { it.name.value.lowercase() }
     }
+    val recentViews by viewModel.recentViews.collectAsStateWithLifecycle()
+    val includeCallsAndMessages by viewModel.includeCallsAndMessagesInRecents.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // Recently viewed contacts, plus recent calls and texts when the user has opted in.
+    val recents by produceState(emptyList<RecentEntry>(), contacts, recentViews, includeCallsAndMessages) {
+        value = withContext(Dispatchers.IO) {
+            RecentActivitySource.load(
+                context = context,
+                views = recentViews,
+                contactsById = contacts.associateBy { it.id },
+                includeCallsAndMessages = includeCallsAndMessages,
+            )
+        }
+    }
 
     HighlightsScreen(
         birthdays = birthdays,
         favorites = favorites,
+        recents = recents,
         isLoading = !hasLoadedContacts,
         onSearch = onSearch,
         actions = object : ContactsActions by viewModel {
@@ -53,8 +74,8 @@ fun HighlightsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, 
 }
 
 /**
- * Google Contacts–style Highlights: the search bar, a strip of favorites, then "For you" cards
- * for upcoming birthdays.
+ * Google Contacts–style Highlights: the search bar, a strip of favorites, "For you" cards for
+ * upcoming birthdays, then Recents.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +84,7 @@ fun HighlightsScreen(
     favorites: List<Contact>,
     isLoading: Boolean,
     actions: ContactsActions,
+    recents: List<RecentEntry> = emptyList(),
     onSearch: () -> Unit = {},
 ) {
     val scrollBehavior = appBarScrollBehavior()
@@ -77,7 +99,7 @@ fun HighlightsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         scrollBehavior = scrollBehavior,
     ) {
-        if (birthdays.isEmpty() && favorites.isEmpty()) {
+        if (birthdays.isEmpty() && favorites.isEmpty() && recents.isEmpty()) {
             item(key = "highlights-empty") {
                 if (isLoading) {
                     LoadingState(modifier = Modifier.fillParentMaxSize())
@@ -102,6 +124,13 @@ fun HighlightsScreen(
             item(key = "for-you-header") { HighlightsSectionHeader(stringResource(R.string.for_you)) }
             birthdays.forEach { birthday ->
                 item(key = "birthday-${birthday.contact.id}") { BirthdayCard(birthday, actions) }
+            }
+        }
+
+        if (recents.isNotEmpty()) {
+            item(key = "recents-header") { HighlightsSectionHeader(stringResource(R.string.recents)) }
+            item(key = "recents") {
+                GroupedContactSection(count = recents.size) { i -> RecentRow(recents[i], actions) }
             }
         }
     }

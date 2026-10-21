@@ -293,4 +293,16 @@
         <item quantity="one">contact in your address book</item>
         <item quantity="other">contacts in your address book</item>
     </plurals>
+    <!-- Highlights: section listing people recently viewed, called or texted -->
+    <string name="recents">Recents</string>
+    <!-- Recents row labels, shown before how long ago, e.g. "Missed call · 2 hr. ago" -->
+    <string name="recent_viewed">Viewed</string>
+    <string name="recent_call_incoming">Incoming call</string>
+    <string name="recent_call_outgoing">Outgoing call</string>
+    <string name="recent_call_missed">Missed call</string>
+    <string name="recent_message_received">Message received</string>
+    <string name="recent_message_sent">Message sent</string>
+    <!-- Settings switch: include call log and SMS in Highlights' Recents -->
+    <string name="recents_calls_messages_title">Calls &amp; messages in Recents</string>
+    <string name="recents_calls_messages_summary">Show recent calls and texts in Highlights. Needs call log and SMS access. Recently viewed contacts show either way.</string>
 </resources>
