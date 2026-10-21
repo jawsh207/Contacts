@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds as Kinds
 import android.util.Base64
 import com.vayunmathur.library.log.Log
 import kotlinx.serialization.Serializable
@@ -104,33 +105,32 @@ object MeProfileSource {
             values.forEach { (key, value) -> op.withValue(key, value) }
             ops += op.build()
         }
-        val kinds = ContactsContract.CommonDataKinds
         if (info.name.isNotBlank()) {
-            insert(kinds.StructuredName.CONTENT_ITEM_TYPE, kinds.StructuredName.DISPLAY_NAME to info.name.trim())
+            insert(Kinds.StructuredName.CONTENT_ITEM_TYPE, Kinds.StructuredName.DISPLAY_NAME to info.name.trim())
         }
         if (info.phone.isNotBlank()) {
             insert(
-                kinds.Phone.CONTENT_ITEM_TYPE,
-                kinds.Phone.NUMBER to info.phone.trim(),
-                kinds.Phone.TYPE to kinds.Phone.TYPE_MOBILE,
+                Kinds.Phone.CONTENT_ITEM_TYPE,
+                Kinds.Phone.NUMBER to info.phone.trim(),
+                Kinds.Phone.TYPE to Kinds.Phone.TYPE_MOBILE,
             )
         }
         if (info.email.isNotBlank()) {
             insert(
-                kinds.Email.CONTENT_ITEM_TYPE,
-                kinds.Email.ADDRESS to info.email.trim(),
-                kinds.Email.TYPE to kinds.Email.TYPE_HOME,
+                Kinds.Email.CONTENT_ITEM_TYPE,
+                Kinds.Email.ADDRESS to info.email.trim(),
+                Kinds.Email.TYPE to Kinds.Email.TYPE_HOME,
             )
         }
         if (info.company.isNotBlank()) {
             insert(
-                kinds.Organization.CONTENT_ITEM_TYPE,
-                kinds.Organization.COMPANY to info.company.trim(),
-                kinds.Organization.TYPE to kinds.Organization.TYPE_WORK,
+                Kinds.Organization.CONTENT_ITEM_TYPE,
+                Kinds.Organization.COMPANY to info.company.trim(),
+                Kinds.Organization.TYPE to Kinds.Organization.TYPE_WORK,
             )
         }
         info.photo?.let { encoded ->
-            insert(kinds.Photo.CONTENT_ITEM_TYPE, kinds.Photo.PHOTO to Base64.decode(encoded, Base64.DEFAULT))
+            insert(Kinds.Photo.CONTENT_ITEM_TYPE, Kinds.Photo.PHOTO to Base64.decode(encoded, Base64.DEFAULT))
         }
         return try {
             context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
