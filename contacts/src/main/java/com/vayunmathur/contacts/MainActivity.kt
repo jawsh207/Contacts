@@ -54,6 +54,7 @@ import com.vayunmathur.contacts.ui.EditContactPage
 import com.vayunmathur.contacts.ui.dialogs.EventDeleteConfirmDialog
 import com.vayunmathur.contacts.ui.GroupsPage
 import com.vayunmathur.contacts.ui.HighlightsPage
+import com.vayunmathur.contacts.ui.MyInfoPage
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.vayunmathur.library.ui.IconOrganize
@@ -545,6 +546,10 @@ private fun NavGraphEntries(
             SettingsPage(viewModel, backStack)
         }
 
+        entry<Route.MyInfo> {
+            MyInfoPage(viewModel, backStack)
+        }
+
         entry<Route.ContactDetail>(metadata = ListDetailPage() + MorphPage()) { key ->
             ContactDetailsPage(
                 viewModel = viewModel,
@@ -730,6 +735,10 @@ private fun ContactsTabs(
 sealed interface Route: NavKey {
     @Serializable
     object Main : Route
+
+    /** "Your info": the user's own card and its QR code. */
+    @Serializable
+    object MyInfo : Route
 
     @Serializable
     object ContactsList : Route

@@ -19,4 +19,6 @@ dependencies {
     // VCF export/import now uses java.io BufferedReader/Writer – no okio needed
     implementation(libs.libphonenumber)
     implementation(libs.androidx.work.runtime.ktx)
+    // QR code for "Your info"
+    implementation(libs.zxing.core)
 }
