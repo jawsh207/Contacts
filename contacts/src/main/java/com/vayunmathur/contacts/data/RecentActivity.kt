@@ -27,6 +27,8 @@ data class RecentEntry(
     val kind: RecentKind,
     /** The text of a message, for a one-line preview; null for calls and views. */
     val snippet: String? = null,
+    /** The number the call or text was with, so tapping can dial or open the conversation. */
+    val address: String? = null,
 )
 
 /** A contact opened in this app, and when. */
@@ -106,7 +108,7 @@ object RecentActivitySource {
                 CallLog.Calls.MISSED_TYPE, CallLog.Calls.REJECTED_TYPE -> RecentKind.CALL_MISSED
                 else -> RecentKind.CALL_INCOMING
             }
-            out += RecentEntry(contact, date, kind)
+            out += RecentEntry(contact, date, kind, address = number)
         }
         return out
     }
@@ -127,7 +129,7 @@ object RecentActivitySource {
             val contact = lookup.contactFor(address) ?: return@query
             // One line is all the row shows; collapse line breaks so the preview reads cleanly.
             val snippet = body?.replace(Regex("\\s+"), " ")?.trim()?.takeIf { it.isNotEmpty() }
-            out += RecentEntry(contact, date, kind, snippet)
+            out += RecentEntry(contact, date, kind, snippet, address)
         }
         return out
     }
@@ -163,19 +165,51 @@ object RecentActivitySource {
     private fun granted(context: Context, permission: String) =
         ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
-    /** Number → contact via the provider's own phone matching, cached per number. */
+    /**
+     * Number → saved contact, cached per number. Matches the contacts' own numbers first (last
+     * digits, as Merge duplicates does), then the provider's phone matching for formats that
+     * differ more. PhoneLookup answers with the aggregate contact id, while this app's contacts
+     * are raw contacts, so that answer is mapped back through RawContacts: the two ids are often
+     * equal, but not after contacts are merged or re-aggregated, which is why Recents lost
+     * merged contacts' calls and texts.
+     */
     private class NumberLookup(private val context: Context, private val contactsById: Map<Long, Contact>) {
         private val cache = HashMap<String, Contact?>()
+        private val byNumber: Map<String, Contact> = buildMap {
+            contactsById.values.forEach { c ->
+                c.details.phoneNumbers.forEach { p -> phoneMatchKey(p.number)?.let { putIfAbsent(it, c) } }
+            }
+        }
 
         fun contactFor(number: String): Contact? = cache.getOrPut(number) {
+            phoneMatchKey(number)?.let { byNumber[it] } ?: providerLookup(number)
+        }
+
+        private fun providerLookup(number: String): Contact? {
             val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
-            try {
-                context.contentResolver.query(uri, arrayOf(ContactsContract.PhoneLookup._ID), null, null, null)
-                    ?.use { if (it.moveToFirst()) contactsById[it.getLong(0)] else null }
+            return try {
+                val aggregateIds = context.contentResolver
+                    .query(uri, arrayOf(ContactsContract.PhoneLookup._ID), null, null, null)
+                    ?.use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }
+                    .orEmpty()
+                aggregateIds.firstNotNullOfOrNull { rawContactsOf(it) }
             } catch (e: IllegalArgumentException) {
                 Log.error("RecentActivity", "Number lookup failed", e)
                 null
             }
         }
+
+        private fun rawContactsOf(aggregateId: Long): Contact? =
+            context.contentResolver.query(
+                ContactsContract.RawContacts.CONTENT_URI,
+                arrayOf(ContactsContract.RawContacts._ID),
+                "${ContactsContract.RawContacts.CONTACT_ID} = ? AND ${ContactsContract.RawContacts.DELETED} = 0",
+                arrayOf(aggregateId.toString()),
+                null,
+            )?.use { c ->
+                var found: Contact? = null
+                while (found == null && c.moveToNext()) found = contactsById[c.getLong(0)]
+                found
+            }
     }
 }
