@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +43,7 @@ import com.vayunmathur.library.ui.MaterialTheme
 import com.vayunmathur.library.ui.OverflowMenu
 import com.vayunmathur.library.ui.R as UiR
 import com.vayunmathur.library.ui.Text
+import com.vayunmathur.library.ui.TopAppBarDefaults
 import com.vayunmathur.library.ui.appBarScrollBehavior
 import com.vayunmathur.library.ui.ringtonePickerIntent
 import com.vayunmathur.library.ui.ringtonePickerResult
@@ -217,12 +219,17 @@ fun ContactDetailsScreen(
             }
         },
         scrollBehavior = appBarScrollBehavior(),
+        // See-through until content scrolls under it, so the header backdrop shows behind it.
+        topBarColors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = MaterialTheme.colorScheme.background,
+        ),
     ) {
 
             item {
                 // Not staggered: this is where the container transform from the list row lands, and a
                 // second entrance animation on top of the morph is what made it look broken before.
-                ProfileHeader(contact, actions::decodePhoto)
+                ProfileHeaderWithBackdrop(contact, actions::decodePhoto)
             }
 
             item {
