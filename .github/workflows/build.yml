@@ -4,12 +4,13 @@ name: Build APK
 #   - Test builds: every push to main (and PRs / manual runs). The `dev` variant
 #     ("Contacts Dev", app id app.people.contacts.dev), always signed with the dev
 #     key so each one installs over the last.
-#   - Releases: pushing a version tag such as v1.0. The `release` variant, signed with the
-#     separate release key, attached to a GitHub Release.
+#   - Releases: pushing to the `release` branch (or a version tag such as v1.0). The
+#     `release` variant, signed with the separate release key, attached to a GitHub
+#     Release tagged v<version name from version.txt>.
 
 on:
   push:
-    branches: [main]
+    branches: [main, release]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
@@ -27,7 +28,7 @@ jobs:
     permissions:
       contents: write   # to publish GitHub Releases for version tags
     env:
-      IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/release' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -110,9 +111,17 @@ jobs:
           path: contacts/build/outputs/apk/${{ env.VARIANT }}/*.apk
           if-no-files-found: error
 
+      - name: Read version
+        if: env.IS_RELEASE == 'true'
+        run: echo "RELEASE_TAG=v$(sed -n 2p version.txt | tr -d '[:space:]')" >> "$GITHUB_ENV"
+
+      # Creates the tag when it doesn't exist yet (a push to the release branch).
       - name: Publish GitHub Release
         if: env.IS_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Contacts ${{ env.RELEASE_TAG }}
           files: contacts/build/outputs/apk/release/*.apk
           generate_release_notes: true
