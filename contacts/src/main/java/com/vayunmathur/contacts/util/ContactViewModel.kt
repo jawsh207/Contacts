@@ -54,6 +54,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -321,6 +325,24 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    // The Me profile, read once per process as the starting point for "Your info".
+    private val meProfileState = MutableStateFlow<com.vayunmathur.contacts.data.MyInfo?>(null)
+    @Volatile private var meProfileLoaded = false
+
+    /** "Your info": what the user saved, else Android's Me profile, else null. */
+    val myInfo: StateFlow<com.vayunmathur.contacts.data.MyInfo?> = combine(
+        dataStore.stringFlow(MY_INFO_KEY).map<String, String?> { it }.onStart { emit(null) },
+        meProfileState,
+    ) { stored, me ->
+        stored?.let {
+            runCatching { Json.decodeFromString<com.vayunmathur.contacts.data.MyInfo>(it) }.getOrNull()
+        } ?: me
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun saveMyInfo(info: com.vayunmathur.contacts.data.MyInfo) {
+        viewModelScope.launch { dataStore.setString(MY_INFO_KEY, Json.encodeToString(info)) }
+    }
+
     /** Contacts opened in this app, newest first, for Highlights' Recents. Stays on the device. */
     val recentViews: StateFlow<List<com.vayunmathur.contacts.data.RecentView>> =
         dataStore.stringFlow(RECENT_VIEWS_KEY)
@@ -376,6 +398,10 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun refreshContactsFromSystem() {
         val app = getApplication<Application>()
         allContactsState.value = com.vayunmathur.contacts.data.Contact.getAllContacts(app)
+        if (!meProfileLoaded) {
+            meProfileLoaded = true
+            meProfileState.value = com.vayunmathur.contacts.data.MeProfileSource.read(app)
+        }
         // Keep the accounts list in step with the contacts; already on IO via syncFromSystem().
         loadAccountsInternal()
     }
@@ -492,4 +518,5 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
 }
 
 private const val RECENT_VIEWS_KEY = "recent_views"
+private const val MY_INFO_KEY = "my_info"
 private const val RECENTS_CALLS_MESSAGES_KEY = "recents_calls_messages"

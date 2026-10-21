@@ -305,4 +305,11 @@
     <!-- Settings switch: include call log and SMS in Highlights' Recents -->
     <string name="recents_calls_messages_title">Calls &amp; messages in Recents</string>
     <string name="recents_calls_messages_summary">Show recent calls and texts in Highlights. Needs call log and SMS access. Recently viewed contacts show either way.</string>
+    <!-- "Your info": the user's own card, shown at the top of the Contacts tab -->
+    <string name="your_info">Your info</string>
+    <string name="your_info_add">Add your info</string>
+    <string name="your_info_qr">QR code with your contact info</string>
+    <string name="your_info_qr_hint">Scan with a phone camera to save your contact</string>
+    <string name="your_info_add_photo">Add photo</string>
+    <string name="your_info_remove_photo">Remove photo</string>
 </resources>

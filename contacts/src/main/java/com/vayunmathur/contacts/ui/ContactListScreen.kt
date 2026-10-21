@@ -67,6 +67,8 @@ fun ContactListScreen(
     actions: ContactsActions,
     sortMode: ContactSortMode = ContactSortMode.FirstName,
     onSortModeChange: (ContactSortMode) -> Unit = {},
+    /** Shown above Favorites when not searching or selecting, e.g. the "Your info" card. */
+    headerCard: (@Composable () -> Unit)? = null,
 ) {
     val contacts = state.contacts
     val selectedIds = remember { mutableStateListOf<Long>() }
@@ -215,6 +217,12 @@ fun ContactListScreen(
                         icon = { IconPerson() },
                     )
                 }
+            }
+        }
+
+        if (headerCard != null && state.searchQuery.isEmpty() && !isSelectionMode) {
+            item(key = "header-card", contentType = "header-card") {
+                Box(Modifier.animateItem().padding(bottom = 6.dp)) { headerCard() }
             }
         }
 

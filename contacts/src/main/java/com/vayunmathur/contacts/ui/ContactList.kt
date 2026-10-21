@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +62,9 @@ fun ContactList(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
     val hasLoadedContacts by viewModel.hasLoadedContacts.collectAsStateWithLifecycle()
+    val myInfo by viewModel.myInfo.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val shareTitle = stringResource(com.vayunmathur.library.ui.R.string.share)
 
     val last = backStack.last()
 
@@ -89,6 +93,13 @@ fun ContactList(
         ),
         sortMode = sortMode,
         onSortModeChange = viewModel::setSortMode,
+        headerCard = {
+            MyInfoCard(
+                info = myInfo,
+                onOpen = { backStack.add(Route.MyInfo) },
+                onShare = { myInfo?.let { shareMyInfo(context, it, shareTitle) } },
+            )
+        },
         actions = object : ContactsActions by viewModel {
             override fun openContact(contact: Contact) = onContactClick(contact)
 
