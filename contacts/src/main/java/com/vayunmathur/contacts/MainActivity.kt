@@ -54,8 +54,11 @@ import com.vayunmathur.contacts.ui.EditContactPage
 import com.vayunmathur.contacts.ui.dialogs.EventDeleteConfirmDialog
 import com.vayunmathur.contacts.ui.GroupsPage
 import com.vayunmathur.contacts.ui.HighlightsPage
-import com.vayunmathur.library.ui.IconLabel
-import com.vayunmathur.library.ui.IconStar
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.vayunmathur.library.ui.IconOrganize
+import com.vayunmathur.library.ui.IconHighlights
+import com.vayunmathur.library.ui.IconPersonOutlined
 import com.vayunmathur.library.ui.IconPerson
 import com.vayunmathur.contacts.ui.ImportVcfScreen
 import com.vayunmathur.contacts.ui.InsertOrEditContactScreen
@@ -697,8 +700,16 @@ private fun ContactsTabs(
     // opened from Organize rather than a tab.
     val startPage = if (initialGroupsExpandId != null) 2 else 0
     val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 3 })
+    val tabScope = rememberCoroutineScope()
+    // Highlights and Organize show the same search bar as Contacts; tapping it goes to Contacts,
+    // where the search runs.
+    val openSearch: () -> Unit = { tabScope.launch { pagerState.animateScrollToPage(0) } }
+    // Outlined icons, filled when selected, as in Google Contacts.
     val tabs = listOf(
-        PagerTab(stringResource(UiR.string.contacts), { IconPerson() }) {
+        PagerTab(
+            stringResource(UiR.string.contacts),
+            { if (pagerState.currentPage == 0) IconPerson() else IconPersonOutlined() },
+        ) {
             ContactList(
                 viewModel = viewModel,
                 backStack = backStack,
@@ -706,11 +717,11 @@ private fun ContactsTabs(
                 onAddContactClick = onAddContactClick,
             )
         },
-        PagerTab(stringResource(R.string.highlights), { IconStar() }) {
-            HighlightsPage(viewModel, backStack)
+        PagerTab(stringResource(R.string.highlights), { IconHighlights(pagerState.currentPage == 1) }) {
+            HighlightsPage(viewModel, backStack, openSearch)
         },
-        PagerTab(stringResource(R.string.organize), { IconLabel() }) {
-            GroupsPage(viewModel, backStack, initialGroupsExpandId)
+        PagerTab(stringResource(R.string.organize), { IconOrganize(pagerState.currentPage == 2) }) {
+            GroupsPage(viewModel, backStack, initialGroupsExpandId, openSearch)
         },
     )
     TabbedPagerScaffold(tabs = tabs, pagerState = pagerState, tabStyle = TabStyle.BottomNav)

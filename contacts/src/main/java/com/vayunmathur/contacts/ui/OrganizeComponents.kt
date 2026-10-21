@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.R
 import com.vayunmathur.library.ui.IconSettings
@@ -26,10 +28,9 @@ internal val EMPTY_LABELS_HEIGHT = 240.dp
 internal fun OrganizeSectionHeader(text: String) {
     Text(
         text = text,
-        modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 8.dp),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 8.dp, top = 24.dp, bottom = 12.dp),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
     )
 }
 
@@ -43,11 +44,46 @@ internal fun OrganizeSettingsRow(onOpenSettings: () -> Unit) {
         color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         ListItem(
-            supportingContent = { Text(stringResource(R.string.settings_summary)) },
-            leadingContent = { IconSettings() },
+            supportingContent = {
+                Text(
+                    stringResource(R.string.settings_summary),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            leadingContent = { IconSettings(tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         ) {
-            Text(stringResource(UiR.string.settings), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(UiR.string.settings), style = MaterialTheme.typography.titleLarge)
+        }
+    }
+}
+
+/**
+ * The summary card at the top of Organize, after Google's account card: a large count of the
+ * contacts in visible accounts.
+ */
+@Composable
+internal fun ContactCountCard(count: Int) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceBright,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = count.toString(),
+                style = MaterialTheme.typography.displayMedium,
+                modifier = Modifier.alignByBaseline(),
+            )
+            Text(
+                text = pluralStringResource(R.plurals.contacts_in_address_book, count),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.alignByBaseline(),
+            )
         }
     }
 }

@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 /** Size of the round photo on the contact page (about 44% of a phone's width, as in Google's). */
-internal val PROFILE_AVATAR_SIZE = 176.dp
+internal val PROFILE_AVATAR_SIZE = 180.dp
 
 /** [ProfileHeader]'s own padding above the photo. */
 private val PROFILE_HEADER_TOP_PADDING = 16.dp
@@ -37,8 +37,12 @@ private val BACKDROP_OVERDRAW = 48.dp
 /** Blurred, but light enough that shapes and highlights in the photo still show through. */
 private val BACKDROP_BLUR = 24.dp
 
-/** Open blurred area between the top bar and the photo, as a fraction of the page width. */
-private const val HERO_GAP_FRACTION = 0.42f
+/**
+ * Open blurred area between the top bar and the photo, as a fraction of the page width.
+ * Measured against width from Google's listing images, whose screens are cropped in height
+ * but show the full width.
+ */
+private const val HERO_GAP_FRACTION = 0.46f
 
 /**
  * The contact page header in Google Contacts' style: the contact's photo, enlarged and blurred,

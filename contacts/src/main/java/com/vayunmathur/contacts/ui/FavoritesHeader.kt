@@ -21,12 +21,13 @@ fun FavoritesHeader(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        IconStar(tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Blue star and label, as in Google Contacts.
+        IconStar(tint = MaterialTheme.colorScheme.primary)
         Text(
             text = stringResource(R.string.favorites),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

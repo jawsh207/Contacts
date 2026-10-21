@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.vayunmathur.library.ui.R as UiR
 import androidx.compose.runtime.Composable
+import com.vayunmathur.library.ui.TopAppBar
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,10 +56,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /** Binds [ContactViewModel] to the stateless [GroupsScreen]. */
 @Composable
-fun GroupsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, expandGroupId: Long? = null) {
+fun GroupsPage(
+    viewModel: ContactViewModel,
+    backStack: NavBackStack<Route>,
+    expandGroupId: Long? = null,
+    onSearch: () -> Unit = {},
+) {
     val groups by viewModel.groups.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val hasLoadedContacts by viewModel.hasLoadedContacts.collectAsStateWithLifecycle()
+    val visibleContacts by viewModel.visibleContacts.collectAsStateWithLifecycle()
 
     // Membership is already part of every contact, so the rows are derived here rather
     // than collected per group — a stateless screen cannot subscribe to one flow per row.
@@ -76,6 +84,8 @@ fun GroupsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, expa
         },
         expandGroupId = expandGroupId,
         onOpenSettings = { backStack.add(Route.Settings) },
+        contactCount = visibleContacts.size.takeIf { hasLoadedContacts },
+        onSearch = onSearch,
     )
 }
 
@@ -93,6 +103,9 @@ fun GroupsScreen(
     actions: ContactsActions,
     expandGroupId: Long? = null,
     onOpenSettings: () -> Unit = {},
+    /** Contacts in visible accounts, for the summary card; null while still loading. */
+    contactCount: Int? = null,
+    onSearch: () -> Unit = {},
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var newGroupName by remember { mutableStateOf("") }
@@ -103,9 +116,16 @@ fun GroupsScreen(
         list
     }
 
-    // Google Contacts' Organize tab: labels first, then the management tools.
+    // Google Contacts' Organize tab: search bar, a contact-count summary, labels, then the
+    // management tools.
+    val scrollBehavior = appBarScrollBehavior()
     LazyListScaffold(
-        title = stringResource(R.string.organize),
+        topBar = {
+            TopAppBar(
+                title = { SearchBarButton(onSearch, Modifier.padding(bottom = 8.dp)) },
+                scrollBehavior = scrollBehavior,
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 IconAdd()
@@ -114,8 +134,11 @@ fun GroupsScreen(
         // Same side margins as the Contacts tab so the cards line up when swiping between tabs.
         horizontalPadding = 16.dp,
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        scrollBehavior = appBarScrollBehavior(),
+        scrollBehavior = scrollBehavior,
     ) {
+            if (contactCount != null) {
+                item(key = "summary") { ContactCountCard(contactCount) }
+            }
             item(key = "labels-header") { OrganizeSectionHeader(stringResource(R.string.groups)) }
             if (state.groups.isEmpty()) {
                 item(key = "groups-empty") {

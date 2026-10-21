@@ -263,7 +263,10 @@
 
     <!-- Highlights tab -->
     <string name="highlights">Highlights</string>
-    <string name="upcoming_birthdays">Upcoming birthdays</string>
+    <!-- Highlights tab: heading above suggestion cards such as birthdays -->
+    <string name="for_you">For you</string>
+    <!-- Highlights birthday card title, e.g. "Christopher Marino’s birthday" -->
+    <string name="birthday_card_title">%1$s’s birthday</string>
     <string name="birthday_today">Today</string>
     <string name="birthday_tomorrow">Tomorrow</string>
     <plurals name="birthday_in_days">
@@ -285,4 +288,9 @@
     <string name="fix_and_manage">Fix &amp; manage</string>
     <!-- Organize tab: supporting text under the Settings entry -->
     <string name="settings_summary">Import, export, accounts and display</string>
+    <!-- Organize summary card, after a large number: "150 contacts in your address book" -->
+    <plurals name="contacts_in_address_book">
+        <item quantity="one">contact in your address book</item>
+        <item quantity="other">contacts in your address book</item>
+    </plurals>
 </resources>

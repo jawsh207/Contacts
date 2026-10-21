@@ -26,12 +26,12 @@ fun DynamicTheme(darkTheme: Boolean? = null, content: @Composable () -> Unit) {
     val isDark = darkTheme ?: isSystemInDarkTheme()
     val wallpaperScheme =
         if (isDark) dynamicDarkColorScheme(LocalContext.current) else dynamicLightColorScheme(LocalContext.current)
-    // Layered like Google's Expressive apps: screens, top bars and lists sit on the tinted
-    // surfaceContainer, and cards use surfaceBright, so cards read brighter than the backdrop
-    // in both light and dark themes.
+    // Layered like Google Contacts: pages sit on surfaceContainerLow, a shade lighter than
+    // the bottom bar (surfaceContainer); cards use surfaceBright on top, and search bars the
+    // darker surfaceContainerHighest.
     val colorScheme = wallpaperScheme.copy(
-        background = wallpaperScheme.surfaceContainer,
-        surface = wallpaperScheme.surfaceContainer,
+        background = wallpaperScheme.surfaceContainerLow,
+        surface = wallpaperScheme.surfaceContainerLow,
     )
 
     MaterialExpressiveTheme(
