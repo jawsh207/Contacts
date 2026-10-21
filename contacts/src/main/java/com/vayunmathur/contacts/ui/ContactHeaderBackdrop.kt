@@ -11,7 +11,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -24,20 +23,28 @@ import com.vayunmathur.library.ui.TopAppBarDefaults
 import com.vayunmathur.library.ui.paneContentMargin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
+
+/** Size of the round photo on the contact page (about 44% of a phone's width, as in Google's). */
+internal val PROFILE_AVATAR_SIZE = 176.dp
+
+/** [ProfileHeader]'s own padding above the photo. */
+private val PROFILE_HEADER_TOP_PADDING = 16.dp
 
 /** How far the backdrop reaches past the window top, so it is never short of the edge. */
 private val BACKDROP_OVERDRAW = 48.dp
 
-/** How far the backdrop runs below the header before it has faded into the page. */
-private val BACKDROP_TAIL = 32.dp
+/** Blurred, but light enough that shapes and highlights in the photo still show through. */
+private val BACKDROP_BLUR = 24.dp
 
-private val BACKDROP_BLUR = 48.dp
+/** Open blurred area between the top bar and the photo, as a fraction of the page width. */
+private const val HERO_GAP_FRACTION = 0.42f
 
 /**
- * The contact page header with Google Contacts' backdrop behind it: the contact's photo,
- * enlarged and heavily blurred, filling the full width from the top of the screen (behind the
- * transparent top bar) down past the name, then fading into the page. A contact without a
- * photo gets a wash of their avatar colour instead, so every header reads the same way.
+ * The contact page header in Google Contacts' style: the contact's photo, enlarged and blurred,
+ * fills the full width from the top of the screen (behind the see-through top bar) down to a
+ * hard edge through the middle of the round photo, which straddles that edge. A contact
+ * without a photo gets a wash of their avatar colour in the same place.
  *
  * The header is a list item inset by the page margins and pushed below the top bar, so the
  * backdrop is laid out larger than the item and shifted up and out by those amounts. Being
@@ -48,10 +55,12 @@ internal fun ProfileHeaderWithBackdrop(contact: Contact, decodePhoto: ((String) 
     val density = LocalDensity.current
     val sidePx = with(density) { paneContentMargin().roundToPx() }
     val topBarInset = TopAppBarDefaults.windowInsets.getTop(density)
-    val topPx = topBarInset + with(density) {
+    val aboveItemPx = topBarInset + with(density) {
         (TopAppBarDefaults.TopAppBarExpandedHeight + BACKDROP_OVERDRAW).roundToPx()
     }
-    val tailPx = with(density) { BACKDROP_TAIL.roundToPx() }
+    val photoHalfPx = with(density) {
+        (PROFILE_HEADER_TOP_PADDING + PROFILE_AVATAR_SIZE / 2).roundToPx()
+    }
 
     Layout(
         content = {
@@ -60,15 +69,17 @@ internal fun ProfileHeaderWithBackdrop(contact: Contact, decodePhoto: ((String) 
         },
     ) { measurables, constraints ->
         val header = measurables[1].measure(constraints)
+        val pageWidth = header.width + 2 * sidePx
+        val heroGapPx = (pageWidth * HERO_GAP_FRACTION).roundToInt()
         val backdrop = measurables[0].measure(
             Constraints.fixed(
-                width = header.width + 2 * sidePx,
-                height = header.height + topPx + tailPx,
+                width = pageWidth,
+                height = aboveItemPx + heroGapPx + photoHalfPx,
             )
         )
-        layout(header.width, header.height) {
-            backdrop.place(-sidePx, -topPx)
-            header.place(0, 0)
+        layout(header.width, heroGapPx + header.height) {
+            backdrop.place(-sidePx, -aboveItemPx)
+            header.place(0, heroGapPx)
         }
     }
 }
@@ -81,7 +92,6 @@ private fun HeaderBackdrop(contact: Contact, decodePhoto: ((String) -> Bitmap?)?
             withContext(Dispatchers.IO) { decodePhoto?.invoke(photoBase64) }
         } else null
     }
-    val page = MaterialTheme.colorScheme.background
     Box(Modifier.fillMaxSize()) {
         val bmp = photo
         if (bmp != null) {
@@ -93,6 +103,12 @@ private fun HeaderBackdrop(contact: Contact, decodePhoto: ((String) -> Bitmap?)?
                     .fillMaxSize()
                     .blur(BACKDROP_BLUR, BlurredEdgeTreatment.Rectangle),
             )
+            // A light veil of the page colour, softening the photo the way Google's does.
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = BACKDROP_VEIL))
+            )
         } else {
             Box(
                 Modifier
@@ -100,18 +116,7 @@ private fun HeaderBackdrop(contact: Contact, decodePhoto: ((String) -> Bitmap?)?
                     .background(avatarColorsFor(contact.id).container)
             )
         }
-        // Mutes the colours so the top bar icons and the name stay legible, then fades the
-        // backdrop into the page so it has no hard bottom edge.
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to page.copy(alpha = 0.3f),
-                        0.55f to page.copy(alpha = 0.45f),
-                        1f to page,
-                    )
-                )
-        )
     }
 }
+
+private const val BACKDROP_VEIL = 0.2f

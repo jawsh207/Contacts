@@ -33,7 +33,7 @@ import com.vayunmathur.library.ui.ExperimentalMaterial3Api
 import com.vayunmathur.library.ui.IconButton
 import com.vayunmathur.library.ui.IconDelete
 import com.vayunmathur.library.ui.IconEdit
-import com.vayunmathur.library.ui.IconMoreVert
+import com.vayunmathur.library.ui.IconManageAccounts
 import com.vayunmathur.library.ui.IconMove
 import com.vayunmathur.library.ui.IconShare
 import com.vayunmathur.library.ui.IconStar
@@ -182,18 +182,26 @@ fun ContactDetailsScreen(
     DetailLazyColumn(
         title = "",
         onNavigateBack = if (showBackButton) actions::closeContact else null,
+        navigationIcon = if (showBackButton) {
+            { CircleBackButton(actions::closeContact) }
+        } else null,
+        // As in Google Contacts: star, edit and a manage-contact menu, each in a light circle.
         actions = {
             IconButton({
                 actions.saveContact(contact.copy(isFavorite = !contact.isFavorite))
             }) {
-                if (!contact.isFavorite) IconStarBorder(tint = MaterialTheme.colorScheme.onSurface)
-                else IconStar(tint = MaterialTheme.colorScheme.primary)
+                if (!contact.isFavorite) {
+                    CircleIcon { IconStarBorder(tint = MaterialTheme.colorScheme.onSurface) }
+                } else {
+                    CircleIcon(MaterialTheme.colorScheme.primaryContainer) {
+                        IconStar(tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
             }
             IconButton(onClick = { actions.editContact(contact.id) }) {
-                IconEdit()
+                CircleIcon { IconEdit() }
             }
-            // Like Google Contacts, only star and edit stay in the bar; the rest live in ⋮.
-            OverflowMenu(icon = { IconMoreVert() }) {
+            OverflowMenu(icon = { CircleIcon { IconManageAccounts() } }) {
                 Item(
                     text = stringResource(UiR.string.share),
                     leadingIcon = { IconShare() },

@@ -275,8 +275,6 @@
     <string name="no_highlights_yet">Nothing to highlight yet</string>
     <string name="no_highlights_yet_message">Star contacts to keep them here. Birthdays in the next 30 days show up here too.</string>
 
-    <!-- Contact page: title of the card holding phones, emails and addresses -->
-    <string name="contact_info">Contact info</string>
     <!-- Contact page overflow menu: pick this contact's ringtone -->
     <string name="set_ringtone">Set ringtone</string>
     <!-- Settings: label for the first/last name sort choice -->

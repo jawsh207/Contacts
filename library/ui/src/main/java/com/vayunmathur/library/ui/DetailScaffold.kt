@@ -143,11 +143,14 @@ fun DetailLazyColumn(
     scrollBehavior: TopAppBarScrollBehavior,
     bottomBar: @Composable () -> Unit = {},
     topBarColors: TopAppBarColors? = null,
+    /** Replaces the default back arrow, e.g. with one drawn in a container. */
+    navigationIcon: (@Composable () -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) = AppScaffold(
     title = title,
     modifier = modifier,
     onNavigateBack = onNavigateBack,
+    navigationIcon = navigationIcon,
     alignment = alignment,
     size = size,
     actions = actions,
