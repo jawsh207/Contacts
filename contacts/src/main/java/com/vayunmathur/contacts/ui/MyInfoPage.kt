@@ -58,8 +58,8 @@ import kotlinx.coroutines.withContext
 private val QR_SIZE = 240.dp
 
 /**
- * "Your info": the user's own card with a QR code others can scan to save it, plus Share and
- * an edit mode. Opens straight into editing when nothing has been filled in yet.
+ * "Your info": the user's own card (Android's Me profile) with a QR code others can scan to
+ * save it, plus Share and an edit mode. Opens straight into editing when the profile is empty.
  */
 @Composable
 fun MyInfoPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
@@ -194,6 +194,13 @@ private fun MyInfoEditor(initial: MyInfo, onCancel: () -> Unit, onSave: (MyInfo)
         item { InfoField(phone, { phone = it }, stringResource(R.string.phone), KeyboardType.Phone) }
         item { InfoField(email, { email = it }, stringResource(UiR.string.email), KeyboardType.Email) }
         item { InfoField(company, { company = it }, stringResource(R.string.company), KeyboardType.Text) }
+        item {
+            Text(
+                stringResource(R.string.your_info_profile_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
