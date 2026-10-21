@@ -1,10 +1,14 @@
 package com.vayunmathur.contacts.ui
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.data.Address
@@ -81,6 +85,10 @@ fun EditContactDetailGroups(
         expandOnEnter = true,
     )
 
+    // Space between groups: each group spaces its own rows, but without this a group's add
+    // button sits flush against the next group's first field, whose floating label then
+    // crowds it whenever that field has a value.
+    Spacer(Modifier.height(GROUP_GAP))
     val emailCtx = LocalContext.current
     FormDetailGroup(
         items = draft.emails,
@@ -107,6 +115,10 @@ fun EditContactDetailGroups(
         expandOnEnter = true,
     )
 
+    // Space between groups: each group spaces its own rows, but without this a group's add
+    // button sits flush against the next group's first field, whose floating label then
+    // crowds it whenever that field has a value.
+    Spacer(Modifier.height(GROUP_GAP))
     val addressCtx = LocalContext.current
     FormDetailGroup(
         items = draft.addresses,
@@ -145,3 +157,6 @@ internal fun getCountryFlagEmoji(phoneNumber: String): String {
         ""
     }
 }
+
+/** Gap between the phone, email and address groups in the editor. */
+private val GROUP_GAP = 20.dp
