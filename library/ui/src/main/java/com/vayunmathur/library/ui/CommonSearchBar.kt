@@ -44,13 +44,13 @@ fun CommonSearchBar(
         onSearch = { focusManager.clearFocus() },
         expanded = false,
         onExpandedChange = {},
-        // Filled, fully rounded container, matching Google Contacts' search bar. The input
-        // field draws no container of its own.
+        // Filled, fully rounded grey pill, darker than the page, matching Google Contacts'
+        // search bar. The input field draws no container of its own.
         modifier = modifier
             .fillMaxWidth()
             .padding(padding)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceBright),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         placeholder = { Text(placeholder) },
         leadingIcon = {
             IconSearch()

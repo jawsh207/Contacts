@@ -98,7 +98,8 @@ fun ContactItem(
                 modifier = itemModifier
                     .fillMaxWidth()
                     .background(rowContainerColor)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    // 64dp rows, as in Google Contacts.
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ContactAvatar(
@@ -130,7 +131,7 @@ fun ContactItem(
                             Text(
                                 text = part,
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
+                                fontWeight = FontWeight.Normal,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = if (sharedKey == null) Modifier
@@ -147,7 +148,7 @@ fun ContactItem(
                                 .ifBlank { contact.details.phoneNumbers.firstOrNull()?.number.orEmpty() }
                                 .ifBlank { contact.details.emails.firstOrNull()?.address.orEmpty() },
                             style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Normal,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

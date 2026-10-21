@@ -1,19 +1,12 @@
 package com.vayunmathur.contacts.ui
 
-import android.text.format.DateUtils
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vayunmathur.contacts.R
@@ -25,16 +18,11 @@ import com.vayunmathur.library.ui.EmptyState
 import com.vayunmathur.library.ui.ExperimentalMaterial3Api
 import com.vayunmathur.library.ui.IconStar
 import com.vayunmathur.library.ui.LazyListScaffold
-import com.vayunmathur.library.ui.ListItem
-import com.vayunmathur.library.ui.ListItemDefaults
 import com.vayunmathur.library.ui.LoadingState
-import com.vayunmathur.library.ui.MaterialTheme
-import com.vayunmathur.library.ui.Text
+import com.vayunmathur.library.ui.TopAppBar
 import com.vayunmathur.library.ui.appBarScrollBehavior
 import com.vayunmathur.library.util.NavBackStack
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -42,7 +30,7 @@ import kotlin.time.ExperimentalTime
 /** Binds [ContactViewModel] to the stateless [HighlightsScreen]. */
 @OptIn(ExperimentalTime::class)
 @Composable
-fun HighlightsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) {
+fun HighlightsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>, onSearch: () -> Unit = {}) {
     val contacts by viewModel.visibleContacts.collectAsStateWithLifecycle()
     val hasLoadedContacts by viewModel.hasLoadedContacts.collectAsStateWithLifecycle()
     val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
@@ -55,6 +43,7 @@ fun HighlightsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) 
         birthdays = birthdays,
         favorites = favorites,
         isLoading = !hasLoadedContacts,
+        onSearch = onSearch,
         actions = object : ContactsActions by viewModel {
             override fun openContact(contact: Contact) {
                 backStack.add(Route.ContactDetail(contact.id))
@@ -63,7 +52,10 @@ fun HighlightsPage(viewModel: ContactViewModel, backStack: NavBackStack<Route>) 
     )
 }
 
-/** Google Contacts–style Highlights: upcoming birthdays, then starred contacts. */
+/**
+ * Google Contacts–style Highlights: the search bar, a strip of favorites, then "For you" cards
+ * for upcoming birthdays.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HighlightsScreen(
@@ -71,12 +63,19 @@ fun HighlightsScreen(
     favorites: List<Contact>,
     isLoading: Boolean,
     actions: ContactsActions,
+    onSearch: () -> Unit = {},
 ) {
+    val scrollBehavior = appBarScrollBehavior()
     LazyListScaffold(
-        title = stringResource(R.string.highlights),
+        topBar = {
+            TopAppBar(
+                title = { SearchBarButton(onSearch, Modifier.padding(bottom = 8.dp)) },
+                scrollBehavior = scrollBehavior,
+            )
+        },
         horizontalPadding = 16.dp,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-        scrollBehavior = appBarScrollBehavior(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        scrollBehavior = scrollBehavior,
     ) {
         if (birthdays.isEmpty() && favorites.isEmpty()) {
             item(key = "highlights-empty") {
@@ -94,85 +93,16 @@ fun HighlightsScreen(
             return@LazyListScaffold
         }
 
-        if (birthdays.isNotEmpty()) {
-            item(key = "birthdays-header") { HighlightsSectionHeader(stringResource(R.string.upcoming_birthdays)) }
-            item(key = "birthdays") {
-                GroupedContactSection(count = birthdays.size) { i ->
-                    BirthdayRow(birthdays[i], actions)
-                }
-            }
-        }
-
         if (favorites.isNotEmpty()) {
             item(key = "favorites-header") { HighlightsSectionHeader(stringResource(R.string.favorites)) }
-            item(key = "favorites") {
-                GroupedContactSection(count = favorites.size) { i ->
-                    val contact = favorites[i]
-                    ContactItem(
-                        contact = contact,
-                        isSelected = false,
-                        showAccountLabels = false,
-                        decodePhoto = actions::decodePhoto,
-                        embeddedInCard = true,
-                        onClick = { actions.openContact(contact) },
-                    )
-                }
+            item(key = "favorites") { FavoritesRow(favorites, actions) }
+        }
+
+        if (birthdays.isNotEmpty()) {
+            item(key = "for-you-header") { HighlightsSectionHeader(stringResource(R.string.for_you)) }
+            birthdays.forEach { birthday ->
+                item(key = "birthday-${birthday.contact.id}") { BirthdayCard(birthday, actions) }
             }
         }
     }
-}
-
-@Composable
-private fun HighlightsSectionHeader(text: String) {
-    Text(
-        text = text,
-        modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 8.dp),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
-private fun BirthdayRow(birthday: UpcomingBirthday, actions: ContactsActions) {
-    val whenText = when (birthday.daysAway) {
-        0 -> stringResource(R.string.birthday_today)
-        1 -> stringResource(R.string.birthday_tomorrow)
-        else -> "${shortDate(birthday.date)} · " +
-            pluralStringResource(R.plurals.birthday_in_days, birthday.daysAway, birthday.daysAway)
-    }
-    val ageText = birthday.turningAge?.let { stringResource(R.string.birthday_turns_age, it) }
-    ListItem(
-        modifier = Modifier.clickable { actions.openContact(birthday.contact) },
-        supportingContent = {
-            Text(
-                text = listOfNotNull(whenText, ageText).joinToString(" · "),
-                color = if (birthday.daysAway == 0) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        leadingContent = {
-            ContactAvatar(
-                contact = birthday.contact,
-                decodePhoto = actions::decodePhoto,
-                modifier = Modifier.size(40.dp),
-            )
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    ) {
-        Text(birthday.contact.name.value, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-/** "Mar 15" in the user's locale, without the year. */
-@OptIn(ExperimentalTime::class)
-@Composable
-private fun shortDate(date: LocalDate): String {
-    val context = LocalContext.current
-    val millis = date.atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-    return DateUtils.formatDateTime(
-        context,
-        millis,
-        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NO_YEAR or DateUtils.FORMAT_ABBREV_MONTH,
-    )
 }

@@ -13,8 +13,9 @@ fun LetterHeader(letter: Char, modifier: Modifier = Modifier) {
     Text(
         text = letter.toString(),
         modifier = modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        // Blue, as in Google Contacts.
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.primary
     )
 }

@@ -304,6 +304,11 @@ import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Directions
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.filled.Assistant
+import androidx.compose.material.icons.outlined.Assistant
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.outlined.Book
 
 /**
  * App-facing icon set. Every shared icon is rendered from `material-icons-extended`
@@ -1752,3 +1757,17 @@ fun IconLocationOnOutlined(modifier: Modifier = Modifier, tint: Color = LocalCon
 @Composable
 fun IconDirectionsOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
     AppIcon(Icons.Outlined.Directions, "Directions", modifier, tint)
+
+// --- Bottom navigation (Google Contacts style: outlined, filled when selected) ---
+
+@Composable
+fun IconPersonOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.Person, "Contacts", modifier, tint)
+
+@Composable
+fun IconHighlights(selected: Boolean, modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(if (selected) Icons.Filled.Assistant else Icons.Outlined.Assistant, "Highlights", modifier, tint)
+
+@Composable
+fun IconOrganize(selected: Boolean, modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(if (selected) Icons.Filled.Book else Icons.Outlined.Book, "Organize", modifier, tint)
