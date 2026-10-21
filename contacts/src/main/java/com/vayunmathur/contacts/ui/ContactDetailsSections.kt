@@ -27,11 +27,11 @@ import com.vayunmathur.contacts.data.formatDisplay
 import com.vayunmathur.contacts.util.ContactPlatforms
 import com.vayunmathur.library.ui.ExternalIntents
 import com.vayunmathur.library.ui.IconCake
-import com.vayunmathur.library.ui.IconCall
-import com.vayunmathur.library.ui.IconChat
-import com.vayunmathur.library.ui.IconDirections
+import com.vayunmathur.library.ui.IconCallOutlined
+import com.vayunmathur.library.ui.IconChatBubbleOutlined
+import com.vayunmathur.library.ui.IconDirectionsOutlined
 import com.vayunmathur.library.ui.IconEvent
-import com.vayunmathur.library.ui.IconLocationOn
+import com.vayunmathur.library.ui.IconLocationOnOutlined
 import com.vayunmathur.library.ui.IconMail
 import com.vayunmathur.library.ui.ListItem
 import com.vayunmathur.library.ui.ListItemDefaults
@@ -62,10 +62,10 @@ internal fun PhonesSection(
             }
 
             DetailItem(
-                icon = { IconCall() },
+                icon = { IconCallOutlined() },
                 data = formatPhoneNumber(phone.number),
                 label = phone.typeString(context),
-                trailingIcon = { IconChat() },
+                trailingIcon = { IconChatBubbleOutlined() },
                 onTrailingIconClick = {
                     if (platforms.hasAnyPlatform) {
                         showSmsDropdown = true
@@ -134,10 +134,10 @@ internal fun AddressesSection(
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         details.addresses.forEachIndexed { index, address ->
             DetailItem(
-                icon = { IconLocationOn() },
+                icon = { IconLocationOnOutlined() },
                 data = address.formattedAddress,
                 label = address.typeString(context),
-                trailingIcon = { IconDirections() },
+                trailingIcon = { IconDirectionsOutlined() },
                 onTrailingIconClick = {
                     ExternalIntents.openMap(context, address.formattedAddress)
                 },

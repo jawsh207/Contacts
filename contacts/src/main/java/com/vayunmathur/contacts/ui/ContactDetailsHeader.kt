@@ -30,8 +30,8 @@ import com.vayunmathur.library.ui.DropdownMenu
 import com.vayunmathur.library.ui.DropdownMenuItem
 import com.vayunmathur.library.ui.ExternalIntents
 import com.vayunmathur.library.ui.IconCall
-import com.vayunmathur.library.ui.IconMail
-import com.vayunmathur.library.ui.IconSms
+import com.vayunmathur.library.ui.IconEmailFilled
+import com.vayunmathur.library.ui.IconChatBubble
 import com.vayunmathur.library.ui.IconVideoCamera
 import com.vayunmathur.library.ui.MaterialTheme
 import com.vayunmathur.library.ui.R as UiR
@@ -54,9 +54,9 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
             contact = contact,
             decodePhoto = decodePhoto,
             modifier = Modifier
-                .size(112.dp)
+                .size(PROFILE_AVATAR_SIZE)
                 .sharedContent("contact-avatar-${contact.id}"),
-            initialsStyle = MaterialTheme.typography.headlineLarge,
+            initialsStyle = MaterialTheme.typography.displayLarge,
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -88,7 +88,7 @@ fun ProfileHeader(contact: Contact, decodePhoto: ((String) -> android.graphics.B
                 Text(
                     text = text,
                     // Regular weight, as in Google Contacts: the size carries the emphasis.
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Normal,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.sharedText("contact-$slot-${contact.id}"),
@@ -199,7 +199,7 @@ fun ActionButtonsRow(
             )
             ActionButton(
                 modifier = Modifier.weight(1f),
-                icon = { IconSms() },
+                icon = { IconChatBubble() },
                 label = stringResource(R.string.action_message),
                 action = {
                     if (phoneNumbers.size == 1 && !platforms.hasAnyPlatform) {
@@ -332,7 +332,7 @@ fun ActionButtonsRow(
         if (email != null) {
             ActionButton(
                 modifier = Modifier.weight(1f),
-                icon = { IconMail() },
+                icon = { IconEmailFilled() },
                 label = stringResource(UiR.string.email),
             ) {
                 val intent = Intent(Intent.ACTION_SENDTO)

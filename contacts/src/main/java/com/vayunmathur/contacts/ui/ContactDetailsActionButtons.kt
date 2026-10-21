@@ -84,7 +84,7 @@ fun ActionButton(
                 .fillMaxWidth()
                 .height(56.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondaryContainer,
+            color = MaterialTheme.colorScheme.primaryContainer,
         ) {
             Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
                 Box(

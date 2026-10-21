@@ -21,7 +21,7 @@ internal fun ContactDetails.hasContactInfo(): Boolean =
     phoneNumbers.isNotEmpty() || emails.isNotEmpty() || addresses.isNotEmpty()
 
 /**
- * Google Contacts' "Contact info" card: one titled card holding every phone number, email and
+ * Google Contacts' contact info card: one untitled card holding every phone number, email and
  * address, rather than a separate card per kind. The rows share the card's colour, so the card
  * reads as a single surface; their own shapes only show in the press ripple.
  */
@@ -33,14 +33,14 @@ internal fun ContactInfoSection(
 ) {
     val phones = details.phoneNumbers.size
     val emails = details.emails.size
-    // Indexed as one group (the title counts as the first segment), so a row's ripple is
-    // rounded only where the row meets the card's own corners.
-    val total = 1 + phones + emails + details.addresses.size
-    GroupedSection(title = stringResource(R.string.contact_info)) {
-        if (phones > 0) PhonesSection(details, platforms, arriving, startIndex = 1, totalCount = total)
-        if (emails > 0) EmailsSection(details, arriving, startIndex = 1 + phones, totalCount = total)
+    // Indexed as one group, so a row's ripple is rounded only where the row meets the card's
+    // own corners.
+    val total = phones + emails + details.addresses.size
+    GroupedSection(title = null) {
+        if (phones > 0) PhonesSection(details, platforms, arriving, startIndex = 0, totalCount = total)
+        if (emails > 0) EmailsSection(details, arriving, startIndex = phones, totalCount = total)
         if (details.addresses.isNotEmpty()) {
-            AddressesSection(details, startIndex = 1 + phones + emails, totalCount = total)
+            AddressesSection(details, startIndex = phones + emails, totalCount = total)
         }
     }
 }

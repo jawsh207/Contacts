@@ -296,6 +296,14 @@ import androidx.compose.ui.unit.dp
 import com.vayunmathur.library.util.NavBackStack
 import com.vayunmathur.library.util.NavKey
 import kotlin.math.sqrt
+import androidx.compose.material.icons.outlined.ManageAccounts
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Directions
 
 /**
  * App-facing icon set. Every shared icon is rendered from `material-icons-extended`
@@ -1710,3 +1718,37 @@ fun IconClock(modifier: Modifier = Modifier, tint: Color = LocalContentColor.cur
 @Composable
 fun IconLabel(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
     AppIcon(Icons.AutoMirrored.Filled.Label, "Label", modifier, tint)
+
+// --- Contact page (Google Contacts style) ---
+
+@Composable
+fun IconManageAccounts(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.ManageAccounts, "Manage contact", modifier, tint)
+
+@Composable
+fun IconChatBubble(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Filled.ChatBubble, "Message", modifier, tint)
+
+@Composable
+fun IconChatBubbleOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.ChatBubbleOutline, "Message", modifier, tint)
+
+@Composable
+fun IconEmailFilled(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Filled.Email, "Email", modifier, tint)
+
+@Composable
+fun IconCallOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.Call, "Call", modifier, tint)
+
+@Composable
+fun IconVideoCameraOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.Videocam, "Video", modifier, tint)
+
+@Composable
+fun IconLocationOnOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.LocationOn, "Location", modifier, tint)
+
+@Composable
+fun IconDirectionsOutlined(modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) =
+    AppIcon(Icons.Outlined.Directions, "Directions", modifier, tint)
