@@ -21,8 +21,10 @@ GitHub Actions builds two kinds of APK, each signed with its own key:
 | **Test build** | every push to `main`, PRs, manual runs | "Contacts Dev" (`app.people.contacts.dev`) | `contacts-dev-apk` on the run page |
 | **Release** | pushing to the `release` branch (`git push origin main:release`), or a version tag such as `v1.0` | "Contacts" (`app.people.contacts`) | attached to a GitHub Release |
 
-A release is tagged with the version name in `version.txt` (line 2; line 1 is the version code,
-which must go up with every release). Because they use different app ids, a test build and a release install side by side. Each run's
+A release is tagged with the version name on line 2 of `version.txt` (line 1 is the version
+code, which must go up with every release), and its notes come from that version's section of
+`CHANGELOG.md`. Because they use different app ids, a test build and a release install side by
+side. Each run's
 page shows the APK's signing certificate SHA-256, so you can check it never changes.
 
 To build locally (JDK 21 and the Android SDK required):
