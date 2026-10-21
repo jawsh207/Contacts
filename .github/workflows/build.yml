@@ -113,7 +113,15 @@ jobs:
 
       - name: Read version
         if: env.IS_RELEASE == 'true'
-        run: echo "RELEASE_TAG=v$(sed -n 2p version.txt | tr -d '[:space:]')" >> "$GITHUB_ENV"
+        run: |
+          VERSION=$(sed -n 2p version.txt | tr -d '[:space:]')
+          echo "RELEASE_TAG=v$VERSION" >> "$GITHUB_ENV"
+          # This version's section of CHANGELOG.md becomes the release notes.
+          awk -v h="## $VERSION" '$0==h{f=1;next} /^## /{f=0} f' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          if [ ! -s "$RUNNER_TEMP/notes.md" ]; then
+            echo "::error::CHANGELOG.md has no '## $VERSION' section for this release."
+            exit 1
+          fi
 
       # Creates the tag when it doesn't exist yet (a push to the release branch).
       - name: Publish GitHub Release
@@ -124,4 +132,4 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Contacts ${{ env.RELEASE_TAG }}
           files: contacts/build/outputs/apk/release/*.apk
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/notes.md
