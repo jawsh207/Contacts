@@ -314,4 +314,6 @@
     <string name="your_info_remove_photo">Remove photo</string>
     <!-- Your info editor: where the info is saved -->
     <string name="your_info_profile_note">Saved to your Android profile (\"Me\"), which other apps with access to your contacts can also read.</string>
+    <!-- Name of the calendar that birthday and anniversary sync creates -->
+    <string name="calendar_name">Contact Birthdays</string>
 </resources>
