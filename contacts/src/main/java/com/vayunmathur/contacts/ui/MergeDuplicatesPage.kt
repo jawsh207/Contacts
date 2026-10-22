@@ -160,7 +160,7 @@ private fun DuplicateRow(contact: Contact, decodePhoto: (String) -> android.grap
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ContactAvatar(contact = contact, decodePhoto = decodePhoto, modifier = Modifier.size(40.dp))
+        ContactAvatar(contact = contact, decodePhoto = decodePhoto, modifier = Modifier.size(48.dp))
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(contact.name.value, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
