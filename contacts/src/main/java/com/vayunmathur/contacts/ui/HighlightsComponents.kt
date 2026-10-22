@@ -100,11 +100,17 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
-        // One column, as before: photo, title and date with the cake on their right, then the
-        // buttons across the full width. The cake is sized from the card's width.
+        // Photo, title and date across the full width, so long names fit; then Call and Message,
+        // with the cake centred in the space to their right. Without a number there are no
+        // buttons, so the cake sits beside the title instead. Sized from the card's width.
         BoxWithConstraints(Modifier.padding(16.dp)) {
             val cakeBox = maxWidth * CAKE_FRACTION
             val cakeGlyph = with(LocalDensity.current) { (cakeBox * CAKE_GLYPH_FRACTION).toSp() }
+            val cake: @Composable (Modifier) -> Unit = { modifier ->
+                Box(modifier.size(cakeBox), contentAlignment = Alignment.Center) {
+                    Text(text = "🎂", fontSize = cakeGlyph, lineHeight = cakeGlyph, maxLines = 1)
+                }
+            }
             Column {
                 Row(verticalAlignment = Alignment.Top) {
                     ContactAvatar(
@@ -121,14 +127,13 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                         Spacer(Modifier.height(4.dp))
                         Text(birthdayWhenText(birthday), style = MaterialTheme.typography.bodyLarge)
                     }
-                    // A large cake on the right, where Google's card has its party illustration.
-                    Box(Modifier.padding(start = 8.dp).size(cakeBox), contentAlignment = Alignment.Center) {
-                        Text(text = "🎂", fontSize = cakeGlyph, lineHeight = cakeGlyph, maxLines = 1)
-                    }
+                    if (number == null) cake(Modifier.padding(start = 8.dp))
                 }
                 if (number != null) {
-                    Spacer(Modifier.height(12.dp))
-                    BirthdayCardButtons(context, number)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        BirthdayCardButtons(context, number)
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { cake(Modifier) }
+                    }
                 }
             }
         }
