@@ -19,7 +19,6 @@ import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -51,7 +50,7 @@ private val FAVORITE_AVATAR_SIZE = 82.dp
  * repeating after the seventh.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val FAVORITE_SHAPES: List<Shape> by lazy {
+private val FAVORITE_SHAPES by lazy {
     listOf(
         MaterialShapes.Cookie9Sided,
         MaterialShapes.Sunny,
@@ -60,7 +59,7 @@ private val FAVORITE_SHAPES: List<Shape> by lazy {
         MaterialShapes.Arch,
         MaterialShapes.Gem,
         MaterialShapes.Puffy,
-    ).map { it.toShape() }
+    )
 }
 
 /** A section heading on the Highlights tab ("Favorites", "For you"). */
@@ -75,6 +74,7 @@ internal fun HighlightsSectionHeader(text: String) {
 }
 
 /** Google Contacts' favorites strip: large shaped photos in a row with names underneath. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FavoritesRow(favorites: List<Contact>, actions: ContactsActions) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -90,7 +90,7 @@ internal fun FavoritesRow(favorites: List<Contact>, actions: ContactsActions) {
                     decodePhoto = actions::decodePhoto,
                     modifier = Modifier.size(FAVORITE_AVATAR_SIZE),
                     initialsStyle = MaterialTheme.typography.headlineLarge,
-                    shape = FAVORITE_SHAPES[index % FAVORITE_SHAPES.size],
+                    shape = FAVORITE_SHAPES[index % FAVORITE_SHAPES.size].toShape(),
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
