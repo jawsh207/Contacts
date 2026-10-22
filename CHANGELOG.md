@@ -2,6 +2,11 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2.2
+
+**Contact photos**
+- Contact photos in the contacts list, Highlights Recents and Merge duplicates are larger (48dp, up from 40dp), so contacts list rows are a little taller.
+
 ## 1.2.1
 
 **Highlights tab**
