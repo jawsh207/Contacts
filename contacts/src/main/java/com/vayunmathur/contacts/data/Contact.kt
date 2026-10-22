@@ -259,7 +259,12 @@ data class Contact(
     val isFavorite: Boolean,
     val details: ContactDetails,
     /** `null` rings with the system default; [RINGTONE_SILENT] suppresses the ringtone. */
-    val customRingtone: String? = null
+    val customRingtone: String? = null,
+    /**
+     * The aggregate contact this raw contact belongs to (ContactsContract.Contacts._ID); 0 when
+     * not known yet, e.g. a contact still being created.
+     */
+    val aggregateId: Long = 0,
 ) {
     val name: Name
         get() = details.names.firstOrNull() ?: Name(0, "", "", "", "", "")
@@ -505,7 +510,8 @@ data class Contact(
             val isFavorite: Boolean,
             val accountName: String?,
             val accountType: String?,
-            val customRingtone: String?
+            val customRingtone: String?,
+            val aggregateId: Long,
         )
 
         /**
@@ -554,6 +560,7 @@ data class Contact(
                 cursor.getColumnIndexOrThrow(ContactsContract.RawContacts.ACCOUNT_TYPE)
             val ringtoneIdx =
                 cursor.getColumnIndexOrThrow(ContactsContract.RawContacts.CUSTOM_RINGTONE)
+            val aggregateIdx = cursor.getColumnIndexOrThrow(ContactsContract.RawContacts.CONTACT_ID)
 
             while (cursor.moveToNext()) {
                 rawContacts += RawContactInfo(
@@ -562,7 +569,8 @@ data class Contact(
                     isFavorite = cursor.getInt(starredIdx) == 1,
                     accountName = cursor.getStringOrNull(accountNameIdx),
                     accountType = cursor.getStringOrNull(accountTypeIdx),
-                    customRingtone = ringtoneFromProvider(cursor.getStringOrNull(ringtoneIdx))
+                    customRingtone = ringtoneFromProvider(cursor.getStringOrNull(ringtoneIdx)),
+                    aggregateId = cursor.getLong(aggregateIdx),
                 )
             }
         }
@@ -576,6 +584,7 @@ data class Contact(
                 ContactsContract.RawContacts.ACCOUNT_NAME,
                 ContactsContract.RawContacts.ACCOUNT_TYPE,
                 ContactsContract.RawContacts.CUSTOM_RINGTONE,
+                ContactsContract.RawContacts.CONTACT_ID,
             )
 
             val rawContacts = mutableListOf<RawContactInfo>()
@@ -609,7 +618,8 @@ data class Contact(
                     raw.accountName,
                     raw.isFavorite,
                     details,
-                    raw.customRingtone
+                    raw.customRingtone,
+                    raw.aggregateId,
                 )
             }
         }
