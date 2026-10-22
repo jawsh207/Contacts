@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.R
 import com.vayunmathur.library.ui.IconMergeDuplicates
@@ -24,14 +25,18 @@ import com.vayunmathur.library.ui.Text
 /** Height of the "no labels" placeholder, so the Fix & manage section stays on screen below it. */
 internal val EMPTY_LABELS_HEIGHT = 240.dp
 
-/** A section heading on the Organize tab ("Labels", "Fix & manage"). */
+/**
+ * A section heading on the Organize tab ("Labels", "Fix & manage"), in the theme's primary
+ * colour at Medium weight like the Contacts tab's "Favorites".
+ */
 @Composable
 internal fun OrganizeSectionHeader(text: String) {
     Text(
         text = text,
         modifier = Modifier.padding(start = 8.dp, top = 24.dp, bottom = 12.dp),
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.primary,
     )
 }
 

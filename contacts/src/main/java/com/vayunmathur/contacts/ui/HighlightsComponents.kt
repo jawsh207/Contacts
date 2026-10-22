@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,14 +41,18 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlin.time.ExperimentalTime
 
-/** A section heading on the Highlights tab ("Favorites", "For you"). */
+/**
+ * A section heading on the Highlights tab ("Favorites", "For you", "Recents"). [accent] draws it
+ * in the theme's primary colour at Medium weight, like the Contacts tab's "Favorites".
+ */
 @Composable
-internal fun HighlightsSectionHeader(text: String) {
+internal fun HighlightsSectionHeader(text: String, accent: Boolean = false) {
     Text(
         text = text,
         modifier = Modifier.padding(start = 8.dp, top = 24.dp, bottom = 16.dp),
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = if (accent) FontWeight.Medium else null,
+        color = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
     )
 }
 
