@@ -132,7 +132,15 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                 if (number != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BirthdayCardButtons(context, number)
-                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { cake(Modifier) }
+                        // The cake fills the whole space right of the buttons: as wide as that
+                        // space (up to CAKE_MAX), as tall as it is wide, glyph centred in it.
+                        BoxWithConstraints(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            val side = minOf(maxWidth, CAKE_MAX)
+                            val glyph = with(LocalDensity.current) { (side * CAKE_GLYPH_FRACTION).toSp() }
+                            Box(Modifier.size(side), contentAlignment = Alignment.Center) {
+                                Text(text = "🎂", fontSize = glyph, lineHeight = glyph, maxLines = 1)
+                            }
+                        }
                     }
                 }
             }
@@ -140,7 +148,10 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
     }
 }
 
-/** Share of the card's width the cake takes. */
+/** Largest the cake gets beside the buttons, so it stays in proportion on wide screens. */
+private val CAKE_MAX = 160.dp
+
+/** Share of the card's width the cake takes beside the title, for a contact with no number. */
 private const val CAKE_FRACTION = 0.25f
 
 /** The cake glyph's size within its square, leaving room for the emoji's own side bearings. */
