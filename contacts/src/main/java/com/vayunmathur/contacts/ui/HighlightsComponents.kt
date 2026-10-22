@@ -42,17 +42,17 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlin.time.ExperimentalTime
 
 /**
- * A section heading on the Highlights tab ("Favorites", "For you", "Recents"). [accent] draws it
- * in the theme's primary colour at Medium weight, like the Contacts tab's "Favorites".
+ * A section heading on the Highlights tab ("Favorites", "For you", "Recents"), in the theme's
+ * primary colour at Medium weight like the Contacts tab's "Favorites".
  */
 @Composable
-internal fun HighlightsSectionHeader(text: String, accent: Boolean = false) {
+internal fun HighlightsSectionHeader(text: String) {
     Text(
         text = text,
         modifier = Modifier.padding(start = 8.dp, top = 24.dp, bottom = 16.dp),
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = if (accent) FontWeight.Medium else null,
-        color = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.primary,
     )
 }
 
