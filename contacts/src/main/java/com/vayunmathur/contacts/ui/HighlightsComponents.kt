@@ -3,6 +3,9 @@ package com.vayunmathur.contacts.ui
 import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -96,48 +100,67 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
-                ContactAvatar(
-                    contact = contact,
-                    decodePhoto = actions::decodePhoto,
-                    modifier = Modifier.size(48.dp),
-                )
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.birthday_card_title, contact.name.value),
-                        style = MaterialTheme.typography.titleLarge,
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f - CAKE_FRACTION)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    ContactAvatar(
+                        contact = contact,
+                        decodePhoto = actions::decodePhoto,
+                        modifier = Modifier.size(48.dp),
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(birthdayWhenText(birthday), style = MaterialTheme.typography.bodyLarge)
-                }
-                // A large cake on the right, where Google's card has its party illustration.
-                Text(
-                    text = "🎂",
-                    style = MaterialTheme.typography.displayMedium,
-                    modifier = Modifier.padding(start = 12.dp),
-                )
-            }
-            if (number != null) {
-                Spacer(Modifier.height(16.dp))
-                val colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { placeCall(context, number) }, colors = colors) {
-                        IconCallOutlined(Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(UiR.string.call))
-                    }
-                    Button(onClick = { ExternalIntents.sendSms(context, number) }, colors = colors) {
-                        IconChatBubbleOutlined(Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.action_message))
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.birthday_card_title, contact.name.value),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(birthdayWhenText(birthday), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
+                if (number != null) {
+                    Spacer(Modifier.height(16.dp))
+                    BirthdayCardButtons(context, number)
+                }
             }
+            // The cake fills the right side, where Google's card has its party illustration.
+            BoxWithConstraints(
+                modifier = Modifier.weight(CAKE_FRACTION).aspectRatio(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                val cakeSize = with(LocalDensity.current) { (maxWidth * CAKE_GLYPH_FRACTION).toSp() }
+                Text(text = "🎂", fontSize = cakeSize, lineHeight = cakeSize, maxLines = 1)
+            }
+        }
+    }
+}
+
+/** Share of the card's width the cake takes. */
+private const val CAKE_FRACTION = 0.34f
+
+/** The cake glyph's size within its square, leaving room for the emoji's own side bearings. */
+private const val CAKE_GLYPH_FRACTION = 0.8f
+
+/** Call and Message, wrapping onto a second line when the card is too narrow for both. */
+@Composable
+private fun BirthdayCardButtons(context: android.content.Context, number: String) {
+    val colors = ButtonDefaults.buttonColors(
+        containerColor = MaterialTheme.colorScheme.tertiary,
+        contentColor = MaterialTheme.colorScheme.onTertiary,
+    )
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Button(onClick = { placeCall(context, number) }, colors = colors) {
+            IconCallOutlined(Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(UiR.string.call))
+        }
+        Button(onClick = { ExternalIntents.sendSms(context, number) }, colors = colors) {
+            IconChatBubbleOutlined(Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.action_message))
         }
     }
 }
