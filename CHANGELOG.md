@@ -2,6 +2,14 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2.3
+
+**Highlights and Organize tabs**
+- Section headings (Favorites, For you and Recents on Highlights; Labels and Fix & manage on Organize) now use your theme colour, like Favorites on the Contacts tab.
+
+**Birthday cards**
+- A large cake now fills the right side of each card, with the photo, name, date and Call and Message buttons beside it. On narrow screens the buttons wrap onto two lines.
+
 ## 1.2.2
 
 **Contact photos**
