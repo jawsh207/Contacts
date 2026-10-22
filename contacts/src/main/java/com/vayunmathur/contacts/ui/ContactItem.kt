@@ -98,7 +98,7 @@ fun ContactItem(
                 modifier = itemModifier
                     .fillMaxWidth()
                     .background(rowContainerColor)
-                    // 64dp rows, as in Google Contacts.
+                    // 72dp rows: a 48dp photo with 12dp above and below.
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -106,7 +106,7 @@ fun ContactItem(
                     contact,
                     decodePhoto,
                     Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .then(
                             if (sharedKey == null) Modifier
                             else Modifier.sharedContent("contact-avatar-$sharedKey")
