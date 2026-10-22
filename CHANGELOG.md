@@ -2,6 +2,11 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2.1
+
+**Highlights tab**
+- Favorites now appear in Material 3 Expressive shapes (cookie, sunny, clover, pentagon, arch, gem and puffy) instead of circles, matching the Dialtone dialer. Each person keeps the same shape and colour, and photos fill the shape.
+
 ## 1.2
 
 **Highlights tab**
