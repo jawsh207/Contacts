@@ -2,6 +2,11 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2.4
+
+**Birthday cards**
+- The name and date now use the full width of the card, so longer names fit, with Call and Message underneath. The cake fills the empty space to the right of the buttons, and the card is back to its usual height.
+
 ## 1.2.3
 
 **Highlights and Organize tabs**
