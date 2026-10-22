@@ -136,7 +136,7 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
 }
 
 /** Share of the card's width the cake takes. */
-private const val CAKE_FRACTION = 0.34f
+private const val CAKE_FRACTION = 0.25f
 
 /** The cake glyph's size within its square, leaving room for the emoji's own side bearings. */
 private const val CAKE_GLYPH_FRACTION = 0.8f
