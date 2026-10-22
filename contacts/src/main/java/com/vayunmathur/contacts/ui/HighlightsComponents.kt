@@ -3,9 +3,9 @@ package com.vayunmathur.contacts.ui
 import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -100,8 +100,12 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f - CAKE_FRACTION)) {
+        // One column, as before: photo, title and date with the cake on their right, then the
+        // buttons across the full width. The cake is sized from the card's width.
+        BoxWithConstraints(Modifier.padding(16.dp)) {
+            val cakeBox = maxWidth * CAKE_FRACTION
+            val cakeGlyph = with(LocalDensity.current) { (cakeBox * CAKE_GLYPH_FRACTION).toSp() }
+            Column {
                 Row(verticalAlignment = Alignment.Top) {
                     ContactAvatar(
                         contact = contact,
@@ -109,7 +113,7 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                         modifier = Modifier.size(48.dp),
                     )
                     Spacer(Modifier.width(16.dp))
-                    Column {
+                    Column(Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.birthday_card_title, contact.name.value),
                             style = MaterialTheme.typography.titleLarge,
@@ -117,19 +121,15 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                         Spacer(Modifier.height(4.dp))
                         Text(birthdayWhenText(birthday), style = MaterialTheme.typography.bodyLarge)
                     }
+                    // A large cake on the right, where Google's card has its party illustration.
+                    Box(Modifier.padding(start = 8.dp).size(cakeBox), contentAlignment = Alignment.Center) {
+                        Text(text = "🎂", fontSize = cakeGlyph, lineHeight = cakeGlyph, maxLines = 1)
+                    }
                 }
                 if (number != null) {
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
                     BirthdayCardButtons(context, number)
                 }
-            }
-            // The cake fills the right side, where Google's card has its party illustration.
-            BoxWithConstraints(
-                modifier = Modifier.weight(CAKE_FRACTION).aspectRatio(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                val cakeSize = with(LocalDensity.current) { (maxWidth * CAKE_GLYPH_FRACTION).toSp() }
-                Text(text = "🎂", fontSize = cakeSize, lineHeight = cakeSize, maxLines = 1)
             }
         }
     }
