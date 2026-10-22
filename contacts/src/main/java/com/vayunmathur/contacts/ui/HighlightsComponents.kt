@@ -3,9 +3,9 @@ package com.vayunmathur.contacts.ui
 import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -101,12 +100,8 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
-        // Photo, title and date across the full width, so long names fit; then Call and Message,
-        // with the cake centred in the empty space to their right. Without a number there are no
-        // buttons, so the cake sits beside the title instead. Either way the cake only fills
-        // space the card already has; it never makes the card taller.
-        Box(Modifier.padding(CARD_PADDING)) {
-            Column {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f - CAKE_FRACTION)) {
                 Row(verticalAlignment = Alignment.Top) {
                     ContactAvatar(
                         contact = contact,
@@ -114,7 +109,7 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                         modifier = Modifier.size(48.dp),
                     )
                     Spacer(Modifier.width(16.dp))
-                    Column(Modifier.weight(1f)) {
+                    Column {
                         Text(
                             text = stringResource(R.string.birthday_card_title, contact.name.value),
                             style = MaterialTheme.typography.titleLarge,
@@ -122,57 +117,29 @@ internal fun BirthdayCard(birthday: UpcomingBirthday, actions: ContactsActions) 
                         Spacer(Modifier.height(4.dp))
                         Text(birthdayWhenText(birthday), style = MaterialTheme.typography.bodyLarge)
                     }
-                    if (number == null) {
-                        Box(Modifier.padding(start = 8.dp).size(TITLE_HEIGHT), contentAlignment = Alignment.Center) {
-                            CakeGlyph(TITLE_HEIGHT)
-                        }
-                    }
                 }
                 if (number != null) {
-                    Spacer(Modifier.height(BUTTONS_GAP))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        BirthdayCardButtons(context, number)
-                        // The cake fills the empty space right of the buttons without making the
-                        // card any taller: its box is only as tall as the buttons, and the glyph
-                        // overflows it into the gap above and the card's padding below.
-                        BoxWithConstraints(
-                            Modifier.weight(1f).height(BUTTON_HEIGHT),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CakeGlyph(minOf(maxWidth, BUTTON_HEIGHT + BUTTONS_GAP + CARD_PADDING))
-                        }
-                    }
+                    Spacer(Modifier.height(16.dp))
+                    BirthdayCardButtons(context, number)
                 }
+            }
+            // The cake fills the right side, where Google's card has its party illustration.
+            BoxWithConstraints(
+                modifier = Modifier.weight(CAKE_FRACTION).aspectRatio(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                val cakeSize = with(LocalDensity.current) { (maxWidth * CAKE_GLYPH_FRACTION).toSp() }
+                Text(text = "🎂", fontSize = cakeSize, lineHeight = cakeSize, maxLines = 1)
             }
         }
     }
 }
 
-private val BUTTON_HEIGHT = 40.dp
-private val BUTTONS_GAP = 16.dp
-private val CARD_PADDING = 16.dp
+/** Share of the card's width the cake takes. */
+private const val CAKE_FRACTION = 0.25f
 
-/** Height of the title and date beside the photo. */
-private val TITLE_HEIGHT = 56.dp
-
-/** The cake glyph's size within the space it fills, leaving a little room at the edges. */
-private const val CAKE_GLYPH_FRACTION = 0.9f
-
-/**
- * The cake, sized to fill a square [space] wide, drawn centred on its box and allowed to overflow
- * it so it doesn't change the layout's height.
- */
-@Composable
-private fun CakeGlyph(space: androidx.compose.ui.unit.Dp) {
-    val glyph = with(LocalDensity.current) { (space * CAKE_GLYPH_FRACTION).toSp() }
-    Text(
-        text = "🎂",
-        fontSize = glyph,
-        lineHeight = glyph,
-        maxLines = 1,
-        modifier = Modifier.wrapContentSize(unbounded = true),
-    )
-}
+/** The cake glyph's size within its square, leaving room for the emoji's own side bearings. */
+private const val CAKE_GLYPH_FRACTION = 0.8f
 
 /** Call and Message, wrapping onto a second line when the card is too narrow for both. */
 @Composable
