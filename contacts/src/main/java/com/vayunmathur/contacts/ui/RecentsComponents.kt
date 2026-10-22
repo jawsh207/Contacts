@@ -67,7 +67,7 @@ internal fun RecentRow(entry: RecentEntry, actions: ContactsActions) {
                 Text(text = " · $ago", color = detailColor, maxLines = 1)
             }
         },
-        leadingContent = { ContactAvatar(contact, actions::decodePhoto, Modifier.size(40.dp)) },
+        leadingContent = { ContactAvatar(contact, actions::decodePhoto, Modifier.size(48.dp)) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     ) {
         Text(contact.name.value, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
