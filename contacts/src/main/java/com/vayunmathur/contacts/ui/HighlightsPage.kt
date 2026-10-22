@@ -116,7 +116,7 @@ fun HighlightsScreen(
         }
 
         if (favorites.isNotEmpty()) {
-            item(key = "favorites-header") { HighlightsSectionHeader(stringResource(R.string.favorites), accent = true) }
+            item(key = "favorites-header") { HighlightsSectionHeader(stringResource(R.string.favorites)) }
             item(key = "favorites") { FavoritesRow(favorites, actions) }
         }
 
@@ -128,7 +128,7 @@ fun HighlightsScreen(
         }
 
         if (recents.isNotEmpty()) {
-            item(key = "recents-header") { HighlightsSectionHeader(stringResource(R.string.recents), accent = true) }
+            item(key = "recents-header") { HighlightsSectionHeader(stringResource(R.string.recents)) }
             item(key = "recents") {
                 GroupedContactSection(count = recents.size) { i -> RecentRow(recents[i], actions) }
             }
