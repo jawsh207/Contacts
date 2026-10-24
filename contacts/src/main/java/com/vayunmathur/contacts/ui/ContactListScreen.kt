@@ -163,7 +163,7 @@ fun ContactListScreen(
                             value = state.searchQuery,
                             onValueChange = { actions.setSearchQuery(it) },
                             placeholder = stringResource(R.string.search_contacts),
-                            padding = PaddingValues(bottom = 8.dp),
+                            padding = PaddingValues(end = SEARCH_BAR_END_INSET, bottom = 8.dp),
                             modifier = Modifier
                                 .focusProperties { canFocus = isFocusableBySystem }
                                 .pointerInput(Unit) {
