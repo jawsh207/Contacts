@@ -91,7 +91,7 @@ fun HighlightsScreen(
     LazyListScaffold(
         topBar = {
             TopAppBar(
-                title = { SearchBarButton(onSearch, Modifier.padding(bottom = 8.dp)) },
+                title = { SearchBarButton(onSearch, Modifier.padding(end = SEARCH_BAR_END_INSET, bottom = 8.dp)) },
                 scrollBehavior = scrollBehavior,
             )
         },

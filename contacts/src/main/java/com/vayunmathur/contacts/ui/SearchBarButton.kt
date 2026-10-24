@@ -18,6 +18,14 @@ import com.vayunmathur.library.ui.Surface
 import com.vayunmathur.library.ui.Text
 
 /**
+ * Extra space after a search bar used as a top app bar's title. The bar insets its title 16dp
+ * from the start (4dp of its own padding plus a 12dp title inset) but only 4dp at the end when
+ * there are no actions, which left the pill closer to the right edge than the left. This evens
+ * it to 16dp on both sides, lining up with the 16dp margins of the cards below.
+ */
+internal val SEARCH_BAR_END_INSET = 12.dp
+
+/**
  * The "Search contacts" pill at the top of the Highlights and Organize tabs. It looks like the
  * Contacts tab's search bar (a 56dp grey pill) but is a button: tapping it opens that search.
  */
