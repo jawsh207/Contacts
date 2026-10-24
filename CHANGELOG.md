@@ -2,6 +2,11 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2.4
+
+**Search bars**
+- The search bars on the Contacts, Highlights and Organize tabs now have the same margin on both sides, in line with the lists and cards below them.
+
 ## 1.2.3
 
 **Highlights and Organize tabs**
