@@ -1,6 +1,12 @@
 # Notes for coding assistants
 
-See README.md for the build setup and AGENTS.md conventions under each module.
+See README.md for the build setup and the AGENTS.md conventions under each module.
+
+## Attribution
+
+Don't name or credit any AI assistant anywhere in this repo: not in files, commit messages,
+commit authors or trailers (no `Co-Authored-By` or session links), release notes, or pull
+requests. Commit as the repo owner, `jawsh207 <76641448+jawsh207@users.noreply.github.com>`.
 
 ## "Build release"
 
@@ -15,8 +21,8 @@ When the user says "Build release", publish a new release:
    1.2.1.
 3. Add a `## <version name>` section at the top of `CHANGELOG.md` (one line per bullet or paragraph, no hard wraps) describing the changes in plain,
    user-facing words, grouped by area. This becomes the notes on the Releases page.
-4. Commit, push `main`, then `git push origin main:release`. (Tag pushes are blocked from the assistant's
-   environment; CI creates the `v<version>` tag.)
+4. Commit, push `main`, then `git push origin main:release`. (CI creates the `v<version>` tag, so
+   no tag push is needed.)
 5. Wait for the Actions run, check its annotations, and confirm the release signing certificate
    SHA-256 is `09d3184e2e50bd0f1fff3d66cebfc6935c57301da868d69cef0d59586c8a1f5a`.
 6. Report the release link and a short summary.
