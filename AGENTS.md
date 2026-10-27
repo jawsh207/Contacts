@@ -10,7 +10,9 @@ requests. Commit as the repo owner, `jawsh207 <76641448+jawsh207@users.noreply.g
 
 ## "Build release"
 
-When the user says "Build release", publish a new release:
+When the user says "Build release", publish a new release. (The repo owner can also run the
+**Build release** workflow from the Actions tab, which bumps the version and writes the changelog
+from commit subjects; doing it by hand as below gives more readable notes.)
 
 1. Collect the changes since the last release: `git log --format=%s <last release commit>..main`
    (the last release is the newest `v*` tag on GitHub, or the `release` branch).

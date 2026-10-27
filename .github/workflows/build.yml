@@ -4,9 +4,10 @@ name: Build APK
 #   - Test builds: every push to main (and PRs / manual runs). The `dev` variant
 #     ("Contacts Dev", app id app.people.contacts.dev), always signed with the dev
 #     key so each one installs over the last.
-#   - Releases: pushing to the `release` branch (or a version tag such as v1.0). The
-#     `release` variant, signed with the separate release key, attached to a GitHub
-#     Release tagged v<version name from version.txt>.
+#   - Releases: the "Build release" workflow (release.yml), a push to the `release`
+#     branch, or a version tag such as v1.0. The `release` variant, signed with the
+#     separate release key, attached to a GitHub Release tagged v<version name from
+#     version.txt>, with that version's CHANGELOG.md section as its notes.
 
 on:
   push:
@@ -14,9 +15,19 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+  # Called by release.yml once it has committed the new version.
+  workflow_call:
+    inputs:
+      release:
+        type: boolean
+        default: false
+      ref:
+        description: Commit to build
+        type: string
+        default: ''
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,9 +39,11 @@ jobs:
     permissions:
       contents: write   # to publish GitHub Releases for version tags
     env:
-      IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/release' }}
+      IS_RELEASE: ${{ inputs.release || startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/release' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: actions/setup-java@v5
         with:
@@ -129,7 +142,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ inputs.ref || github.sha }}
           name: Contacts ${{ env.RELEASE_TAG }}
           files: contacts/build/outputs/apk/release/*.apk
           body_path: ${{ runner.temp }}/notes.md

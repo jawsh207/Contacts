@@ -19,7 +19,12 @@ GitHub Actions builds two kinds of APK, each signed with its own key:
 | | When | App | Artifact |
 | --- | --- | --- | --- |
 | **Test build** | every push to `main`, PRs, manual runs | "Contacts Dev" (`app.people.contacts.dev`) | `contacts-dev-apk` on the run page |
-| **Release** | pushing to the `release` branch (`git push origin main:release`), or a version tag such as `v1.0` | "Contacts" (`app.people.contacts`) | attached to a GitHub Release |
+| **Release** | Actions → **Build release** → Run workflow; or pushing to the `release` branch (`git push origin main:release`), or a version tag such as `v1.0` | "Contacts" (`app.people.contacts`) | attached to a GitHub Release |
+
+The **Build release** workflow does a whole release in one go: it raises the version (patch by
+default; minor or major if you pick it), adds a `CHANGELOG.md` section listing the commits since
+the last release (with an optional summary above them) unless one is already written, commits
+both to `main` and `release`, then builds, signs and publishes the release.
 
 A release is tagged with the version name on line 2 of `version.txt` (line 1 is the version
 code, which must go up with every release), and its notes come from that version's section of

@@ -1,0 +1,123 @@
+name: Build release
+
+# Run from the Actions tab: Build release → Run workflow.
+#
+# Bumps version.txt (patch by default), makes sure CHANGELOG.md has a section for the new
+# version (written from the commits since the last release if there isn't one already),
+# commits both to main and the release branch, then builds, signs and publishes the
+# release through build.yml with that section as its notes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to raise
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      notes:
+        description: Optional summary shown above the list of changes
+        type: string
+        default: ''
+
+concurrency:
+  group: build-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+      version: ${{ steps.version.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Work out the new version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          OLD_CODE=$(sed -n 1p version.txt | tr -d '[:space:]')
+          OLD_NAME=$(sed -n 2p version.txt | tr -d '[:space:]')
+          IFS=. read -r MAJOR MINOR PATCH <<< "$OLD_NAME"
+          MAJOR=${MAJOR:-0}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            *)     PATCH=$((PATCH + 1)) ;;
+          esac
+          NAME="$MAJOR.$MINOR.$PATCH"
+          # Version code: today's date, or one more than the last if that isn't higher.
+          CODE=$(TZ=America/New_York date +%Y%m%d)
+          [ "$CODE" -gt "$OLD_CODE" ] || CODE=$((OLD_CODE + 1))
+          if git rev-parse -q --verify "refs/tags/v$NAME" >/dev/null; then
+            echo "::error::v$NAME already exists."
+            exit 1
+          fi
+          printf '%s\n%s\n' "$CODE" "$NAME" > version.txt
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Releasing $NAME (version code $CODE), up from $OLD_NAME"
+
+      - name: Write the changelog
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          if grep -qx "## $VERSION" CHANGELOG.md; then
+            echo "CHANGELOG.md already has a $VERSION section; keeping it."
+            exit 0
+          fi
+          LAST=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          RANGE=${LAST:+$LAST..}HEAD
+          # One line per change since the last release, skipping release bookkeeping.
+          git log --no-merges --format='%s' "$RANGE" \
+            | grep -v -E '^(Version [0-9]|Discard changes since|Move version tags)' \
+            | sed 's/^/- /' > "$RUNNER_TEMP/changes.md" || true
+          if [ ! -s "$RUNNER_TEMP/changes.md" ]; then
+            echo "::error::Nothing has changed since ${LAST:-the start}."
+            exit 1
+          fi
+          {
+            echo "## $VERSION"
+            echo
+            if [ -n "$NOTES" ]; then echo "$NOTES"; echo; fi
+            cat "$RUNNER_TEMP/changes.md"
+            echo
+          } > "$RUNNER_TEMP/section.md"
+          # Insert above the newest existing section, below the intro.
+          awk -v f="$RUNNER_TEMP/section.md" '
+            !done && /^## / { while ((getline l < f) > 0) print l; done = 1 }
+            { print }
+            END { if (!done) { while ((getline l < f) > 0) print l } }
+          ' CHANGELOG.md > "$RUNNER_TEMP/CHANGELOG.md"
+          mv "$RUNNER_TEMP/CHANGELOG.md" CHANGELOG.md
+          cat "$RUNNER_TEMP/section.md"
+
+      - name: Commit to main and release
+        id: commit
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+        run: |
+          git config user.name jawsh207
+          git config user.email 76641448+jawsh207@users.noreply.github.com
+          git add version.txt CHANGELOG.md
+          git commit -m "Version $VERSION"
+          git push origin HEAD:main HEAD:release
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # Pushes made with the workflow's own token don't start other workflows, so the
+  # release build is called directly.
+  build:
+    needs: prepare
+    uses: ./.github/workflows/build.yml
+    with:
+      release: true
+      ref: ${{ needs.prepare.outputs.sha }}
+    secrets: inherit
