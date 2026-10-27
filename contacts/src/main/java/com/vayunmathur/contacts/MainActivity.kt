@@ -58,6 +58,7 @@ import com.vayunmathur.contacts.ui.MyInfoPage
 import com.vayunmathur.contacts.ui.MergeDuplicatesPage
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.activity.compose.BackHandler
 import com.vayunmathur.library.ui.IconOrganize
 import com.vayunmathur.library.ui.IconHighlights
 import com.vayunmathur.library.ui.IconPersonOutlined
@@ -714,6 +715,11 @@ private fun ContactsTabs(
     // Highlights and Organize show the same search bar as Contacts; tapping it goes to Contacts,
     // where the search runs.
     val openSearch: () -> Unit = { tabScope.launch { pagerState.animateScrollToPage(0) } }
+    // Contacts is the home tab: Back from Highlights or Organize returns there instead of
+    // leaving the app. Back from Contacts falls through to the nav host, which exits.
+    BackHandler(enabled = pagerState.currentPage != 0) {
+        tabScope.launch { pagerState.animateScrollToPage(0) }
+    }
     // Outlined icons, filled when selected, as in Google Contacts.
     val tabs = listOf(
         PagerTab(

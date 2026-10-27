@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vayunmathur.contacts.R
 import com.vayunmathur.contacts.util.ContactViewModel
@@ -46,6 +47,7 @@ fun EditContactNameSection(
             value = draft.firstName,
             onValueChange = { v -> onUpdate(draft.copy(firstName = v)) },
             label = stringResource(R.string.first_name),
+            keyboardType = KeyboardType.PersonName,
             sharedTextKey = contactId?.let { "contact-firstname-$it" },
             modifier = Modifier.fillMaxWidth().expandFromLine(),
             leadingIcon = {
@@ -58,6 +60,7 @@ fun EditContactNameSection(
             value = draft.middleName,
             onValueChange = { v -> onUpdate(draft.copy(middleName = v)) },
             label = stringResource(R.string.middle_name),
+            keyboardType = KeyboardType.PersonName,
             sharedTextKey = contactId?.let { "contact-middlename-$it" },
             modifier = Modifier.fillMaxWidth().expandFromLine(),
         )
@@ -65,6 +68,7 @@ fun EditContactNameSection(
             value = draft.lastName,
             onValueChange = { v -> onUpdate(draft.copy(lastName = v)) },
             label = stringResource(R.string.last_name),
+            keyboardType = KeyboardType.PersonName,
             sharedTextKey = contactId?.let { "contact-lastname-$it" },
             modifier = Modifier.fillMaxWidth().expandFromLine(),
             trailingIcon = {
