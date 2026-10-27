@@ -2,6 +2,14 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 1.2.5
+
+**Fixes** - Importing contacts from a vCard (.vcf) file now handles birthdays without a year correctly, and no longer splits names or addresses that contain a comma or semicolon. - In the contact editor, an empty Notes field is the right height again and responds to a tap anywhere on it. - Apps that add or look up contacts through Contacts no longer crash. - First, middle and last name fields now open the name keyboard. - Pressing Back on the Highlights or Organize tab now takes you to the Contacts tab instead of closing the app.
+
+- Add a Build release workflow
+- Bring in upstream bug fixes
+- Move assistant notes to AGENTS.md; no assistant attribution
+
 ## 1.2.4
 
 **Search bars**
