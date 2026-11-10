@@ -123,8 +123,15 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Notes that a contact's page was opened, for Recents. */
     fun recordView(id: Long) {
+        if (ContactsContract.isProfileId(id)) return
         viewModelScope.launch { settings.recordView(id, System.currentTimeMillis()) }
     }
+
+    /** The user's own card ("Your info"); null until loaded or if there isn't one. */
+    val profile: StateFlow<ContactSummary?> = accessChanges
+        .flatMapLatest { merge(contentChanges(app, ContactsContract.Profile.CONTENT_URI), changes) }
+        .mapLatest { repository.loadProfile() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val labelStore = LabelStore(app)
 

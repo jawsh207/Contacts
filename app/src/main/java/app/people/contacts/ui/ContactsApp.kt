@@ -120,7 +120,7 @@ fun ContactsApp(intent: Intent?, finish: (Uri?) -> Unit, viewModel: ContactsView
         Screen.Settings -> SettingsScreen(viewModel, onBack = back)
         is Screen.ImportFile -> ImportFileScreen(viewModel, Uri.parse(screen.uri), onDone = back)
         is Screen.Edit -> EditContactScreen(
-            viewModel, screen.id,
+            viewModel, screen.id, profile = screen.profile,
             onClose = back,
             onSaved = { savedId ->
                 // A new contact opens on its page; an edited one goes back to its page.
@@ -167,6 +167,7 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                 contentPadding = padding,
                 onSearch = { open(Screen.Search) },
                 onOpenContact = { open(Screen.Contact(it)) },
+                onSetUpProfile = { open(Screen.Edit(null, profile = true)) },
             )
             Tab.Highlights -> HighlightsTab(
                 viewModel = viewModel,

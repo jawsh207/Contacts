@@ -94,6 +94,8 @@ fun EditContactScreen(
     onSaved: (Long) -> Unit,
     /** Details another app passed in: a new contact starts with them, an existing one gains them. */
     prefill: EditableContact? = null,
+    /** Creating the user's own card ("Your info") rather than a contact. */
+    profile: Boolean = false,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -111,7 +113,7 @@ fun EditContactScreen(
             // New contacts go to the account the last one was saved to, or the phone.
             val last = viewModel.settings.lastAccount()
             val account = accounts.firstOrNull { (it.name.orEmpty() to it.type.orEmpty()) == last } ?: accounts.first()
-            blank = EditableContact(account = account)
+            blank = if (profile) EditableContact(isProfile = true) else EditableContact(account = account)
             edited = prefill?.copy(account = account) ?: blank
         } else {
             val loaded = viewModel.writer.load(id)
@@ -140,7 +142,13 @@ fun EditContactScreen(
             ) {
                 IconButton(onClick = close) { Icon(Icons.Rounded.Close, stringResource(R.string.cancel)) }
                 Text(
-                    stringResource(if (id == null) R.string.create_contact else R.string.edit_contact),
+                    stringResource(
+                        when {
+                            profile || (id != null && android.provider.ContactsContract.isProfileId(id)) -> R.string.your_info
+                            id == null -> R.string.create_contact
+                            else -> R.string.edit_contact
+                        }
+                    ),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 8.dp).weight(1f),
                 )
@@ -151,7 +159,7 @@ fun EditContactScreen(
                         saving = true
                         scope.launch {
                             val savedId = viewModel.writer.save(original, toSave, photo)
-                            if (savedId != null && original == null) viewModel.settings.setLastAccount(toSave.account?.name, toSave.account?.type)
+                            if (savedId != null && original == null && !profile) viewModel.settings.setLastAccount(toSave.account?.name, toSave.account?.type)
                             saving = false
                             if (savedId != null) onSaved(savedId) else android.widget.Toast
                                 .makeText(context, R.string.save_failed, android.widget.Toast.LENGTH_LONG).show()
@@ -170,7 +178,7 @@ fun EditContactScreen(
                     PhotoEditor(contact, photo, onPick = {
                         picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }, onRemove = { photo = PhotoChange.Remove })
-                    if (contact.contactId == null && accounts.size > 1) {
+                    if (contact.contactId == null && !contact.isProfile && accounts.size > 1) {
                         AccountPicker(accounts, contact.account) { edited = contact.copy(account = it) }
                     }
                     Fields(contact, context.resources) { edited = it }

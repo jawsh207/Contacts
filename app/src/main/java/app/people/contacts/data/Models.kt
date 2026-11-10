@@ -46,3 +46,11 @@ data class ContactDetails(
 
 /** The name a contact is sorted and grouped by: "First Last", or "Last, First" by last name. */
 fun ContactSummary.sortName(order: SortOrder): String = if (order == SortOrder.LastName) nameAlternative else name
+
+/** Where a contact's data rows live: the profile ("Your info") has its own store. */
+fun dataUriFor(contactId: Long?): android.net.Uri =
+    if (contactId != null && android.provider.ContactsContract.isProfileId(contactId)) {
+        android.net.Uri.withAppendedPath(android.provider.ContactsContract.Profile.CONTENT_URI, android.provider.ContactsContract.Contacts.Data.CONTENT_DIRECTORY)
+    } else {
+        android.provider.ContactsContract.Data.CONTENT_URI
+    }

@@ -30,6 +30,8 @@ data class EditableContact(
     val contactId: Long? = null,
     val rawContactId: Long? = null,
     val account: ContactAccount? = null,
+    /** The user's own card ("Your info"), which Android keeps apart from other contacts. */
+    val isProfile: Boolean = false,
     val photoUri: String? = null,
     val nameId: Long = 0,
     val prefix: String = "",

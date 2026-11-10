@@ -92,6 +92,8 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.work.runtime)
+    // QR codes for sharing Your info.
+    implementation(libs.zxing.core)
 }
 
 // APKs are named contacts-dev.apk / contacts-release.apk, as in the app this one replaces.

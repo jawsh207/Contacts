@@ -1,6 +1,12 @@
 package app.people.contacts.ui.contacts
 
 import androidx.compose.foundation.layout.Arrangement
+import app.people.contacts.ui.components.Avatar
+import androidx.compose.material3.Surface
+import androidx.compose.material.icons.rounded.QrCode2
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -48,8 +54,10 @@ fun ContactsTab(
     contentPadding: PaddingValues,
     onSearch: () -> Unit,
     onOpenContact: (Long) -> Unit,
+    onSetUpProfile: () -> Unit,
 ) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    val profile by viewModel.profile.collectAsStateWithLifecycle()
     val order by viewModel.sortOrder.collectAsStateWithLifecycle()
     val list = contacts
     val sections = remember(list, order) { list?.let { byFirstLetter(it, order) }.orEmpty() }
@@ -62,6 +70,9 @@ fun ContactsTab(
     ) {
         item(key = "search") {
             SearchPill(onSearch, Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp))
+        }
+        item(key = "your-info") {
+            YourInfoCard(profile, onOpen = { p -> if (p != null) onOpenContact(p.id) else onSetUpProfile() })
         }
         when {
             list == null -> item(key = "loading") {
@@ -107,6 +118,33 @@ private fun byFirstLetter(contacts: List<ContactSummary>, order: SortOrder): Lis
         foldForSearch(c.sortName(order)).firstOrNull { it.isLetterOrDigit() }
             ?.takeIf { it.isLetter() }?.uppercaseChar()?.toString() ?: "#"
     }.toList().sortedBy { (letter, _) -> if (letter == "#") "￿" else letter }
+
+/** The user's own card at the top of the list, or an invitation to set it up. */
+@Composable
+private fun YourInfoCard(profile: ContactSummary?, onOpen: (ContactSummary?) -> Unit) {
+    Surface(
+        onClick = { onOpen(profile) },
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceBright,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth(),
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Avatar(profile?.name, profile?.photoUri, profile?.id ?: 0, 56.dp)
+            Column(Modifier.padding(start = 16.dp).weight(1f)) {
+                Text(
+                    profile?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_info_set_up),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    stringResource(if (profile != null) R.string.your_info else R.string.your_info_set_up_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (profile != null) Icon(Icons.Rounded.QrCode2, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
 
 /** "Favorites" with a star, in the theme's primary colour, as in Google Contacts. */
 @Composable

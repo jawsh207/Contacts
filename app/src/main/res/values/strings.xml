@@ -144,6 +144,14 @@
     <string name="delete_account_title">Delete \u201c<xliff:g id="account" example="Family">%1$s</xliff:g>\u201d?</string>
     <string name="delete_account_body">Every contact saved in this account will be deleted from your phone.</string>
 
+    <!-- Your info -->
+    <string name="your_info">Your info</string>
+    <string name="your_info_set_up">Set up your profile</string>
+    <string name="your_info_set_up_body">Your own contact card, to share with others</string>
+    <string name="show_qr">Show QR code</string>
+    <string name="qr_hint">Show this code to share your contact info. Others can scan it with their phone camera to save it.</string>
+    <string name="done">Done</string>
+
     <!-- Requests from other apps -->
     <string name="pick_contact">Choose a contact</string>
     <string name="pick_phone">Choose a phone number</string>

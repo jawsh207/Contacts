@@ -45,7 +45,7 @@ class ContactWriter(private val context: Context) {
         val events = ArrayList<EditField>()
         val websites = ArrayList<EditField>()
         resolver.query(
-            Data.CONTENT_URI,
+            dataUriFor(contactId),
             arrayOf(
                 Data._ID, Data.RAW_CONTACT_ID, Data.MIMETYPE, Data.DATA1, Data.DATA2, Data.DATA3,
                 Data.DATA4, Data.DATA5, Data.DATA6,
@@ -102,7 +102,9 @@ class ContactWriter(private val context: Context) {
             val rawId = edited.rawContactId
             // New rows: into the existing raw contact, or a new one created as the first operation.
             if (rawId == null) {
-                ops += ContentProviderOperation.newInsert(RawContacts.CONTENT_URI)
+                ops += ContentProviderOperation.newInsert(
+                    if (edited.isProfile) ContactsContract.Profile.CONTENT_RAW_CONTACTS_URI else RawContacts.CONTENT_URI
+                )
                     .withValue(RawContacts.ACCOUNT_NAME, edited.account?.name)
                     .withValue(RawContacts.ACCOUNT_TYPE, edited.account?.type)
                     .build()
@@ -152,14 +154,14 @@ class ContactWriter(private val context: Context) {
             when (photo) {
                 PhotoChange.Keep -> Unit
                 PhotoChange.Remove -> if (edited.contactId != null) {
-                    ops += ContentProviderOperation.newDelete(Data.CONTENT_URI)
+                    ops += ContentProviderOperation.newDelete(dataUriFor(edited.contactId))
                         .withSelection("${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?",
                             arrayOf(edited.contactId.toString(), Photo.CONTENT_ITEM_TYPE))
                         .build()
                 }
                 is PhotoChange.Set -> {
                     if (edited.contactId != null) {
-                        ops += ContentProviderOperation.newDelete(Data.CONTENT_URI)
+                        ops += ContentProviderOperation.newDelete(dataUriFor(edited.contactId))
                             .withSelection("${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?",
                                 arrayOf(edited.contactId.toString(), Photo.CONTENT_ITEM_TYPE))
                             .build()

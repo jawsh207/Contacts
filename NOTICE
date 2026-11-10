@@ -9,6 +9,8 @@ This product includes:
   under the SIL Open Font License 1.1 (app/src/main/assets/licenses/google_sans_flex_OFL.txt).
   Google Sans Flex is a trademark of Google LLC; this project is not affiliated with Google.
 
+- ZXing core (https://github.com/zxing/zxing), under the Apache License 2.0, to draw QR codes.
+
 - The launcher icon's contact-card glyph, from GrapheneOS Contacts
   (https://github.com/GrapheneOS/platform_packages_apps_Contacts), Copyright (C) 2021 Google Inc.,
   under the Apache License 2.0. Modified: filled white instead of black.

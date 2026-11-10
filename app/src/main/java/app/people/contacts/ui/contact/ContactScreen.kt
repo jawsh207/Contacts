@@ -1,5 +1,14 @@
 package app.people.contacts.ui.contact
 
+import android.provider.ContactsContract
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.QrCode2
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.text.style.TextAlign
+import app.people.contacts.util.qrCode
+import app.people.contacts.util.qrVCard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,6 +78,8 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var confirmDelete by remember { mutableStateOf(false) }
+    var showQr by remember { mutableStateOf(false) }
+    val isProfile = ContactsContract.isProfileId(id)
 
     if (confirmDelete && contact != null) {
         AlertDialog(
@@ -90,6 +101,8 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
         )
     }
 
+    if (showQr && contact != null) QrDialog(contact, onDismiss = { showQr = false })
+
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(Modifier.fillMaxSize()) {
             if (contact != null) {
@@ -105,10 +118,12 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
             }
             TopBar(
                 contact = contact,
+                isProfile = isProfile,
                 onBack = onBack,
+                onShowQr = { showQr = true },
                 onToggleStar = { contact?.let { viewModel.setStarred(it.id, !it.starred) } },
                 onEdit = onEdit,
-                onShare = { contact?.let { Reach.share(context, it.lookupKey, it.name) } },
+                onShare = { contact?.let { Reach.share(context, it.lookupKey, it.name, profile = isProfile) } },
                 onDelete = { confirmDelete = true },
             )
         }
@@ -119,7 +134,9 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
 @Composable
 private fun TopBar(
     contact: ContactDetails?,
+    isProfile: Boolean,
     onBack: () -> Unit,
+    onShowQr: () -> Unit,
     onToggleStar: () -> Unit,
     onEdit: () -> Unit,
     onShare: () -> Unit,
@@ -133,12 +150,16 @@ private fun TopBar(
         CircleIconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), onBack)
         Spacer(Modifier.weight(1f))
         if (contact != null) {
+            if (isProfile) CircleIconButton(Icons.Rounded.QrCode2, stringResource(R.string.show_qr), onShowQr)
             CircleIconButton(Icons.Outlined.Edit, stringResource(R.string.edit_contact), onEdit)
-            CircleIconButton(
-                if (contact.starred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
-                stringResource(if (contact.starred) R.string.remove_from_favorites else R.string.add_to_favorites),
-                onToggleStar,
-            )
+            // Your info can't be a favorite or be deleted from here.
+            if (!isProfile) {
+                CircleIconButton(
+                    if (contact.starred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                    stringResource(if (contact.starred) R.string.remove_from_favorites else R.string.add_to_favorites),
+                    onToggleStar,
+                )
+            }
             var menu by remember { mutableStateOf(false) }
             Box {
                 CircleIconButton(Icons.Rounded.MoreVert, stringResource(R.string.more_options)) { menu = true }
@@ -148,11 +169,13 @@ private fun TopBar(
                         leadingIcon = { Icon(Icons.Outlined.Share, null) },
                         onClick = { menu = false; onShare() },
                     )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.delete)) },
-                        leadingIcon = { Icon(Icons.Outlined.Delete, null) },
-                        onClick = { menu = false; onDelete() },
-                    )
+                    if (!isProfile) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.delete)) },
+                            leadingIcon = { Icon(Icons.Outlined.Delete, null) },
+                            onClick = { menu = false; onDelete() },
+                        )
+                    }
                 }
             }
         }
@@ -214,4 +237,31 @@ private fun QuickAction(icon: ImageVector, label: String, enabled: Boolean, onCl
             color = if (enabled) scheme.onSurface else scheme.onSurface.copy(alpha = 0.38f),
         )
     }
+}
+
+/** Your info as a QR code: anyone can scan it with their camera to save your contact. */
+@Composable
+private fun QrDialog(contact: ContactDetails, onDismiss: () -> Unit) {
+    val code = remember(contact) { qrCode(qrVCard(contact)) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(contact.name) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                if (code != null) {
+                    // Black on white whatever the theme, so every camera can read it.
+                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                        Image(
+                            code, contentDescription = stringResource(R.string.show_qr),
+                            filterQuality = FilterQuality.None,
+                            modifier = Modifier.padding(12.dp).size(240.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.qr_hint), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.done)) } },
+    )
 }

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.Event
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership
@@ -134,7 +135,7 @@ class ContactsRepository(private val context: Context) {
         var company: String? = null
         var title: String? = null
         resolver.query(
-            Data.CONTENT_URI,
+            dataUriFor(base.id),
             arrayOf(Data.MIMETYPE, Data.DATA1, Data.DATA2, Data.DATA3, Data.DATA4),
             "${Data.CONTACT_ID} = ?",
             arrayOf(base.id.toString()),
@@ -211,6 +212,22 @@ class ContactsRepository(private val context: Context) {
                 }
             }
         }
+    }
+
+    /** The user's own card ("Your info", Android's profile), or null if they haven't made one. */
+    suspend fun loadProfile(): ContactSummary? = withContext(Dispatchers.IO) {
+        if (!canRead()) return@withContext null
+        runCatching {
+            resolver.query(
+                ContactsContract.Profile.CONTENT_URI,
+                arrayOf(Contacts._ID, Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME_PRIMARY, Contacts.PHOTO_THUMBNAIL_URI),
+                null, null, null,
+            )?.use { c ->
+                if (!c.moveToFirst()) return@use null
+                val name = c.getString(2).orEmpty()
+                ContactSummary(c.getLong(0), c.getString(1).orEmpty(), name, name, c.getString(3), starred = false)
+            }
+        }.getOrNull()
     }
 
     /** Adds the contact to, or removes it from, Favorites. */
