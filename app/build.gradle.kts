@@ -45,16 +45,16 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("ci") ?: signingConfigs.getByName("debug")
         }
-        // Test builds: quick to build and inspectable. Their own app id, so they install beside
-        // the current Contacts app (and its test builds) until this app replaces it.
+        // Test builds: quick to build and inspectable, with their own app id so they install
+        // beside the release.
         create("dev") {
             initWith(getByName("release"))
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
-            applicationIdSuffix = ".preview"
-            versionNameSuffix = "-preview"
-            resValue("string", "account_type", "app.people.contacts.preview")
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "account_type", "app.people.contacts.dev")
             matchingFallbacks += "release"
         }
     }

@@ -1,4 +1,4 @@
 <resources>
-    <!-- Test builds install beside the current Contacts app; this tells them apart. -->
-    <string name="app_name">Contacts Preview</string>
+    <!-- Test builds install beside the release; this tells them apart. -->
+    <string name="app_name">Contacts Dev</string>
 </resources>
