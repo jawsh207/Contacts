@@ -6,6 +6,8 @@ import android.provider.ContactsContract
 import android.provider.Telephony
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.people.contacts.calendar.BirthdayCalendar
+import app.people.contacts.calendar.BirthdayWorker
 import app.people.contacts.data.AccountKeys
 import app.people.contacts.data.BIRTHDAY_WINDOW_DAYS
 import app.people.contacts.data.ContactAccount
@@ -20,6 +22,8 @@ import app.people.contacts.data.RecentEntry
 import app.people.contacts.data.Settings
 import app.people.contacts.data.SortOrder
 import app.people.contacts.data.UpcomingBirthday
+import app.people.contacts.data.VCardReader
+import app.people.contacts.data.VCardWriter
 import app.people.contacts.data.allAccounts
 import app.people.contacts.data.deleteOnDeviceAccountContacts
 import app.people.contacts.data.findDuplicates
@@ -34,10 +38,12 @@ import java.text.Collator
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -191,6 +197,55 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
                 settings.editSavedAccounts { it - AccountKeys.savedEntry(account.name.orEmpty()) }
                 setAccountVisible(account, true)
             }
+        }
+    }
+
+    /** Turns the birthday calendar on (filling it now and daily) or off (removing it). */
+    fun setBirthdayCalendar(on: Boolean) {
+        val app = getApplication<Application>()
+        viewModelScope.launch {
+            settings.setBirthdayCalendar(on)
+            if (on) {
+                BirthdayWorker.schedule(app)
+                BirthdayCalendar.sync(app)
+            } else {
+                BirthdayWorker.cancel(app)
+                BirthdayCalendar.remove(app)
+            }
+        }
+    }
+
+    init {
+        // While the birthday calendar is on, keep it in step with contacts as they change.
+        viewModelScope.launch {
+            combine(settings.birthdayCalendar, changes) { on, _ -> on }.collectLatest { on ->
+                if (on) {
+                    BirthdayWorker.schedule(getApplication<Application>())
+                    delay(2_000)
+                    BirthdayCalendar.sync(getApplication<Application>())
+                }
+            }
+        }
+    }
+
+    /** Saves every contact shown to a .vcf file. */
+    suspend fun exportTo(uri: android.net.Uri): Boolean {
+        val app = getApplication<Application>()
+        val keys = contacts.value.orEmpty().map { it.lookupKey }.filter { it.isNotEmpty() }
+        return app.contentResolver.openOutputStream(uri)?.use { VCardWriter.export(app, keys, it) } ?: false
+    }
+
+    /** Adds every contact in a .vcf file to [account]; returns how many were added. */
+    suspend fun importFrom(uri: android.net.Uri, account: ContactAccount): Int {
+        val app = getApplication<Application>()
+        val text = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            runCatching { app.contentResolver.openInputStream(uri)?.use { String(it.readBytes()) } }.getOrNull()
+        } ?: return 0
+        return VCardReader.parse(text).count { (contact, photo) ->
+            contact.hasContent && writer.save(
+                null, contact.copy(account = account),
+                if (photo != null) app.people.contacts.data.PhotoChange.Set(photo) else app.people.contacts.data.PhotoChange.Keep,
+            ) != null
         }
     }
 

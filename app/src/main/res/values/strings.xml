@@ -121,6 +121,21 @@
     <string name="settings_recents_title">Calls and texts in Recents</string>
     <string name="settings_recents_summary">Show calls and texts with your saved contacts in Highlights instead of contacts you\'ve opened. Needs call log and SMS access.</string>
     <string name="settings_accounts">Accounts</string>
+    <string name="settings_birthdays">Birthdays</string>
+    <string name="settings_calendar_title">Contact Birthdays calendar</string>
+    <string name="settings_calendar_summary">Adds your contacts\' birthdays to your calendar app, with the age each person turns. Needs calendar access.</string>
+    <string name="settings_backup">Backup and export</string>
+    <string name="export_contacts">Export contacts</string>
+    <string name="export_summary">Save every contact to a .vcf file</string>
+    <string name="export_done">Contacts exported</string>
+    <string name="export_failed">Couldn\'t export contacts</string>
+    <string name="import_contacts">Import contacts</string>
+    <string name="import_summary">Add contacts from a .vcf file</string>
+    <string name="import_to">Import to</string>
+    <plurals name="imported">
+        <item quantity="one">Imported <xliff:g id="count" example="1">%1$d</xliff:g> contact</item>
+        <item quantity="other">Imported <xliff:g id="count" example="12">%1$d</xliff:g> contacts</item>
+    </plurals>
     <string name="account_phone_summary">Saved on this phone</string>
     <string name="account_on_device_summary">On-device account</string>
     <string name="add_on_device_account">Add on-device account</string>

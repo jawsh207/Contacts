@@ -19,6 +19,8 @@ android {
         versionCode = versionLines[0].toInt()
         versionName = versionLines[1]
         ndk { abiFilters += "arm64-v8a" }
+        // The app's own account type (it holds the birthday calendar): the app id, as in the old app.
+        resValue("string", "account_type", "app.people.contacts")
     }
 
     // CI supplies the key through ORG_GRADLE_PROJECT_RELEASE_* (the dev key for test builds,
@@ -52,6 +54,7 @@ android {
             isDebuggable = true
             applicationIdSuffix = ".preview"
             versionNameSuffix = "-preview"
+            resValue("string", "account_type", "app.people.contacts.preview")
             matchingFallbacks += "release"
         }
     }
@@ -61,6 +64,7 @@ android {
     }
     buildFeatures {
         compose = true
+        resValues = true
     }
 }
 
@@ -87,6 +91,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.work.runtime)
 }
 
 // APKs are named contacts-dev.apk / contacts-release.apk, as in the app this one replaces.
