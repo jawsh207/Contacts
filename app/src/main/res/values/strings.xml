@@ -45,6 +45,27 @@
     <string name="delete_body"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g> will be removed from your phone and every account it\'s saved in.</string>
     <string name="delete_failed">Couldn\'t delete this contact</string>
 
+    <!-- Highlights -->
+    <string name="for_you">For you</string>
+    <string name="recents">Recents</string>
+    <string name="highlights_empty_title">Nothing to highlight yet</string>
+    <string name="highlights_empty_body">Favorites, upcoming birthdays and contacts you\'ve opened recently show up here.</string>
+    <string name="birthday_title"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g>\'s birthday</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <plurals name="in_days">
+        <item quantity="one">In <xliff:g id="count" example="1">%1$d</xliff:g> day</item>
+        <item quantity="other">In <xliff:g id="count" example="5">%1$d</xliff:g> days</item>
+    </plurals>
+    <string name="turns_age">Turns <xliff:g id="age" example="34">%1$d</xliff:g></string>
+    <string name="action_message">Message</string>
+    <string name="recent_viewed">Viewed</string>
+    <string name="recent_missed">Missed call</string>
+    <string name="recent_incoming">Incoming call</string>
+    <string name="recent_outgoing">Outgoing call</string>
+    <string name="recent_text_received">Text</string>
+    <string name="recent_text_sent">Text sent</string>
+
     <!-- Editor -->
     <string name="create_contact">Create contact</string>
     <string name="edit_contact">Edit contact</string>

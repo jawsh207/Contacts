@@ -41,6 +41,7 @@ import app.people.contacts.ui.contact.ContactScreen
 import app.people.contacts.ui.contacts.AccessScreen
 import app.people.contacts.ui.contacts.ContactsTab
 import app.people.contacts.ui.edit.EditContactScreen
+import app.people.contacts.ui.highlights.HighlightsTab
 import app.people.contacts.ui.search.SearchScreen
 import app.people.contacts.util.hasPermission
 
@@ -123,7 +124,13 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                 onSearch = { open(Screen.Search) },
                 onOpenContact = { open(Screen.Contact(it)) },
             )
-            else -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            Tab.Highlights -> HighlightsTab(
+                viewModel = viewModel,
+                contentPadding = padding,
+                onSearch = { open(Screen.Search) },
+                onOpenContact = { open(Screen.Contact(it)) },
+            )
+            Tab.Organize -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text(
                     stringResource(R.string.coming_soon),
                     style = MaterialTheme.typography.titleLarge,

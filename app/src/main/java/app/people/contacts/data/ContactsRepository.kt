@@ -176,6 +176,27 @@ class ContactsRepository(private val context: Context) {
         }
     }
 
+    /** Each contact's birthday as stored ("1990-03-04" or "--03-04"), by contact id. */
+    suspend fun loadBirthdays(): Map<Long, String> = withContext(Dispatchers.IO) {
+        if (!canRead()) return@withContext emptyMap()
+        buildMap {
+            runCatching {
+                resolver.query(
+                    Data.CONTENT_URI,
+                    arrayOf(Data.CONTACT_ID, Event.START_DATE),
+                    "${Data.MIMETYPE} = ? AND ${Event.TYPE} = ?",
+                    arrayOf(Event.CONTENT_ITEM_TYPE, Event.TYPE_BIRTHDAY.toString()),
+                    null,
+                )?.use { c ->
+                    while (c.moveToNext()) {
+                        val date = c.getString(1)?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+                        putIfAbsent(c.getLong(0), date)
+                    }
+                }
+            }
+        }
+    }
+
     /** Adds the contact to, or removes it from, Favorites. */
     suspend fun setStarred(id: Long, starred: Boolean) = withContext(Dispatchers.IO) {
         runCatching {

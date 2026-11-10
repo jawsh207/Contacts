@@ -61,6 +61,7 @@ import app.people.contacts.util.Reach
 @Composable
 fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onEdit: () -> Unit) {
     val flow = remember(id) { viewModel.details(id) }
+    LaunchedEffect(id) { viewModel.recordView(id) }
     val state by flow.collectAsStateWithLifecycle(DetailState(false, null))
     // Deleted elsewhere while open: nothing to show.
     LaunchedEffect(state) { if (state.loaded && state.details == null) onBack() }
