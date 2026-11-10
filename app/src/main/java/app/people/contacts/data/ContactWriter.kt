@@ -101,16 +101,16 @@ class ContactWriter(private val context: Context) {
             val ops = ArrayList<ContentProviderOperation>()
             val rawId = edited.rawContactId
             // New rows: into the existing raw contact, or a new one created as the first operation.
-            val insertInto: (ContentProviderOperation.Builder) -> ContentProviderOperation.Builder =
-                if (rawId != null) {
-                    { it.withValue(Data.RAW_CONTACT_ID, rawId) }
-                } else {
-                    ops += ContentProviderOperation.newInsert(RawContacts.CONTENT_URI)
-                        .withValue(RawContacts.ACCOUNT_NAME, edited.account?.name)
-                        .withValue(RawContacts.ACCOUNT_TYPE, edited.account?.type)
-                        .build()
-                    { it.withValueBackReference(Data.RAW_CONTACT_ID, 0) }
-                }
+            if (rawId == null) {
+                ops += ContentProviderOperation.newInsert(RawContacts.CONTENT_URI)
+                    .withValue(RawContacts.ACCOUNT_NAME, edited.account?.name)
+                    .withValue(RawContacts.ACCOUNT_TYPE, edited.account?.type)
+                    .build()
+            }
+            val insertInto: (ContentProviderOperation.Builder) -> ContentProviderOperation.Builder = { builder ->
+                if (rawId != null) builder.withValue(Data.RAW_CONTACT_ID, rawId)
+                else builder.withValueBackReference(Data.RAW_CONTACT_ID, 0)
+            }
             val rows = RowWriter(ops, insertInto)
 
             rows.single(
