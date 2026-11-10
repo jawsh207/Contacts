@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Call
@@ -70,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.people.contacts.R
 import app.people.contacts.data.AccountKeys
 import app.people.contacts.data.ContactAccount
@@ -106,6 +108,7 @@ fun EditContactScreen(
     var photo by remember { mutableStateOf<PhotoChange>(PhotoChange.Keep) }
     var saving by remember { mutableStateOf(false) }
     var confirmDiscard by remember { mutableStateOf(false) }
+    val labels by viewModel.labels.collectAsStateWithLifecycle()
 
     LaunchedEffect(id) {
         accounts = writableAccounts(context, AccountKeys.savedNames(viewModel.settings.savedAccounts.first()))
@@ -182,6 +185,13 @@ fun EditContactScreen(
                         AccountPicker(accounts, contact.account) { edited = contact.copy(account = it) }
                     }
                     Fields(contact, context.resources) { edited = it }
+                    if (!contact.isProfile) {
+                        val inAccount = labels.orEmpty().filter {
+                            it.accountType.orEmpty() == contact.account?.type.orEmpty() &&
+                                it.accountName.orEmpty() == contact.account?.name.orEmpty()
+                        }
+                        LabelChips(inAccount, contact.labelIds) { edited = contact.copy(labelIds = it) }
+                    }
                     Spacer(Modifier.navigationBarsPadding().height(24.dp))
                 }
             }
@@ -241,6 +251,31 @@ private fun AccountPicker(accounts: List<ContactAccount>, selected: ContactAccou
                 androidx.compose.material3.DropdownMenuItem(
                     text = { Text(account.label) },
                     onClick = { open = false; onPick(account) },
+                )
+            }
+        }
+    }
+}
+
+/** The labels the contact can be in (those of its account), as chips to tick. */
+@Composable
+private fun LabelChips(labels: List<app.people.contacts.data.Label>, chosen: Set<Long>, onChange: (Set<Long>) -> Unit) {
+    if (labels.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.AutoMirrored.Outlined.Label, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 12.dp, end = 16.dp))
+            Text(stringResource(R.string.labels_in_editor), style = MaterialTheme.typography.bodyLarge)
+        }
+        androidx.compose.foundation.layout.FlowRow(
+            Modifier.padding(start = 52.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            labels.forEach { label ->
+                val selected = label.id in chosen
+                androidx.compose.material3.FilterChip(
+                    selected = selected,
+                    onClick = { onChange(if (selected) chosen - label.id else chosen + label.id) },
+                    label = { Text(label.title) },
                 )
             }
         }

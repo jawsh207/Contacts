@@ -43,6 +43,11 @@
     <string name="delete">Delete</string>
     <string name="delete_title">Delete this contact?</string>
     <string name="delete_body"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g> will be removed from your phone and every account it\'s saved in.</string>
+    <string name="set_ringtone">Set ringtone</string>
+    <string name="move_to_account">Move to another account</string>
+    <string name="move_body">The contact is copied to the account you choose and removed from where it is now. Labels stay behind.</string>
+    <string name="move_failed">Couldn\'t move this contact</string>
+    <string name="labels_in_editor">Labels</string>
     <string name="delete_failed">Couldn\'t delete this contact</string>
 
     <!-- Highlights -->

@@ -258,6 +258,10 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun setRingtone(id: Long, uri: String?) {
+        viewModelScope.launch { repository.setRingtone(id, uri) }
+    }
+
     fun setStarred(id: Long, starred: Boolean) {
         viewModelScope.launch { repository.setStarred(id, starred) }
     }

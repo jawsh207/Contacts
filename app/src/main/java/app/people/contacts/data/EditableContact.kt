@@ -51,6 +51,8 @@ data class EditableContact(
     val addresses: List<EditField> = emptyList(),
     val events: List<EditField> = emptyList(),
     val websites: List<EditField> = emptyList(),
+    /** Labels (group row ids) the contact is in. */
+    val labelIds: Set<Long> = emptySet(),
 ) {
     /** Worth saving: has a name, company, number or email. */
     val hasContent: Boolean

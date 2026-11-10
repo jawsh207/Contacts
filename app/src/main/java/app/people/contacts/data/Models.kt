@@ -42,6 +42,8 @@ data class ContactDetails(
     val jobTitle: String? = null,
     val notes: List<String> = emptyList(),
     val labels: List<String> = emptyList(),
+    /** The contact's own ringtone (a URI), or null for the phone's default. */
+    val ringtone: String? = null,
 )
 
 /** The name a contact is sorted and grouped by: "First Last", or "Last, First" by last name. */

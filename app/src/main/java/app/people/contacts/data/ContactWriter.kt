@@ -5,6 +5,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership
 import android.provider.ContactsContract.CommonDataKinds.Event
 import android.provider.ContactsContract.CommonDataKinds.Nickname
 import android.provider.ContactsContract.CommonDataKinds.Note
@@ -44,6 +45,7 @@ class ContactWriter(private val context: Context) {
         val addresses = ArrayList<EditField>()
         val events = ArrayList<EditField>()
         val websites = ArrayList<EditField>()
+        val labels = HashSet<Long>()
         resolver.query(
             dataUriFor(contactId),
             arrayOf(
@@ -86,10 +88,19 @@ class ContactWriter(private val context: Context) {
                     StructuredPostal.CONTENT_ITEM_TYPE -> addresses += field()
                     Event.CONTENT_ITEM_TYPE -> events += field()
                     Website.CONTENT_ITEM_TYPE -> websites += field()
+                    GroupMembership.CONTENT_ITEM_TYPE -> data1.toLongOrNull()?.let { labels += it }
                 }
             }
         }
-        contact.copy(phones = phones, emails = emails, addresses = addresses, events = events, websites = websites)
+        // The account new details go to: the one holding the contact's name.
+        val account = resolver.query(
+            ContentUris.withAppendedId(RawContacts.CONTENT_URI, nameRawId),
+            arrayOf(RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE), null, null, null,
+        )?.use { c -> if (c.moveToFirst()) ContactAccount(c.getString(0), c.getString(1), c.getString(0).orEmpty()) else null }
+        contact.copy(
+            account = account, phones = phones, emails = emails, addresses = addresses, events = events,
+            websites = websites, labelIds = labels,
+        )
     }
 
     /**
@@ -150,6 +161,7 @@ class ContactWriter(private val context: Context) {
             )
             rows.repeating(Event.CONTENT_ITEM_TYPE, original?.events, edited.events, Event.START_DATE, Event.TYPE, Event.LABEL)
             rows.repeating(Website.CONTENT_ITEM_TYPE, original?.websites, edited.websites, Website.URL, Website.TYPE, Website.LABEL)
+            rows.labels(edited.contactId, original?.labelIds.orEmpty(), edited.labelIds)
 
             when (photo) {
                 PhotoChange.Keep -> Unit
@@ -184,6 +196,45 @@ class ContactWriter(private val context: Context) {
                 ?.use { c -> if (c.moveToFirst()) c.getLong(0) else null }
         }
 
+    /**
+     * Moves a contact to [account]: saves a copy there, then deletes the copies it had. Labels
+     * belong to accounts, so they don't come along. Returns the moved contact's id.
+     */
+    suspend fun move(contactId: Long, account: ContactAccount): Long? = withContext(Dispatchers.IO) {
+        val oldRaw = resolver.query(
+            RawContacts.CONTENT_URI, arrayOf(RawContacts._ID),
+            "${RawContacts.CONTACT_ID} = ? AND ${RawContacts.DELETED} = 0", arrayOf(contactId.toString()), null,
+        )?.use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }.orEmpty()
+        val loaded = load(contactId) ?: return@withContext null
+        val photo = runCatching {
+            Contacts.openContactPhotoInputStream(resolver, ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId), true)
+                ?.use { it.readBytes() }
+        }.getOrNull()
+        fun List<EditField>.fresh() = map { it.copy(dataId = 0) }
+        val copy = loaded.copy(
+            contactId = null, rawContactId = null, account = account, nameId = 0, nicknameId = 0,
+            organizationId = 0, noteId = 0, labelIds = emptySet(),
+            phones = loaded.phones.fresh(), emails = loaded.emails.fresh(), addresses = loaded.addresses.fresh(),
+            events = loaded.events.fresh(), websites = loaded.websites.fresh(),
+        )
+        val newId = save(null, copy, if (photo != null) PhotoChange.Set(photo) else PhotoChange.Keep) ?: return@withContext null
+        // The copy's own raw contacts, told apart from the old ones it may have been joined with.
+        val newRaw = resolver.query(
+            RawContacts.CONTENT_URI, arrayOf(RawContacts._ID),
+            "${RawContacts.CONTACT_ID} = ? AND ${RawContacts.DELETED} = 0", arrayOf(newId.toString()), null,
+        )?.use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }.orEmpty().filter { it !in oldRaw }
+        if (oldRaw.isNotEmpty()) {
+            runCatching {
+                resolver.delete(RawContacts.CONTENT_URI, "${RawContacts._ID} IN (${oldRaw.joinToString(",")})", null)
+            }
+        }
+        // Where the copy ended up once the old ones were gone.
+        newRaw.firstOrNull()?.let { raw ->
+            resolver.query(ContentUris.withAppendedId(RawContacts.CONTENT_URI, raw), arrayOf(RawContacts.CONTACT_ID), null, null, null)
+                ?.use { c -> if (c.moveToFirst()) c.getLong(0) else null }
+        } ?: newId
+    }
+
     /** Deletes the contact everywhere it's stored. */
     suspend fun delete(contactId: Long, lookupKey: String): Boolean = withContext(Dispatchers.IO) {
         runCatching {
@@ -214,6 +265,26 @@ private class RowWriter(
             id != 0L -> ops += ContentProviderOperation.newUpdate(rowUri(id)).withValues(values, extra).build()
             !empty -> ops += insertInto(ContentProviderOperation.newInsert(Data.CONTENT_URI))
                 .withValue(Data.MIMETYPE, mimeType).withValues(values, extra).build()
+        }
+    }
+
+    /** Label memberships: leave labels no longer chosen, join newly chosen ones. */
+    fun labels(contactId: Long?, before: Set<Long>, after: Set<Long>) {
+        if (contactId != null) {
+            (before - after).forEach { group ->
+                ops += ContentProviderOperation.newDelete(Data.CONTENT_URI)
+                    .withSelection(
+                        "${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ? AND ${GroupMembership.GROUP_ROW_ID} = ?",
+                        arrayOf(contactId.toString(), GroupMembership.CONTENT_ITEM_TYPE, group.toString()),
+                    )
+                    .build()
+            }
+        }
+        (after - before).forEach { group ->
+            ops += insertInto(ContentProviderOperation.newInsert(Data.CONTENT_URI))
+                .withValue(Data.MIMETYPE, GroupMembership.CONTENT_ITEM_TYPE)
+                .withValue(GroupMembership.GROUP_ROW_ID, group)
+                .build()
         }
     }
 

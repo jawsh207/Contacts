@@ -114,7 +114,10 @@ fun ContactsApp(intent: Intent?, finish: (Uri?) -> Unit, viewModel: ContactsView
     when (val screen = stack.last()) {
         Screen.Home -> Home(viewModel, tab, onTabChange = { tab = it }, open = open)
         Screen.Search -> SearchScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
-        is Screen.Contact -> ContactScreen(viewModel, screen.id, onBack = back, onEdit = { open(Screen.Edit(screen.id)) })
+        is Screen.Contact -> ContactScreen(
+            viewModel, screen.id, onBack = back, onEdit = { open(Screen.Edit(screen.id)) },
+            onMoved = { moved -> stack[stack.lastIndex] = Screen.Contact(moved) },
+        )
         is Screen.Label -> LabelScreen(viewModel, screen.id, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
         Screen.MergeDuplicates -> MergeScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
         Screen.Settings -> SettingsScreen(viewModel, onBack = back)

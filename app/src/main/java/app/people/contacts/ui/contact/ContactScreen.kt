@@ -1,5 +1,18 @@
 package app.people.contacts.ui.contact
 
+import android.content.Intent
+import android.media.RingtoneManager
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.runtime.produceState
+import androidx.core.content.IntentCompat
+import app.people.contacts.data.AccountKeys
+import app.people.contacts.data.ContactAccount
+import app.people.contacts.data.writableAccounts
+import kotlinx.coroutines.flow.first
 import android.provider.ContactsContract
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,7 +81,7 @@ import app.people.contacts.util.Reach
 
 /** A contact's page: header, quick actions, then cards of everything stored for them. */
 @Composable
-fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onEdit: () -> Unit) {
+fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onEdit: () -> Unit, onMoved: (Long) -> Unit = {}) {
     val flow = remember(id) { viewModel.details(id) }
     LaunchedEffect(id) { viewModel.recordView(id) }
     val state by flow.collectAsStateWithLifecycle(DetailState(false, null))
@@ -79,6 +92,17 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
     val scope = rememberCoroutineScope()
     var confirmDelete by remember { mutableStateOf(false) }
     var showQr by remember { mutableStateOf(false) }
+    var moving by remember { mutableStateOf(false) }
+    val ringtonePicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val picked = result.data?.let {
+                IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, android.net.Uri::class.java)
+            }
+            // The default ringtone is stored as "none of its own".
+            val stored = picked?.takeIf { !RingtoneManager.isDefault(it) }?.toString()
+            viewModel.setRingtone(id, stored)
+        }
+    }
     val isProfile = ContactsContract.isProfileId(id)
 
     if (confirmDelete && contact != null) {
@@ -102,6 +126,33 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
     }
 
     if (showQr && contact != null) QrDialog(contact, onDismiss = { showQr = false })
+    if (moving && contact != null) {
+        val accounts by produceState(emptyList<ContactAccount>()) {
+            value = writableAccounts(context, AccountKeys.savedNames(viewModel.settings.savedAccounts.first()))
+        }
+        AlertDialog(
+            onDismissRequest = { moving = false },
+            title = { Text(stringResource(R.string.move_to_account)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.move_body), style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(8.dp))
+                    accounts.forEach { account ->
+                        TextButton(onClick = {
+                            moving = false
+                            scope.launch {
+                                val moved = viewModel.writer.move(contact.id, account)
+                                if (moved != null) onMoved(moved)
+                                else android.widget.Toast.makeText(context, R.string.move_failed, android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        }, modifier = Modifier.fillMaxWidth()) { Text(account.label, modifier = Modifier.fillMaxWidth()) }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { moving = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(Modifier.fillMaxSize()) {
@@ -125,6 +176,20 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
                 onEdit = onEdit,
                 onShare = { contact?.let { Reach.share(context, it.lookupKey, it.name, profile = isProfile) } },
                 onDelete = { confirmDelete = true },
+                onRingtone = {
+                    ringtonePicker.launch(
+                        Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                            .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE)
+                            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                            .putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_RINGTONE_URI)
+                            .putExtra(
+                                RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                                contact?.ringtone?.let(android.net.Uri::parse) ?: Settings.System.DEFAULT_RINGTONE_URI,
+                            )
+                    )
+                },
+                onMove = { moving = true },
             )
         }
     }
@@ -141,6 +206,8 @@ private fun TopBar(
     onEdit: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
+    onRingtone: () -> Unit,
+    onMove: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().statusBarsPadding().height(CONTACT_TOP_BAR_HEIGHT).padding(horizontal = 8.dp),
@@ -170,6 +237,16 @@ private fun TopBar(
                         onClick = { menu = false; onShare() },
                     )
                     if (!isProfile) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.set_ringtone)) },
+                            leadingIcon = { Icon(Icons.Outlined.MusicNote, null) },
+                            onClick = { menu = false; onRingtone() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.move_to_account)) },
+                            leadingIcon = { Icon(Icons.Outlined.SwapHoriz, null) },
+                            onClick = { menu = false; onMove() },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.delete)) },
                             leadingIcon = { Icon(Icons.Outlined.Delete, null) },

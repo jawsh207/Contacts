@@ -104,7 +104,7 @@ class ContactsRepository(private val context: Context) {
             ContentUris.withAppendedId(Contacts.CONTENT_URI, id),
             arrayOf(
                 Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME_PRIMARY, Contacts.PHOTO_URI,
-                Contacts.PHOTO_THUMBNAIL_URI, Contacts.STARRED,
+                Contacts.PHOTO_THUMBNAIL_URI, Contacts.STARRED, Contacts.CUSTOM_RINGTONE,
             ),
             null, null, null,
         )?.use { c ->
@@ -116,6 +116,7 @@ class ContactsRepository(private val context: Context) {
                 photoUri = c.getString(2),
                 thumbnailUri = c.getString(3),
                 starred = c.getInt(4) == 1,
+                ringtone = c.getString(5)?.takeIf { it.isNotEmpty() },
             )
         } ?: return@withContext null
         readData(base, groupTitles())
@@ -228,6 +229,17 @@ class ContactsRepository(private val context: Context) {
                 ContactSummary(c.getLong(0), c.getString(1).orEmpty(), name, name, c.getString(3), starred = false)
             }
         }.getOrNull()
+    }
+
+    /** Sets the contact's ringtone; null goes back to the phone's default. */
+    suspend fun setRingtone(id: Long, uri: String?) = withContext(Dispatchers.IO) {
+        runCatching {
+            resolver.update(
+                ContentUris.withAppendedId(Contacts.CONTENT_URI, id),
+                ContentValues().apply { put(Contacts.CUSTOM_RINGTONE, uri) },
+                null, null,
+            )
+        }
     }
 
     /** Adds the contact to, or removes it from, Favorites. */
