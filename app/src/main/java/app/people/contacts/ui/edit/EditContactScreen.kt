@@ -71,6 +71,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.people.contacts.R
+import app.people.contacts.data.AccountKeys
+import app.people.contacts.data.ContactAccount
 import app.people.contacts.data.EditableContact
 import app.people.contacts.data.PhotoChange
 import app.people.contacts.data.writableAccounts
@@ -78,6 +80,7 @@ import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.Avatar
 import app.people.contacts.util.scaledContactPhoto
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -86,7 +89,8 @@ import kotlinx.coroutines.withContext
 fun EditContactScreen(viewModel: ContactsViewModel, id: Long?, onClose: () -> Unit, onSaved: (Long) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val accounts = remember { writableAccounts(context) }
+    var accounts by remember { mutableStateOf<List<ContactAccount>>(emptyList()) }
+    var blank by remember { mutableStateOf(EditableContact()) }
     var original by remember { mutableStateOf<EditableContact?>(null) }
     var edited by remember { mutableStateOf<EditableContact?>(null) }
     var photo by remember { mutableStateOf<PhotoChange>(PhotoChange.Keep) }
@@ -94,15 +98,20 @@ fun EditContactScreen(viewModel: ContactsViewModel, id: Long?, onClose: () -> Un
     var confirmDiscard by remember { mutableStateOf(false) }
 
     LaunchedEffect(id) {
+        accounts = writableAccounts(context, AccountKeys.savedNames(viewModel.settings.savedAccounts.first()))
         if (id == null) {
-            edited = EditableContact(account = accounts.first())
+            // New contacts go to the account the last one was saved to, or the phone.
+            val last = viewModel.settings.lastAccount()
+            val account = accounts.firstOrNull { (it.name.orEmpty() to it.type.orEmpty()) == last } ?: accounts.first()
+            blank = EditableContact(account = account)
+            edited = blank
         } else {
             val loaded = viewModel.writer.load(id)
             if (loaded == null) onClose() else { original = loaded; edited = loaded }
         }
     }
     val contact = edited
-    val dirty = contact != null && (contact != (original ?: EditableContact(account = accounts.first())) || photo != PhotoChange.Keep)
+    val dirty = contact != null && (contact != (original ?: blank) || photo != PhotoChange.Keep)
     val close = { if (dirty) confirmDiscard = true else onClose() }
     BackHandler(onBack = close)
 
@@ -131,6 +140,7 @@ fun EditContactScreen(viewModel: ContactsViewModel, id: Long?, onClose: () -> Un
                         saving = true
                         scope.launch {
                             val savedId = viewModel.writer.save(original, toSave, photo)
+                            if (savedId != null && original == null) viewModel.settings.setLastAccount(toSave.account?.name, toSave.account?.type)
                             saving = false
                             if (savedId != null) onSaved(savedId) else android.widget.Toast
                                 .makeText(context, R.string.save_failed, android.widget.Toast.LENGTH_LONG).show()
@@ -194,7 +204,7 @@ private fun PhotoEditor(contact: EditableContact, photo: PhotoChange, onPick: ()
 }
 
 @Composable
-private fun AccountPicker(accounts: List<app.people.contacts.data.ContactAccount>, selected: app.people.contacts.data.ContactAccount?, onPick: (app.people.contacts.data.ContactAccount) -> Unit) {
+private fun AccountPicker(accounts: List<ContactAccount>, selected: ContactAccount?, onPick: (ContactAccount) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         OutlinedTextField(

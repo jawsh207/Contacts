@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.people.contacts.R
 import app.people.contacts.data.ContactSummary
+import app.people.contacts.data.SortOrder
+import app.people.contacts.data.sortName
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.ContactRow
 import app.people.contacts.ui.components.EmptyState
@@ -48,8 +50,9 @@ fun ContactsTab(
     onOpenContact: (Long) -> Unit,
 ) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    val order by viewModel.sortOrder.collectAsStateWithLifecycle()
     val list = contacts
-    val sections = remember(list) { list?.let(::byFirstLetter).orEmpty() }
+    val sections = remember(list, order) { list?.let { byFirstLetter(it, order) }.orEmpty() }
     val favorites = remember(list) { list?.filter { it.starred }.orEmpty() }
 
     LazyColumn(
@@ -99,9 +102,9 @@ private fun LazyListScope.group(prefix: String, members: List<ContactSummary>, o
 }
 
 /** Contacts in letter groups, in the order they're already sorted; anything else under "#". */
-private fun byFirstLetter(contacts: List<ContactSummary>): List<Pair<String, List<ContactSummary>>> =
+private fun byFirstLetter(contacts: List<ContactSummary>, order: SortOrder): List<Pair<String, List<ContactSummary>>> =
     contacts.groupBy { c ->
-        foldForSearch(c.name).firstOrNull { it.isLetterOrDigit() }
+        foldForSearch(c.sortName(order)).firstOrNull { it.isLetterOrDigit() }
             ?.takeIf { it.isLetter() }?.uppercaseChar()?.toString() ?: "#"
     }.toList().sortedBy { (letter, _) -> if (letter == "#") "￿" else letter }
 

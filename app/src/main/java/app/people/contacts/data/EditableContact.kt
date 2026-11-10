@@ -21,9 +21,6 @@ sealed interface PhotoChange {
     class Set(val jpeg: ByteArray) : PhotoChange
 }
 
-/** Where a new contact is saved. A null name and type is the phone itself. */
-data class ContactAccount(val name: String?, val type: String?, val label: String)
-
 /**
  * A contact as the editor works on it. Single fields keep their row id ([nameId], …) so they're
  * updated in place; 0 means there's no row yet. New rows go to [rawContactId], or to a new raw

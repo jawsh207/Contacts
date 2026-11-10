@@ -1,6 +1,11 @@
 package app.people.contacts.ui
 
 import android.app.Application
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.Dispatchers
+import app.people.contacts.data.sortName
+import app.people.contacts.data.SortOrder
+import app.people.contacts.data.AccountKeys
 import android.provider.CallLog
 import android.provider.ContactsContract
 import android.provider.Telephony
@@ -53,19 +58,27 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
     private val changes: Flow<Unit> =
         accessChanges.flatMapLatest { contentChanges(app, ContactsContract.Contacts.CONTENT_URI) }
 
-    /** All contacts, sorted by name; null until the first load. */
-    val contacts: StateFlow<List<ContactSummary>?> = changes
-        .mapLatest {
-            val collator = Collator.getInstance().apply { strength = Collator.PRIMARY }
-            repository.loadAll().sortedWith { a, b -> collator.compare(a.name, b.name) }
-        }
+    val settings = Settings(app)
+
+    /** Every contact, unsorted; null until the first load. */
+    private val allContacts: StateFlow<List<ContactSummary>?> = changes
+        .mapLatest { repository.loadAll() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val sortOrder: StateFlow<SortOrder> = settings.sortOrder.stateIn(viewModelScope, SharingStarted.Eagerly, SortOrder.FirstName)
+
+    /** Contacts in accounts that aren't hidden, in the chosen order; null until the first load. */
+    val contacts: StateFlow<List<ContactSummary>?> = combine(allContacts, sortOrder, settings.hiddenAccounts) { all, order, hidden ->
+        val collator = Collator.getInstance().apply { strength = Collator.PRIMARY }
+        all?.filter { c -> c.accounts.isEmpty() || c.accounts.any { (type, name) -> !AccountKeys.isHidden(type, name, hidden) } }
+            ?.sortedWith { a, b -> collator.compare(a.sortName(order), b.sortName(order)) }
+    }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** One contact's details, reloaded whenever contacts change. */
     fun details(id: Long): Flow<DetailState> =
         changes.mapLatest { repository.loadDetails(id) }.map { DetailState(true, it) }
-
-    val settings = Settings(app)
 
     /** Birthdays today and in the next [BIRTHDAY_WINDOW_DAYS] days, soonest first. */
     val birthdays: StateFlow<List<UpcomingBirthday>> = combine(

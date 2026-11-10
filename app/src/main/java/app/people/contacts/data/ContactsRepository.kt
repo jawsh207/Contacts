@@ -17,6 +17,7 @@ import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
 import android.provider.ContactsContract.Groups
+import android.provider.ContactsContract.RawContacts
 import app.people.contacts.util.hasPermission
 import app.people.contacts.util.numberKey
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +50,20 @@ class ContactsRepository(private val context: Context) {
                 }
             }
         }
+        val accounts = HashMap<Long, MutableList<Pair<String?, String?>>>()
+        runCatching {
+            resolver.query(
+                RawContacts.CONTENT_URI,
+                arrayOf(RawContacts.CONTACT_ID, RawContacts.ACCOUNT_TYPE, RawContacts.ACCOUNT_NAME),
+                "${RawContacts.DELETED} = 0", null, null,
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    val account = c.getString(1) to c.getString(2)
+                    val list = accounts.getOrPut(c.getLong(0)) { mutableListOf() }
+                    if (account !in list) list += account
+                }
+            }
+        }
         val out = ArrayList<ContactSummary>()
         runCatching {
             resolver.query(
@@ -73,6 +88,7 @@ class ContactsRepository(private val context: Context) {
                         starred = c.getInt(5) == 1,
                         numbers = numbers[id].orEmpty(),
                         emails = emails[id].orEmpty(),
+                        accounts = accounts[id].orEmpty(),
                     )
                 }
             }

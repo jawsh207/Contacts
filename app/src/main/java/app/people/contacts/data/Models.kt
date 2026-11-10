@@ -12,6 +12,8 @@ data class ContactSummary(
     /** Phone numbers and email addresses, for search. */
     val numbers: List<String> = emptyList(),
     val emails: List<String> = emptyList(),
+    /** The accounts it's stored in, as (type, name); both null for the phone. */
+    val accounts: List<Pair<String?, String?>> = emptyList(),
 )
 
 /**
@@ -41,3 +43,6 @@ data class ContactDetails(
     val notes: List<String> = emptyList(),
     val labels: List<String> = emptyList(),
 )
+
+/** The name a contact is sorted and grouped by: "First Last", or "Last, First" by last name. */
+fun ContactSummary.sortName(order: SortOrder): String = if (order == SortOrder.LastName) nameAlternative else name
