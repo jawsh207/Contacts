@@ -1,0 +1,14 @@
+Contacts
+
+Copyright 2026 jawsh207
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes:
+
+- Google Sans Flex, unmodified, from https://github.com/google/fonts/tree/main/ofl/googlesansflex,
+  under the SIL Open Font License 1.1 (app/src/main/assets/licenses/google_sans_flex_OFL.txt).
+  Google Sans Flex is a trademark of Google LLC; this project is not affiliated with Google.
+
+- The launcher icon's contact-card glyph, from GrapheneOS Contacts
+  (https://github.com/GrapheneOS/platform_packages_apps_Contacts), Copyright (C) 2021 Google Inc.,
+  under the Apache License 2.0. Modified: filled white instead of black.
