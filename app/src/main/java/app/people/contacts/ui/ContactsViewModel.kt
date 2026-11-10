@@ -17,6 +17,8 @@ import app.people.contacts.data.ContactWriter
 import app.people.contacts.data.ContactsRepository
 import app.people.contacts.data.DuplicateSet
 import app.people.contacts.data.Label
+import app.people.contacts.data.PhotoChange
+import app.people.contacts.data.renameOnDeviceAccount as renameAccountContacts
 import app.people.contacts.data.LabelStore
 import app.people.contacts.data.RecentEntry
 import app.people.contacts.data.Settings
@@ -179,7 +181,7 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
     fun renameOnDeviceAccount(account: ContactAccount, newName: String) {
         val name = newName.trim()
         viewModelScope.launch {
-            if (app.people.contacts.data.renameOnDeviceAccount(getApplication<Application>(), account, name)) {
+            if (renameAccountContacts(getApplication<Application>(), account, name)) {
                 settings.editSavedAccounts { it - AccountKeys.savedEntry(account.name.orEmpty()) + AccountKeys.savedEntry(name) }
                 val wasHidden = AccountKeys.isHidden(account.type, account.name, settings.hiddenAccounts.first())
                 if (wasHidden) {
@@ -244,7 +246,7 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         return VCardReader.parse(text).count { (contact, photo) ->
             contact.hasContent && writer.save(
                 null, contact.copy(account = account),
-                if (photo != null) app.people.contacts.data.PhotoChange.Set(photo) else app.people.contacts.data.PhotoChange.Keep,
+                if (photo != null) PhotoChange.Set(photo) else PhotoChange.Keep,
             ) != null
         }
     }
