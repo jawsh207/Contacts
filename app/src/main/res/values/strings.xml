@@ -144,6 +144,21 @@
     <string name="delete_account_title">Delete \u201c<xliff:g id="account" example="Family">%1$s</xliff:g>\u201d?</string>
     <string name="delete_account_body">Every contact saved in this account will be deleted from your phone.</string>
 
+    <!-- Requests from other apps -->
+    <string name="pick_contact">Choose a contact</string>
+    <string name="pick_phone">Choose a phone number</string>
+    <string name="pick_email">Choose an email address</string>
+    <string name="pick_address">Choose an address</string>
+    <string name="add_to_contact">Add to a contact</string>
+    <plurals name="import_file_title">
+        <item quantity="one">Import <xliff:g id="count" example="1">%1$d</xliff:g> contact?</item>
+        <item quantity="other">Import <xliff:g id="count" example="12">%1$d</xliff:g> contacts?</item>
+    </plurals>
+    <string name="import_file_body">Choose where to save them.</string>
+    <string name="import_into">Save to <xliff:g id="account" example="Phone">%1$s</xliff:g></string>
+    <string name="import_nothing_title">No contacts in this file</string>
+    <string name="import_nothing_body">The file couldn\'t be read as contacts.</string>
+
     <!-- Editor -->
     <string name="create_contact">Create contact</string>
     <string name="edit_contact">Edit contact</string>

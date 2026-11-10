@@ -16,6 +16,8 @@ sealed interface Screen {
     data class Label(val id: Long) : Screen
     data object MergeDuplicates : Screen
     data object Settings : Screen
+    /** A .vcf file opened from another app, waiting to be imported. */
+    data class ImportFile(val uri: String) : Screen
 }
 
 private fun Screen.encode(): String = when (this) {
@@ -26,6 +28,7 @@ private fun Screen.encode(): String = when (this) {
     is Screen.Label -> "label:$id"
     Screen.MergeDuplicates -> "merge"
     Screen.Settings -> "settings"
+    is Screen.ImportFile -> "import:$uri"
 }
 
 private fun decode(text: String): Screen? = when {
@@ -34,6 +37,7 @@ private fun decode(text: String): Screen? = when {
     text.startsWith("contact:") -> text.removePrefix("contact:").toLongOrNull()?.let { Screen.Contact(it) }
     text == "merge" -> Screen.MergeDuplicates
     text == "settings" -> Screen.Settings
+    text.startsWith("import:") -> Screen.ImportFile(text.removePrefix("import:"))
     text.startsWith("label:") -> text.removePrefix("label:").toLongOrNull()?.let { Screen.Label(it) }
     text == "edit:new" -> Screen.Edit(null)
     text.startsWith("edit:") -> text.removePrefix("edit:").toLongOrNull()?.let { Screen.Edit(it) }

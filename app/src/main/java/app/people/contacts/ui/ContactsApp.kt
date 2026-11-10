@@ -1,6 +1,13 @@
 package app.people.contacts.ui
 
 import android.Manifest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import app.people.contacts.intents.parseRequest
+import app.people.contacts.intents.ExternalRequest
+import androidx.compose.runtime.produceState
+import android.net.Uri
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -58,9 +65,13 @@ enum class Tab(@StringRes val label: Int, val icon: ImageVector, val selectedIco
 
 private val CONTACTS_PERMISSIONS = arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
 
-/** The whole app: asks for contacts access, then shows the screen on top of the back stack. */
+/**
+ * The whole app: asks for contacts access, then shows the screen on top of the back stack.
+ * [intent] is what opened the app; requests from other apps that hand something back end
+ * through [finish] with the result (null when cancelled).
+ */
 @Composable
-fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
+fun ContactsApp(intent: Intent?, finish: (Uri?) -> Unit, viewModel: ContactsViewModel = viewModel()) {
     val context = LocalContext.current
     var hasAccess by remember { mutableStateOf(context.hasPermission(Manifest.permission.READ_CONTACTS)) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -73,7 +84,28 @@ fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
         return
     }
 
+    // What another app asked for, read once access is granted.
+    var handled by rememberSaveable { mutableStateOf(false) }
+    val request by produceState<ExternalRequest?>(null, intent) {
+        value = intent?.let { withContext(Dispatchers.IO) { parseRequest(context, it) } }
+    }
+    val external = request
+    if (!handled && external != null && external.handsBack()) {
+        ExternalFlow(viewModel, external, finish = { handled = true; finish(it) })
+        return
+    }
+
     val stack = rememberBackStack()
+    LaunchedEffect(external) {
+        if (handled || external == null) return@LaunchedEffect
+        handled = true
+        when (external) {
+            is ExternalRequest.View -> stack.add(Screen.Contact(external.contactId))
+            ExternalRequest.Settings -> stack.add(Screen.Settings)
+            is ExternalRequest.ImportFile -> stack.add(Screen.ImportFile(external.uri.toString()))
+            else -> Unit
+        }
+    }
     var tab by rememberSaveable { mutableStateOf(Tab.Contacts) }
     val open: (Screen) -> Unit = { stack.add(it) }
     val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
@@ -86,6 +118,7 @@ fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
         is Screen.Label -> LabelScreen(viewModel, screen.id, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
         Screen.MergeDuplicates -> MergeScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
         Screen.Settings -> SettingsScreen(viewModel, onBack = back)
+        is Screen.ImportFile -> ImportFileScreen(viewModel, Uri.parse(screen.uri), onDone = back)
         is Screen.Edit -> EditContactScreen(
             viewModel, screen.id,
             onClose = back,
@@ -97,6 +130,10 @@ fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
         )
     }
 }
+
+/** Requests that end by returning to the app that made them. */
+private fun ExternalRequest.handsBack() = this is ExternalRequest.Pick || this is ExternalRequest.Insert ||
+    this is ExternalRequest.InsertOrEdit || this is ExternalRequest.Edit
 
 /** The bottom tabs. Back from Highlights or Organize returns to Contacts. */
 @Composable

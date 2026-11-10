@@ -76,6 +76,7 @@ import app.people.contacts.data.ContactAccount
 import app.people.contacts.data.EditableContact
 import app.people.contacts.data.PhotoChange
 import app.people.contacts.data.writableAccounts
+import app.people.contacts.intents.mergePrefill
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.Avatar
 import app.people.contacts.util.scaledContactPhoto
@@ -86,7 +87,14 @@ import kotlinx.coroutines.withContext
 
 /** The contact editor. [id] null creates a contact; [onSaved] gets the saved contact's id. */
 @Composable
-fun EditContactScreen(viewModel: ContactsViewModel, id: Long?, onClose: () -> Unit, onSaved: (Long) -> Unit) {
+fun EditContactScreen(
+    viewModel: ContactsViewModel,
+    id: Long?,
+    onClose: () -> Unit,
+    onSaved: (Long) -> Unit,
+    /** Details another app passed in: a new contact starts with them, an existing one gains them. */
+    prefill: EditableContact? = null,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var accounts by remember { mutableStateOf<List<ContactAccount>>(emptyList()) }
@@ -104,10 +112,13 @@ fun EditContactScreen(viewModel: ContactsViewModel, id: Long?, onClose: () -> Un
             val last = viewModel.settings.lastAccount()
             val account = accounts.firstOrNull { (it.name.orEmpty() to it.type.orEmpty()) == last } ?: accounts.first()
             blank = EditableContact(account = account)
-            edited = blank
+            edited = prefill?.copy(account = account) ?: blank
         } else {
             val loaded = viewModel.writer.load(id)
-            if (loaded == null) onClose() else { original = loaded; edited = loaded }
+            if (loaded == null) onClose() else {
+                original = loaded
+                edited = prefill?.let { mergePrefill(loaded, it) } ?: loaded
+            }
         }
     }
     val contact = edited
