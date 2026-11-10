@@ -22,6 +22,9 @@ messages, release notes or pull requests.
 Don't publish a release until this app has every feature of the old Contacts app; until then,
 test builds only. When it's ready, the first release replaces the old app (same app id and keys).
 
-Before that first release, the app must declare the same contacts account authenticator as the
-old app (account type `app.people.contacts`, the on-device accounts made in it). If an update
-drops an authenticator, Android removes its accounts, and the contacts saved in them go too.
+Things that must stay compatible with the old app for the update to keep the user's data:
+
+- The settings file (`datastore_default.preferences_pb`) and its keys: see `data/Settings.kt`.
+- On-device accounts are stored as contacts with account type `com.vayunmathur.contacts.local`.
+- The birthday calendar's account: name "Contacts", type = the app id (`@string/account_type`),
+  with the account authenticator declared in the manifest.
