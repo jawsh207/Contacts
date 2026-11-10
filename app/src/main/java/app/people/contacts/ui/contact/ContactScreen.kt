@@ -1,0 +1,154 @@
+package app.people.contacts.ui.contact
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.people.contacts.R
+import app.people.contacts.data.ContactDetails
+import app.people.contacts.ui.ContactsViewModel
+import app.people.contacts.ui.DetailState
+import app.people.contacts.util.Reach
+
+/** A contact's page: header, quick actions, then cards of everything stored for them. */
+@Composable
+fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit) {
+    val flow = remember(id) { viewModel.details(id) }
+    val state by flow.collectAsStateWithLifecycle(DetailState(false, null))
+    // Deleted elsewhere while open: nothing to show.
+    LaunchedEffect(state) { if (state.loaded && state.details == null) onBack() }
+    val contact = state.details
+
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Box(Modifier.fillMaxSize()) {
+            if (contact != null) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                ) {
+                    item(key = "header") { ContactHeader(contact) }
+                    item(key = "actions") { QuickActions(contact) }
+                    contactSections(contact)
+                    item(key = "bottom") { Spacer(Modifier.navigationBarsPadding()) }
+                }
+            }
+            TopBar(
+                starred = contact?.starred == true,
+                showStar = contact != null,
+                onBack = onBack,
+                onToggleStar = { contact?.let { viewModel.setStarred(it.id, !it.starred) } },
+            )
+        }
+    }
+}
+
+/** Back on the left and the Favorites star on the right, floating over the backdrop. */
+@Composable
+private fun TopBar(starred: Boolean, showStar: Boolean, onBack: () -> Unit, onToggleStar: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().statusBarsPadding().height(CONTACT_TOP_BAR_HEIGHT).padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircleIconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), onBack)
+        Spacer(Modifier.weight(1f))
+        if (showStar) {
+            CircleIconButton(
+                if (starred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                stringResource(if (starred) R.string.remove_from_favorites else R.string.add_to_favorites),
+                onToggleStar,
+            )
+        }
+    }
+}
+
+/** An icon button on a translucent circle of the page colour, readable over any photo. */
+@Composable
+private fun CircleIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.background.copy(alpha = 0.7f)) {
+        IconButton(onClick = onClick) { Icon(icon, description) }
+    }
+}
+
+/** Call, Text, Video and Email, using the contact's first number and email address. */
+@Composable
+private fun QuickActions(contact: ContactDetails) {
+    val context = LocalContext.current
+    val number = contact.phones.firstOrNull()?.value
+    val email = contact.emails.firstOrNull()?.value
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        QuickAction(Icons.Outlined.Call, stringResource(R.string.action_call), number != null) {
+            number?.let { Reach.dial(context, it) }
+        }
+        QuickAction(Icons.Outlined.ChatBubbleOutline, stringResource(R.string.action_text), number != null) {
+            number?.let { Reach.message(context, it) }
+        }
+        QuickAction(Icons.Outlined.Videocam, stringResource(R.string.action_video), number != null) {
+            number?.let { Reach.videoCall(context, it) }
+        }
+        QuickAction(Icons.Outlined.Email, stringResource(R.string.action_email), email != null) {
+            email?.let { Reach.email(context, it) }
+        }
+    }
+}
+
+@Composable
+private fun QuickAction(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val content = if (enabled) scheme.onSecondaryContainer else scheme.onSurface.copy(alpha = 0.38f)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            onClick = onClick,
+            enabled = enabled,
+            shape = CircleShape,
+            color = if (enabled) scheme.secondaryContainer else scheme.onSurface.copy(alpha = 0.12f),
+            contentColor = content,
+            modifier = Modifier.size(56.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) { Icon(icon, null) }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (enabled) scheme.onSurface else scheme.onSurface.copy(alpha = 0.38f),
+        )
+    }
+}

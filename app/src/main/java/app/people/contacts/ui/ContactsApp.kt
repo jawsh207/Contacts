@@ -1,6 +1,9 @@
 package app.people.contacts.ui
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,16 +21,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.people.contacts.R
 import app.people.contacts.ui.components.BottomBar
+import app.people.contacts.ui.contact.ContactScreen
+import app.people.contacts.ui.contacts.AccessScreen
+import app.people.contacts.ui.contacts.ContactsTab
+import app.people.contacts.ui.search.SearchScreen
+import app.people.contacts.util.hasPermission
 
 /** The three bottom tabs, in order. Contacts is home. */
 enum class Tab(@StringRes val label: Int, val icon: ImageVector, val selectedIcon: ImageVector) {
@@ -36,13 +48,40 @@ enum class Tab(@StringRes val label: Int, val icon: ImageVector, val selectedIco
     Organize(R.string.tab_organize, Icons.Outlined.Book, Icons.Filled.Book),
 }
 
-/** The app's main screen: the current tab above the bottom bar. */
-@Composable
-fun ContactsApp() {
-    var tab by rememberSaveable { mutableStateOf(Tab.Contacts) }
-    // Back from Highlights or Organize returns to Contacts; Back from Contacts leaves the app.
-    BackHandler(enabled = tab != Tab.Contacts) { tab = Tab.Contacts }
+private val CONTACTS_PERMISSIONS = arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
 
+/** The whole app: asks for contacts access, then shows the screen on top of the back stack. */
+@Composable
+fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
+    val context = LocalContext.current
+    var hasAccess by remember { mutableStateOf(context.hasPermission(Manifest.permission.READ_CONTACTS)) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        hasAccess = context.hasPermission(Manifest.permission.READ_CONTACTS)
+        viewModel.onAccessChanged()
+    }
+    LaunchedEffect(Unit) { if (!hasAccess) launcher.launch(CONTACTS_PERMISSIONS) }
+    if (!hasAccess) {
+        AccessScreen(onAllow = { launcher.launch(CONTACTS_PERMISSIONS) })
+        return
+    }
+
+    val stack = rememberBackStack()
+    var tab by rememberSaveable { mutableStateOf(Tab.Contacts) }
+    val open: (Screen) -> Unit = { stack.add(it) }
+    val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
+    BackHandler(enabled = stack.size > 1, onBack = back)
+
+    when (val screen = stack.last()) {
+        Screen.Home -> Home(viewModel, tab, onTabChange = { tab = it }, open = open)
+        Screen.Search -> SearchScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
+        is Screen.Contact -> ContactScreen(viewModel, screen.id, onBack = back)
+    }
+}
+
+/** The bottom tabs. Back from Highlights or Organize returns to Contacts. */
+@Composable
+private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> Unit, open: (Screen) -> Unit) {
+    BackHandler(enabled = tab != Tab.Contacts) { onTabChange(Tab.Contacts) }
     Scaffold(
         bottomBar = {
             BottomBar {
@@ -50,7 +89,7 @@ fun ContactsApp() {
                     val selected = entry == tab
                     ShortNavigationBarItem(
                         selected = selected,
-                        onClick = { tab = entry },
+                        onClick = { onTabChange(entry) },
                         icon = { Icon(if (selected) entry.selectedIcon else entry.icon, contentDescription = null) },
                         label = { Text(stringResource(entry.label)) },
                     )
@@ -58,12 +97,20 @@ fun ContactsApp() {
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-            Text(
-                stringResource(R.string.coming_soon),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        when (tab) {
+            Tab.Contacts -> ContactsTab(
+                viewModel = viewModel,
+                contentPadding = padding,
+                onSearch = { open(Screen.Search) },
+                onOpenContact = { open(Screen.Contact(it)) },
             )
+            else -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text(
+                    stringResource(R.string.coming_soon),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

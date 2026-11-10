@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">Contacts</string>
 
     <!-- Bottom tabs -->
@@ -7,4 +7,35 @@
     <string name="tab_organize">Organize</string>
 
     <string name="coming_soon">Coming soon</string>
+
+    <!-- Contacts access -->
+    <string name="access_title">Allow access to your contacts</string>
+    <string name="access_body">Contacts needs access to show, add and change the contacts on your phone.</string>
+    <string name="access_allow">Allow access</string>
+
+    <!-- Contacts tab -->
+    <string name="search_contacts">Search contacts</string>
+    <string name="favorites">Favorites</string>
+    <string name="no_contacts_title">No contacts yet</string>
+    <string name="no_contacts_body">Contacts you add will show up here.</string>
+
+    <!-- Search -->
+    <string name="back">Back</string>
+    <string name="clear_search">Clear search</string>
+    <string name="search_no_results_title">No matches</string>
+    <string name="search_no_results_body">No contacts match \u201c<xliff:g id="query" example="Alex">%1$s</xliff:g>\u201d.</string>
+
+    <!-- Contact page -->
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="remove_from_favorites">Remove from favorites</string>
+    <string name="action_call">Call</string>
+    <string name="action_text">Text</string>
+    <string name="action_video">Video</string>
+    <string name="action_email">Email</string>
+    <string name="section_contact_info">Contact info</string>
+    <string name="section_dates">Dates</string>
+    <string name="section_about">About</string>
+    <string name="section_labels">Labels</string>
+    <string name="copied">Copied</string>
+    <string name="no_app_found">No app found to do that</string>
 </resources>
