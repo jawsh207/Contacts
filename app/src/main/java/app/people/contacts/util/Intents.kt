@@ -33,6 +33,17 @@ object Reach {
         start(context, Intent(Intent.ACTION_VIEW, Uri.parse(full)))
     }
 
+    /** Shares the contact as a vCard file through the share sheet. */
+    fun share(context: Context, lookupKey: String, name: String) {
+        val uri = Uri.withAppendedPath(android.provider.ContactsContract.Contacts.CONTENT_VCARD_URI, lookupKey)
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(android.provider.ContactsContract.Contacts.CONTENT_VCARD_TYPE)
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .putExtra(Intent.EXTRA_SUBJECT, name)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        start(context, Intent.createChooser(send, null))
+    }
+
     private fun start(context: Context, intent: Intent) {
         try {
             context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

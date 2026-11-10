@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.people.contacts.data.ContactDetails
 import app.people.contacts.data.ContactSummary
+import app.people.contacts.data.ContactWriter
 import app.people.contacts.data.ContactsRepository
 import app.people.contacts.util.contentChanges
 import java.text.Collator
@@ -26,6 +27,7 @@ data class DetailState(val loaded: Boolean, val details: ContactDetails?)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactsViewModel(app: Application) : AndroidViewModel(app) {
     private val repository = ContactsRepository(app)
+    val writer = ContactWriter(app)
 
     /** Bumped when contacts access is granted, so everything reloads. */
     private val accessChanges = MutableStateFlow(0)

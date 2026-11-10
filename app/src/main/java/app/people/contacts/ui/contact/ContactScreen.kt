@@ -21,6 +21,18 @@ import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material3.Icon
@@ -47,12 +59,35 @@ import app.people.contacts.util.Reach
 
 /** A contact's page: header, quick actions, then cards of everything stored for them. */
 @Composable
-fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit) {
+fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onEdit: () -> Unit) {
     val flow = remember(id) { viewModel.details(id) }
     val state by flow.collectAsStateWithLifecycle(DetailState(false, null))
     // Deleted elsewhere while open: nothing to show.
     LaunchedEffect(state) { if (state.loaded && state.details == null) onBack() }
     val contact = state.details
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var confirmDelete by remember { mutableStateOf(false) }
+
+    if (confirmDelete && contact != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(stringResource(R.string.delete_title)) },
+            text = { Text(stringResource(R.string.delete_body, contact.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    // Once it's gone the page closes itself (see above).
+                    scope.launch {
+                        if (!viewModel.writer.delete(contact.id, contact.lookupKey)) {
+                            android.widget.Toast.makeText(context, R.string.delete_failed, android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(Modifier.fillMaxSize()) {
@@ -68,30 +103,57 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit) {
                 }
             }
             TopBar(
-                starred = contact?.starred == true,
-                showStar = contact != null,
+                contact = contact,
                 onBack = onBack,
                 onToggleStar = { contact?.let { viewModel.setStarred(it.id, !it.starred) } },
+                onEdit = onEdit,
+                onShare = { contact?.let { Reach.share(context, it.lookupKey, it.name) } },
+                onDelete = { confirmDelete = true },
             )
         }
     }
 }
 
-/** Back on the left and the Favorites star on the right, floating over the backdrop. */
+/** Back on the left; edit, the Favorites star and a menu on the right, floating over the backdrop. */
 @Composable
-private fun TopBar(starred: Boolean, showStar: Boolean, onBack: () -> Unit, onToggleStar: () -> Unit) {
+private fun TopBar(
+    contact: ContactDetails?,
+    onBack: () -> Unit,
+    onToggleStar: () -> Unit,
+    onEdit: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth().statusBarsPadding().height(CONTACT_TOP_BAR_HEIGHT).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CircleIconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), onBack)
         Spacer(Modifier.weight(1f))
-        if (showStar) {
+        if (contact != null) {
+            CircleIconButton(Icons.Outlined.Edit, stringResource(R.string.edit_contact), onEdit)
             CircleIconButton(
-                if (starred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
-                stringResource(if (starred) R.string.remove_from_favorites else R.string.add_to_favorites),
+                if (contact.starred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                stringResource(if (contact.starred) R.string.remove_from_favorites else R.string.add_to_favorites),
                 onToggleStar,
             )
+            var menu by remember { mutableStateOf(false) }
+            Box {
+                CircleIconButton(Icons.Rounded.MoreVert, stringResource(R.string.more_options)) { menu = true }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.share)) },
+                        leadingIcon = { Icon(Icons.Outlined.Share, null) },
+                        onClick = { menu = false; onShare() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.delete)) },
+                        leadingIcon = { Icon(Icons.Outlined.Delete, null) },
+                        onClick = { menu = false; onDelete() },
+                    )
+                }
+            }
         }
     }
 }

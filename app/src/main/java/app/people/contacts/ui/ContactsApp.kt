@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Assistant
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,6 +40,7 @@ import app.people.contacts.ui.components.BottomBar
 import app.people.contacts.ui.contact.ContactScreen
 import app.people.contacts.ui.contacts.AccessScreen
 import app.people.contacts.ui.contacts.ContactsTab
+import app.people.contacts.ui.edit.EditContactScreen
 import app.people.contacts.ui.search.SearchScreen
 import app.people.contacts.util.hasPermission
 
@@ -74,7 +77,16 @@ fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
     when (val screen = stack.last()) {
         Screen.Home -> Home(viewModel, tab, onTabChange = { tab = it }, open = open)
         Screen.Search -> SearchScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
-        is Screen.Contact -> ContactScreen(viewModel, screen.id, onBack = back)
+        is Screen.Contact -> ContactScreen(viewModel, screen.id, onBack = back, onEdit = { open(Screen.Edit(screen.id)) })
+        is Screen.Edit -> EditContactScreen(
+            viewModel, screen.id,
+            onClose = back,
+            onSaved = { savedId ->
+                // A new contact opens on its page; an edited one goes back to its page.
+                stack.removeAt(stack.lastIndex)
+                if (screen.id == null) stack.add(Screen.Contact(savedId))
+            },
+        )
     }
 }
 
@@ -83,6 +95,13 @@ fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
 private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> Unit, open: (Screen) -> Unit) {
     BackHandler(enabled = tab != Tab.Contacts) { onTabChange(Tab.Contacts) }
     Scaffold(
+        floatingActionButton = {
+            if (tab == Tab.Contacts) {
+                FloatingActionButton(onClick = { open(Screen.Edit(null)) }) {
+                    Icon(Icons.Rounded.Add, stringResource(R.string.create_contact))
+                }
+            }
+        },
         bottomBar = {
             BottomBar {
                 Tab.entries.forEach { entry ->

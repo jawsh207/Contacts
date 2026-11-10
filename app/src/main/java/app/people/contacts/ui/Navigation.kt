@@ -11,18 +11,23 @@ sealed interface Screen {
     data object Home : Screen
     data object Search : Screen
     data class Contact(val id: Long) : Screen
+    /** The editor; [id] null creates a new contact. */
+    data class Edit(val id: Long?) : Screen
 }
 
 private fun Screen.encode(): String = when (this) {
     Screen.Home -> "home"
     Screen.Search -> "search"
     is Screen.Contact -> "contact:$id"
+    is Screen.Edit -> "edit:${id ?: "new"}"
 }
 
 private fun decode(text: String): Screen? = when {
     text == "home" -> Screen.Home
     text == "search" -> Screen.Search
     text.startsWith("contact:") -> text.removePrefix("contact:").toLongOrNull()?.let { Screen.Contact(it) }
+    text == "edit:new" -> Screen.Edit(null)
+    text.startsWith("edit:") -> text.removePrefix("edit:").toLongOrNull()?.let { Screen.Edit(it) }
     else -> null
 }
 

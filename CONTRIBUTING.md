@@ -21,3 +21,7 @@ messages, release notes or pull requests.
 
 Don't publish a release until this app has every feature of the old Contacts app; until then,
 test builds only. When it's ready, the first release replaces the old app (same app id and keys).
+
+Before that first release, the app must declare the same contacts account authenticator as the
+old app (account type `app.people.contacts`, the on-device accounts made in it). If an update
+drops an authenticator, Android removes its accounts, and the contacts saved in them go too.

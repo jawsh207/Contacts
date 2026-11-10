@@ -38,4 +38,51 @@
     <string name="section_labels">Labels</string>
     <string name="copied">Copied</string>
     <string name="no_app_found">No app found to do that</string>
+    <string name="more_options">More options</string>
+    <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="delete_title">Delete this contact?</string>
+    <string name="delete_body"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g> will be removed from your phone and every account it\'s saved in.</string>
+    <string name="delete_failed">Couldn\'t delete this contact</string>
+
+    <!-- Editor -->
+    <string name="create_contact">Create contact</string>
+    <string name="edit_contact">Edit contact</string>
+    <string name="save">Save</string>
+    <string name="save_failed">Couldn\'t save this contact</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="discard_title">Discard changes?</string>
+    <string name="discard_body">Your changes to this contact haven\'t been saved.</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="add_photo">Add picture</string>
+    <string name="change_photo">Change picture</string>
+    <string name="remove_photo">Remove</string>
+    <string name="save_to">Save to</string>
+    <string name="account_phone">Phone</string>
+    <string name="name_prefix">Name prefix</string>
+    <string name="first_name">First name</string>
+    <string name="middle_name">Middle name</string>
+    <string name="last_name">Last name</string>
+    <string name="name_suffix">Name suffix</string>
+    <string name="nickname">Nickname</string>
+    <string name="more_name_fields">More name fields</string>
+    <string name="fewer_name_fields">Fewer name fields</string>
+    <string name="company">Company</string>
+    <string name="job_title">Title</string>
+    <string name="notes">Notes</string>
+    <string name="phone">Phone</string>
+    <string name="add_phone">Add phone</string>
+    <string name="email">Email</string>
+    <string name="add_email">Add email</string>
+    <string name="address">Address</string>
+    <string name="add_address">Add address</string>
+    <string name="date">Date</string>
+    <string name="add_date">Add date</string>
+    <string name="website">Website</string>
+    <string name="add_website">Add website</string>
+    <string name="remove">Remove</string>
+    <string name="custom_label">Custom label</string>
+    <string name="pick_date">Pick a date</string>
 </resources>
