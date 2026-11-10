@@ -66,6 +66,69 @@
     <string name="recent_text_received">Text</string>
     <string name="recent_text_sent">Text sent</string>
 
+    <!-- Organize -->
+    <string name="fix_and_manage">Fix and manage</string>
+    <plurals name="contact_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact</item>
+        <item quantity="other"><xliff:g id="count" example="12">%1$d</xliff:g> contacts</item>
+    </plurals>
+    <string name="create_label">Create label</string>
+    <string name="create_label_in">Create in</string>
+    <string name="label_name">Label name</string>
+    <string name="create">Create</string>
+    <string name="rename">Rename</string>
+    <string name="rename_label">Rename label</string>
+    <string name="delete_label_title">Delete this label?</string>
+    <string name="delete_label_body">\u201c<xliff:g id="label" example="Family">%1$s</xliff:g>\u201d will be deleted. The contacts in it stay.</string>
+    <string name="add_contacts">Add contacts</string>
+    <string name="add">Add</string>
+    <plurals name="selected_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> selected</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selected</item>
+    </plurals>
+    <string name="remove_from_label">Remove from label</string>
+    <string name="label_empty_title">No contacts in this label</string>
+    <string name="label_empty_body">Add contacts to keep them together here.</string>
+    <string name="label_add_skipped"><xliff:g id="count" example="2">%1$d</xliff:g> couldn\'t be added: a label can only hold contacts saved in its own account.</string>
+    <string name="merge_duplicates">Merge duplicates</string>
+    <string name="merge_none">No duplicates found</string>
+    <plurals name="merge_suggestions">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> suggestion</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> suggestions</item>
+    </plurals>
+    <string name="merge_none_title">No duplicates</string>
+    <string name="merge_none_body">Contacts that look like the same person will show up here.</string>
+    <string name="merge_intro">Contacts with the same name, phone number or email. Merging links them into one contact with all their details; nothing is deleted.</string>
+    <string name="merge">Merge</string>
+    <string name="merge_all">Merge all</string>
+    <string name="merge_all_title">Merge all duplicates?</string>
+    <plurals name="merge_all_body">
+        <item quantity="one">The contacts in <xliff:g id="count" example="1">%1$d</xliff:g> suggestion will be linked into one.</item>
+        <item quantity="other">The contacts in all <xliff:g id="count" example="3">%1$d</xliff:g> suggestions will be linked, each set into one contact.</item>
+    </plurals>
+    <plurals name="merged">
+        <item quantity="one">Merged <xliff:g id="count" example="1">%1$d</xliff:g> duplicate</item>
+        <item quantity="other">Merged <xliff:g id="count" example="3">%1$d</xliff:g> duplicates</item>
+    </plurals>
+    <string name="merge_failed">Some contacts couldn\'t be merged</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="settings">Settings</string>
+    <string name="settings_summary">Sort order, birthdays, backup and accounts</string>
+
+    <!-- Settings -->
+    <string name="settings_display">Display</string>
+    <string name="sort_by">Sort by</string>
+    <string name="settings_recents_title">Calls and texts in Recents</string>
+    <string name="settings_recents_summary">Show calls and texts with your saved contacts in Highlights instead of contacts you\'ve opened. Needs call log and SMS access.</string>
+    <string name="settings_accounts">Accounts</string>
+    <string name="account_phone_summary">Saved on this phone</string>
+    <string name="account_on_device_summary">On-device account</string>
+    <string name="add_on_device_account">Add on-device account</string>
+    <string name="account_name">Account name</string>
+    <string name="rename_account">Rename account</string>
+    <string name="delete_account_title">Delete \u201c<xliff:g id="account" example="Family">%1$s</xliff:g>\u201d?</string>
+    <string name="delete_account_body">Every contact saved in this account will be deleted from your phone.</string>
+
     <!-- Editor -->
     <string name="create_contact">Create contact</string>
     <string name="edit_contact">Edit contact</string>

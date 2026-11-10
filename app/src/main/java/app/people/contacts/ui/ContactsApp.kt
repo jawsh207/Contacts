@@ -42,6 +42,10 @@ import app.people.contacts.ui.contacts.AccessScreen
 import app.people.contacts.ui.contacts.ContactsTab
 import app.people.contacts.ui.edit.EditContactScreen
 import app.people.contacts.ui.highlights.HighlightsTab
+import app.people.contacts.ui.organize.LabelScreen
+import app.people.contacts.ui.organize.MergeScreen
+import app.people.contacts.ui.organize.OrganizeTab
+import app.people.contacts.ui.settings.SettingsScreen
 import app.people.contacts.ui.search.SearchScreen
 import app.people.contacts.util.hasPermission
 
@@ -79,6 +83,9 @@ fun ContactsApp(viewModel: ContactsViewModel = viewModel()) {
         Screen.Home -> Home(viewModel, tab, onTabChange = { tab = it }, open = open)
         Screen.Search -> SearchScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
         is Screen.Contact -> ContactScreen(viewModel, screen.id, onBack = back, onEdit = { open(Screen.Edit(screen.id)) })
+        is Screen.Label -> LabelScreen(viewModel, screen.id, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
+        Screen.MergeDuplicates -> MergeScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
+        Screen.Settings -> SettingsScreen(viewModel, onBack = back)
         is Screen.Edit -> EditContactScreen(
             viewModel, screen.id,
             onClose = back,
@@ -130,13 +137,14 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                 onSearch = { open(Screen.Search) },
                 onOpenContact = { open(Screen.Contact(it)) },
             )
-            Tab.Organize -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.coming_soon),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Tab.Organize -> OrganizeTab(
+                viewModel = viewModel,
+                contentPadding = padding,
+                onSearch = { open(Screen.Search) },
+                onOpenLabel = { open(Screen.Label(it)) },
+                onOpenMerge = { open(Screen.MergeDuplicates) },
+                onOpenSettings = { open(Screen.Settings) },
+            )
         }
     }
 }
