@@ -22,7 +22,7 @@ fun qrCode(text: String): ImageBitmap? = runCatching {
 }.getOrNull()
 
 private fun escape(value: String) =
-    value.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\;").replace("\n", "\\n")
+    value.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
 
 /**
  * A small vCard of the contact for a QR code: name, work, numbers, emails and websites. Photos
