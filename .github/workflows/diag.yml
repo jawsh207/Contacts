@@ -1,0 +1,45 @@
+name: Launch check
+on:
+  push:
+    branches: [diag]
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21 }
+      - run: |
+          SDKMANAGER=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | head -1)
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew --no-daemon :app:assembleRelease
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            adb install -r app/build/outputs/apk/release/*.apk
+            adb logcat -c
+            adb shell am start -W -n app.people.contacts/.MainActivity || true
+            sleep 15
+            adb logcat -d -b crash > crash.txt || true
+            adb logcat -d '*:E' | grep -i -A40 "FATAL\|people.contacts" | head -150 > err.txt || true
+      - name: Report
+        if: always()
+        run: |
+          RT=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/retrace | head -1)
+          M=app/build/outputs/mapping/release/mapping.txt
+          [ -s crash.txt ] || cp err.txt crash.txt
+          "$RT" "$M" crash.txt > retraced.txt 2>&1 || cp crash.txt retraced.txt
+          echo "lines: $(wc -l < retraced.txt)"
+          i=0; split -l 25 retraced.txt part_
+          for f in part_*; do i=$((i+1)); echo "::warning title=trace $i::$(sed 's/%/%25/g' "$f" | awk '{printf "%s%%0A",$0}')"; done
