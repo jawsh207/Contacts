@@ -124,6 +124,44 @@ jobs:
           path: app/build/outputs/apk/${{ env.VARIANT }}/*.apk
           if-no-files-found: error
 
+      # Launch check: installs the release APK on an Android emulator and opens it. If it
+      # crashes or isn't running 15 seconds later, the release is not published. Release
+      # builds are shrunk by R8, which test builds skip, so this catches what testing the
+      # dev build can't. The crash trace, with R8's short names mapped back, is shown on
+      # the run page.
+      - name: Enable KVM for the emulator
+        if: env.IS_RELEASE == 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Launch check
+        if: env.IS_RELEASE == 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            adb install -r app/build/outputs/apk/release/*.apk
+            adb logcat -c
+            adb shell am start -W -n app.people.contacts/.MainActivity
+            sleep 15
+            adb logcat -d -b crash > "$RUNNER_TEMP/crash.txt" || true
+            if adb shell pidof app.people.contacts > /dev/null && ! grep -q 'Process: app.people.contacts' "$RUNNER_TEMP/crash.txt"; then echo "The app opened and is still running."; else touch "$RUNNER_TEMP/launch-failed"; fi
+
+      - name: Report launch failure
+        if: env.IS_RELEASE == 'true'
+        run: |
+          [ -e "$RUNNER_TEMP/launch-failed" ] || exit 0
+          RETRACE=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/retrace | head -1)
+          "$RETRACE" app/build/outputs/mapping/release/mapping.txt "$RUNNER_TEMP/crash.txt" > "$RUNNER_TEMP/trace.txt" 2>&1 \
+            || cp "$RUNNER_TEMP/crash.txt" "$RUNNER_TEMP/trace.txt"
+          trace=$(grep -E 'Exception|Error|Caused by|^\s*at |\sat ' "$RUNNER_TEMP/trace.txt" | head -40 | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error title=Release crashes on launch; not publishing::${trace:-The app was not running 15 seconds after opening.}"
+          exit 1
+
       - name: Read version
         if: env.IS_RELEASE == 'true'
         run: |

@@ -28,7 +28,9 @@ When the owner says "Build release":
 3. Add a `## <version name>` section at the top of the sections in `CHANGELOG.md` (one line per
    bullet or paragraph, no hard wraps), in plain, user-facing words, grouped by area.
 4. Commit, push `main`, then `git push origin main:release`. CI builds, signs, tags
-   `v<version>` and publishes the release with that section as its notes.
+   `v<version>` and publishes the release with that section as its notes. Before publishing it
+   opens the release APK on an emulator; if the app crashes, nothing is published and the
+   crash trace is on the run page.
 5. Check the run: the release signing certificate SHA-256 must be
    `09d3184e2e50bd0f1fff3d66cebfc6935c57301da868d69cef0d59586c8a1f5a`.
 
