@@ -2,6 +2,7 @@ package app.people.contacts.ui.organize
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -71,7 +72,7 @@ fun MergeScreen(viewModel: ContactsViewModel, onBack: () -> Unit, onOpenContact:
 
     Scaffold(
         topBar = {
-            Row(Modifier.fillMaxWidth().statusBarsPadding().height(64.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding().height(64.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back)) }
                 Text(stringResource(R.string.merge_duplicates), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).padding(start = 8.dp))
                 if (shown.size > 1) TextButton(onClick = { confirmAll = true }) { Text(stringResource(R.string.merge_all)) }
