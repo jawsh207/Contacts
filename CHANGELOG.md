@@ -2,6 +2,10 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.4
+
+- The headers in Settings, on a label's page and in Merge duplicates are now solid, so lists scroll behind them instead of showing through.
+
 ## 2.0.3
 
 - The search bar stays at the top of Contacts, Highlights and Organize, and lists scroll behind it, as in Dialtone.
