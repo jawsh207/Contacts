@@ -2,6 +2,10 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.5
+
+- Swipe left and right to move between Contacts, Highlights and Organize, as in Dialtone. Tapping a tab slides over to it.
+
 ## 2.0.4
 
 - The headers in Settings, on a label's page and in Merge duplicates are now solid, so lists scroll behind them instead of showing through.
