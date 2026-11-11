@@ -13,6 +13,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.HorizontalPager
 import app.people.contacts.ui.components.SearchPill
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -143,10 +147,19 @@ fun ContactsApp(intent: Intent?, finish: (Uri?) -> Unit, viewModel: ContactsView
 private fun ExternalRequest.handsBack() = this is ExternalRequest.Pick || this is ExternalRequest.Insert ||
     this is ExternalRequest.InsertOrEdit || this is ExternalRequest.Edit
 
-/** The bottom tabs. Back from Highlights or Organize returns to Contacts. */
+/**
+ * The bottom tabs, as swipeable pages (as in Dialtone): swipe between them or tap the bottom
+ * bar. Back from Highlights or Organize returns to Contacts.
+ */
 @Composable
 private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> Unit, open: (Screen) -> Unit) {
-    BackHandler(enabled = tab != Tab.Contacts) { onTabChange(Tab.Contacts) }
+    val scope = rememberCoroutineScope()
+    val pager = rememberPagerState(initialPage = tab.ordinal) { Tab.entries.size }
+    // targetPage, not currentPage, so the bar and button follow a swipe as soon as it's let go.
+    val current = Tab.entries[pager.targetPage]
+    // Remembered outside Home, so the same tab is open on coming back from a contact.
+    LaunchedEffect(pager.settledPage) { onTabChange(Tab.entries[pager.settledPage]) }
+    BackHandler(enabled = current != Tab.Contacts) { scope.launch { pager.animateScrollToPage(Tab.Contacts.ordinal) } }
     Scaffold(
         // Pinned above the tabs, as in Dialtone: lists scroll behind it. The strip is opaque in
         // the background colour (status bar included) so nothing shows through around the pill.
@@ -156,7 +169,7 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
             }
         },
         floatingActionButton = {
-            if (tab == Tab.Contacts) {
+            if (current == Tab.Contacts) {
                 FloatingActionButton(onClick = { open(Screen.Edit(null)) }) {
                     Icon(Icons.Rounded.Add, stringResource(R.string.create_contact))
                 }
@@ -165,10 +178,10 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
         bottomBar = {
             BottomBar {
                 Tab.entries.forEach { entry ->
-                    val selected = entry == tab
+                    val selected = entry == current
                     ShortNavigationBarItem(
                         selected = selected,
-                        onClick = { onTabChange(entry) },
+                        onClick = { scope.launch { pager.animateScrollToPage(entry.ordinal) } },
                         icon = { Icon(if (selected) entry.selectedIcon else entry.icon, contentDescription = null) },
                         label = { Text(stringResource(entry.label)) },
                     )
@@ -176,25 +189,27 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
             }
         },
     ) { padding ->
-        when (tab) {
-            Tab.Contacts -> ContactsTab(
-                viewModel = viewModel,
-                contentPadding = padding,
-                onOpenContact = { open(Screen.Contact(it)) },
-                onSetUpProfile = { open(Screen.Edit(null, profile = true)) },
-            )
-            Tab.Highlights -> HighlightsTab(
-                viewModel = viewModel,
-                contentPadding = padding,
-                onOpenContact = { open(Screen.Contact(it)) },
-            )
-            Tab.Organize -> OrganizeTab(
-                viewModel = viewModel,
-                contentPadding = padding,
-                onOpenLabel = { open(Screen.Label(it)) },
-                onOpenMerge = { open(Screen.MergeDuplicates) },
-                onOpenSettings = { open(Screen.Settings) },
-            )
+        HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { Tab.entries[it] }) { page ->
+            when (Tab.entries[page]) {
+                Tab.Contacts -> ContactsTab(
+                    viewModel = viewModel,
+                    contentPadding = padding,
+                    onOpenContact = { open(Screen.Contact(it)) },
+                    onSetUpProfile = { open(Screen.Edit(null, profile = true)) },
+                )
+                Tab.Highlights -> HighlightsTab(
+                    viewModel = viewModel,
+                    contentPadding = padding,
+                    onOpenContact = { open(Screen.Contact(it)) },
+                )
+                Tab.Organize -> OrganizeTab(
+                    viewModel = viewModel,
+                    contentPadding = padding,
+                    onOpenLabel = { open(Screen.Label(it)) },
+                    onOpenMerge = { open(Screen.MergeDuplicates) },
+                    onOpenSettings = { open(Screen.Settings) },
+                )
+            }
         }
     }
 }
