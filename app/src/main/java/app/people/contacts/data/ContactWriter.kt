@@ -86,7 +86,8 @@ class ContactWriter(private val context: Context) {
                     Phone.CONTENT_ITEM_TYPE -> phones += field()
                     Email.CONTENT_ITEM_TYPE -> emails += field()
                     StructuredPostal.CONTENT_ITEM_TYPE -> addresses += field()
-                    Event.CONTENT_ITEM_TYPE -> events += field()
+                    // Some apps store a birthday row with no date; it isn't shown, so it isn't edited either.
+                    Event.CONTENT_ITEM_TYPE -> if (data1.isNotBlank()) events += field()
                     Website.CONTENT_ITEM_TYPE -> websites += field()
                     GroupMembership.CONTENT_ITEM_TYPE -> data1.toLongOrNull()?.let { labels += it }
                 }

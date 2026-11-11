@@ -69,13 +69,15 @@ class FieldKind(
  */
 @Composable
 fun RepeatingFields(kind: FieldKind, fields: List<EditField>, onChange: (List<EditField>) -> Unit) {
+    // The field just added with the button: a date opens its picker straight away, but only then.
+    var added by remember { mutableStateOf<Long?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(FIELD_GAP)) {
         fields.forEachIndexed { index, field ->
             fun update(new: EditField) = onChange(fields.toMutableList().also { it[index] = new })
             Row(verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f)) {
                     if (kind.isDate) {
-                        DateField(kind, field, onPick = { update(field.copy(value = it)) })
+                        DateField(kind, field, openPicker = field.key == added, onPick = { update(field.copy(value = it)) })
                     } else {
                         OutlinedTextField(
                             value = field.value,
@@ -100,7 +102,9 @@ fun RepeatingFields(kind: FieldKind, fields: List<EditField>, onChange: (List<Ed
             }
         }
         TextButton(onClick = {
-            onChange(fields + EditField(key = newFieldKey(), type = kind.types.firstOrNull() ?: kind.customType))
+            val new = EditField(key = newFieldKey(), type = kind.types.firstOrNull() ?: kind.customType)
+            added = new.key
+            onChange(fields + new)
         }) {
             Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
@@ -148,10 +152,13 @@ private fun TypePicker(kind: FieldKind, field: EditField, onPick: (Int, String?)
     }
 }
 
-/** A date: shows the date, and opens a date picker when tapped. Stored as "yyyy-MM-dd". */
+/**
+ * A date: shows the date, and opens a date picker when tapped, or at once when [openPicker] (a
+ * date just added). Stored as "yyyy-MM-dd".
+ */
 @Composable
-private fun DateField(kind: FieldKind, field: EditField, onPick: (String) -> Unit) {
-    var picking by remember { mutableStateOf(field.value.isEmpty()) }
+private fun DateField(kind: FieldKind, field: EditField, openPicker: Boolean, onPick: (String) -> Unit) {
+    var picking by remember { mutableStateOf(openPicker) }
     val context = LocalContext.current
     OutlinedTextField(
         value = if (field.value.isEmpty()) "" else formatEventDate(field.value),
