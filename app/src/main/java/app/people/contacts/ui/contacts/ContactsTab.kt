@@ -42,7 +42,6 @@ import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.ContactRow
 import app.people.contacts.ui.components.EmptyState
 import app.people.contacts.ui.components.SEGMENT_GAP
-import app.people.contacts.ui.components.SearchPill
 import app.people.contacts.ui.components.SectionHeader
 import app.people.contacts.ui.components.segmentShape
 import app.people.contacts.util.foldForSearch
@@ -52,7 +51,6 @@ import app.people.contacts.util.foldForSearch
 fun ContactsTab(
     viewModel: ContactsViewModel,
     contentPadding: PaddingValues,
-    onSearch: () -> Unit,
     onOpenContact: (Long) -> Unit,
     onSetUpProfile: () -> Unit,
 ) {
@@ -65,12 +63,12 @@ fun ContactsTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp),
+        contentPadding = PaddingValues(
+            top = contentPadding.calculateTopPadding(),
+            bottom = contentPadding.calculateBottomPadding() + 16.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
     ) {
-        item(key = "search") {
-            SearchPill(onSearch, Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp))
-        }
         item(key = "your-info") {
             YourInfoCard(profile, onOpen = { p -> if (p != null) onOpenContact(p.id) else onSetUpProfile() })
         }

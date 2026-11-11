@@ -13,6 +13,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import app.people.contacts.ui.components.SearchPill
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -143,6 +148,13 @@ private fun ExternalRequest.handsBack() = this is ExternalRequest.Pick || this i
 private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> Unit, open: (Screen) -> Unit) {
     BackHandler(enabled = tab != Tab.Contacts) { onTabChange(Tab.Contacts) }
     Scaffold(
+        // Pinned above the tabs, as in Dialtone: lists scroll behind it. The strip is opaque in
+        // the background colour (status bar included) so nothing shows through around the pill.
+        topBar = {
+            Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
+                SearchPill(onClick = { open(Screen.Search) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            }
+        },
         floatingActionButton = {
             if (tab == Tab.Contacts) {
                 FloatingActionButton(onClick = { open(Screen.Edit(null)) }) {
@@ -168,20 +180,17 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
             Tab.Contacts -> ContactsTab(
                 viewModel = viewModel,
                 contentPadding = padding,
-                onSearch = { open(Screen.Search) },
                 onOpenContact = { open(Screen.Contact(it)) },
                 onSetUpProfile = { open(Screen.Edit(null, profile = true)) },
             )
             Tab.Highlights -> HighlightsTab(
                 viewModel = viewModel,
                 contentPadding = padding,
-                onSearch = { open(Screen.Search) },
                 onOpenContact = { open(Screen.Contact(it)) },
             )
             Tab.Organize -> OrganizeTab(
                 viewModel = viewModel,
                 contentPadding = padding,
-                onSearch = { open(Screen.Search) },
                 onOpenLabel = { open(Screen.Label(it)) },
                 onOpenMerge = { open(Screen.MergeDuplicates) },
                 onOpenSettings = { open(Screen.Settings) },

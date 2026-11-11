@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -23,7 +22,6 @@ import app.people.contacts.R
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.EmptyState
 import app.people.contacts.ui.components.SEGMENT_GAP
-import app.people.contacts.ui.components.SearchPill
 import app.people.contacts.ui.components.SectionHeader
 import app.people.contacts.ui.components.segmentShape
 
@@ -32,7 +30,6 @@ import app.people.contacts.ui.components.segmentShape
 fun HighlightsTab(
     viewModel: ContactsViewModel,
     contentPadding: PaddingValues,
-    onSearch: () -> Unit,
     onOpenContact: (Long) -> Unit,
 ) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
@@ -42,12 +39,12 @@ fun HighlightsTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp),
+        contentPadding = PaddingValues(
+            top = contentPadding.calculateTopPadding(),
+            bottom = contentPadding.calculateBottomPadding() + 16.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
     ) {
-        item(key = "search") {
-            SearchPill(onSearch, Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp))
-        }
         if (contacts == null) {
             item(key = "loading") {
                 Box(Modifier.fillMaxSize().padding(top = 96.dp), contentAlignment = Alignment.Center) { LoadingIndicator() }

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -32,7 +31,6 @@ import app.people.contacts.data.ContactAccount
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.ListRow
 import app.people.contacts.ui.components.SEGMENT_GAP
-import app.people.contacts.ui.components.SearchPill
 import app.people.contacts.ui.components.SectionHeader
 import app.people.contacts.ui.components.TextInputDialog
 import app.people.contacts.ui.components.segmentShape
@@ -43,7 +41,6 @@ import kotlinx.coroutines.launch
 fun OrganizeTab(
     viewModel: ContactsViewModel,
     contentPadding: PaddingValues,
-    onSearch: () -> Unit,
     onOpenLabel: (Long) -> Unit,
     onOpenMerge: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -60,12 +57,12 @@ fun OrganizeTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp),
+        contentPadding = PaddingValues(
+            top = contentPadding.calculateTopPadding(),
+            bottom = contentPadding.calculateBottomPadding() + 16.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
     ) {
-        item(key = "search") {
-            SearchPill(onSearch, Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp))
-        }
         item(key = "labels-header") { SectionHeader(stringResource(R.string.section_labels)) }
         val rows = list.size + 1
         itemsIndexed(list, key = { _, l -> "label-${l.id}" }) { index, label ->
