@@ -2,6 +2,10 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.1
+
+- Fixed the app closing as soon as it was opened in 2.0.0.
+
 ## 2.0.0
 
 A new version of Contacts, rebuilt from scratch with the same look. It updates over the old app and keeps your contacts, settings, on-device accounts and birthday calendar.
