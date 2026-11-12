@@ -2,6 +2,10 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.7
+
+- The app stays in portrait when the phone is turned.
+
 ## 2.0.6
 
 - Editing a contact no longer opens the date picker by itself. It only opens when you add a new date.
