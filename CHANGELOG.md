@@ -2,6 +2,10 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.6
+
+- Editing a contact no longer opens the date picker by itself. It only opens when you add a new date.
+
 ## 2.0.5
 
 - Swipe left and right to move between Contacts, Highlights and Organize, as in Dialtone. Tapping a tab slides over to it.
