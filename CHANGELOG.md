@@ -2,6 +2,18 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.8
+
+- Long-press a contact to select several at once, then favorite, share, delete or add them to a label together.
+- Deleted contacts can be brought back with Undo for a few seconds.
+- An A–Z strip on the side of the contacts list jumps straight to a letter.
+- Long-press a number or email to make it the contact's default.
+- Linked contacts can be unlinked from the contact's menu.
+- New setting to show only contacts with phone numbers.
+- Sorting by last name now also shows names as "Last, First".
+- The editor adds phonetic names, relationships, internet call addresses and chat addresses.
+- Text or email everyone in a label from the label's page.
+
 ## 2.0.7
 
 - The app stays in portrait when the phone is turned.
