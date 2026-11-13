@@ -39,6 +39,10 @@ data class EditableContact(
     val middle: String = "",
     val last: String = "",
     val suffix: String = "",
+    /** How the first, middle and last names are said. */
+    val phoneticFirst: String = "",
+    val phoneticMiddle: String = "",
+    val phoneticLast: String = "",
     val nicknameId: Long = 0,
     val nickname: String = "",
     val organizationId: Long = 0,
@@ -51,6 +55,10 @@ data class EditableContact(
     val addresses: List<EditField> = emptyList(),
     val events: List<EditField> = emptyList(),
     val websites: List<EditField> = emptyList(),
+    val relations: List<EditField> = emptyList(),
+    /** Internet call (SIP) addresses and chat addresses. */
+    val sipAddresses: List<EditField> = emptyList(),
+    val chats: List<EditField> = emptyList(),
     /** Labels (group row ids) the contact is in. */
     val labelIds: Set<Long> = emptySet(),
 ) {

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.MoreVert
@@ -75,6 +76,7 @@ import app.people.contacts.ui.components.segmentShape
 fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     val order by viewModel.sortOrder.collectAsStateWithLifecycle()
+    val hideNoPhone by viewModel.hideWithoutPhone.collectAsStateWithLifecycle()
     val recentsOn by viewModel.settings.recentsFromCallsAndTexts.collectAsStateWithLifecycle(false)
     val hidden by viewModel.settings.hiddenAccounts.collectAsStateWithLifecycle(emptySet())
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
@@ -144,12 +146,23 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
         ) {
             item(key = "display-header") { SectionHeader(stringResource(R.string.settings_display)) }
             item(key = "sort") { SortRow(order, viewModel::setSortOrder) }
+            item(key = "hide-no-phone") {
+                ListRow(
+                    icon = Icons.Outlined.Phone,
+                    title = stringResource(R.string.settings_hide_no_phone_title),
+                    summary = stringResource(R.string.settings_hide_no_phone_summary),
+                    shape = segmentShape(1, 3),
+                    onClick = { viewModel.setHideWithoutPhone(!hideNoPhone) },
+                    trailing = { Switch(checked = hideNoPhone, onCheckedChange = viewModel::setHideWithoutPhone) },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
             item(key = "recents") {
                 ListRow(
                     icon = Icons.Outlined.History,
                     title = stringResource(R.string.settings_recents_title),
                     summary = stringResource(R.string.settings_recents_summary),
-                    shape = segmentShape(1, 2),
+                    shape = segmentShape(2, 3),
                     onClick = { setRecents(!recentsEffective) },
                     trailing = { Switch(checked = recentsEffective, onCheckedChange = setRecents) },
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -266,11 +279,18 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
 /** "Sort by" first or last name, as a segmented button under the title. */
 @Composable
 private fun SortRow(order: SortOrder, onChange: (SortOrder) -> Unit) {
-    Surface(shape = segmentShape(0, 2), color = MaterialTheme.colorScheme.surfaceBright, modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
+    Surface(shape = segmentShape(0, 3), color = MaterialTheme.colorScheme.surfaceBright, modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()) {
         Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp), verticalAlignment = Alignment.Top) {
             Icon(Icons.AutoMirrored.Rounded.List, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(Modifier.padding(start = 16.dp).weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.sort_by), style = MaterialTheme.typography.bodyLarge)
+                Column {
+                    Text(stringResource(R.string.sort_by), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        stringResource(R.string.sort_by_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 val options = listOf(SortOrder.FirstName to R.string.first_name, SortOrder.LastName to R.string.last_name)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     options.forEachIndexed { index, (value, label) ->

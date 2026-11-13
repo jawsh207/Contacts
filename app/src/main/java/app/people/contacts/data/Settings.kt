@@ -42,6 +42,13 @@ class Settings(context: Context) {
         store.edit { it[SORT_MODE] = order.name }
     }
 
+    /** The list leaves out contacts with no phone number. */
+    val hideWithoutPhone: Flow<Boolean> = store.data.map { it[HIDE_WITHOUT_PHONE] ?: false }
+
+    suspend fun setHideWithoutPhone(on: Boolean) {
+        store.edit { it[HIDE_WITHOUT_PHONE] = on }
+    }
+
     /** Recents shows calls and texts with saved contacts instead of recently viewed contacts. */
     val recentsFromCallsAndTexts: Flow<Boolean> = store.data.map { it[RECENTS_CALLS_TEXTS] ?: false }
 
@@ -121,6 +128,7 @@ class Settings(context: Context) {
         // This app's own: the old app's versions used different contact ids.
         val RECENT_VIEWS = stringPreferencesKey("recent_contact_views")
         val DISMISSED_DUPLICATES = stringSetPreferencesKey("dismissed_duplicate_contacts")
+        val HIDE_WITHOUT_PHONE = booleanPreferencesKey("hide_contacts_without_phone")
         const val MAX_RECENT_VIEWS = 30
     }
 }

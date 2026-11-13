@@ -20,7 +20,15 @@ data class ContactSummary(
  * One labelled value: a number, an address, a date… with its type label ("Mobile", "Work") and
  * the provider's type code behind it.
  */
-data class LabeledValue(val value: String, val label: String, val type: Int = 0)
+data class LabeledValue(
+    val value: String,
+    val label: String,
+    val type: Int = 0,
+    /** The provider's row id, for setting a default number or email. */
+    val dataId: Long = 0,
+    /** The contact's default (Android's "super primary") number or email. */
+    val isDefault: Boolean = false,
+)
 
 /** Everything the contact page shows. */
 data class ContactDetails(
@@ -37,6 +45,11 @@ data class ContactDetails(
     val events: List<LabeledValue> = emptyList(),
     val websites: List<String> = emptyList(),
     val relations: List<LabeledValue> = emptyList(),
+    /** Internet call (SIP) addresses and chat addresses. */
+    val sipAddresses: List<LabeledValue> = emptyList(),
+    val chats: List<LabeledValue> = emptyList(),
+    /** How the name is said, if stored ("Phonetic name"). */
+    val phoneticName: String? = null,
     val nickname: String? = null,
     val company: String? = null,
     val jobTitle: String? = null,
@@ -44,6 +57,8 @@ data class ContactDetails(
     val labels: List<String> = emptyList(),
     /** The contact's own ringtone (a URI), or null for the phone's default. */
     val ringtone: String? = null,
+    /** How many stored contacts are linked into this one; more than 1 can be unlinked. */
+    val linkedCount: Int = 1,
 )
 
 /** The name a contact is sorted and grouped by: "First Last", or "Last, First" by last name. */

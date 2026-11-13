@@ -7,11 +7,14 @@ import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership
 import android.provider.ContactsContract.CommonDataKinds.Event
+import android.provider.ContactsContract.CommonDataKinds.Im
 import android.provider.ContactsContract.CommonDataKinds.Nickname
 import android.provider.ContactsContract.CommonDataKinds.Note
 import android.provider.ContactsContract.CommonDataKinds.Organization
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.CommonDataKinds.Photo
+import android.provider.ContactsContract.CommonDataKinds.Relation
+import android.provider.ContactsContract.CommonDataKinds.SipAddress
 import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
@@ -45,12 +48,15 @@ class ContactWriter(private val context: Context) {
         val addresses = ArrayList<EditField>()
         val events = ArrayList<EditField>()
         val websites = ArrayList<EditField>()
+        val relations = ArrayList<EditField>()
+        val sips = ArrayList<EditField>()
+        val chats = ArrayList<EditField>()
         val labels = HashSet<Long>()
         resolver.query(
             dataUriFor(contactId),
             arrayOf(
                 Data._ID, Data.RAW_CONTACT_ID, Data.MIMETYPE, Data.DATA1, Data.DATA2, Data.DATA3,
-                Data.DATA4, Data.DATA5, Data.DATA6,
+                Data.DATA4, Data.DATA5, Data.DATA6, Data.DATA7, Data.DATA8, Data.DATA9,
             ),
             "${Data.CONTACT_ID} = ?",
             arrayOf(contactId.toString()),
@@ -76,6 +82,9 @@ class ContactWriter(private val context: Context) {
                             // A name stored only in its display form (some imports) goes in First.
                             first = if (partsEmpty) data1 else given,
                             last = family, prefix = prefix, middle = middle, suffix = suffix,
+                            phoneticFirst = c.getString(9).orEmpty(), // PHONETIC_GIVEN_NAME
+                            phoneticMiddle = c.getString(10).orEmpty(), // PHONETIC_MIDDLE_NAME
+                            phoneticLast = c.getString(11).orEmpty(), // PHONETIC_FAMILY_NAME
                         )
                     }
                     Nickname.CONTENT_ITEM_TYPE -> if (contact.nicknameId == 0L) contact = contact.copy(nicknameId = id, nickname = data1)
@@ -89,6 +98,9 @@ class ContactWriter(private val context: Context) {
                     // Some apps store a birthday row with no date; it isn't shown, so it isn't edited either.
                     Event.CONTENT_ITEM_TYPE -> if (data1.isNotBlank()) events += field()
                     Website.CONTENT_ITEM_TYPE -> websites += field()
+                    Relation.CONTENT_ITEM_TYPE -> if (data1.isNotBlank()) relations += field()
+                    SipAddress.CONTENT_ITEM_TYPE -> if (data1.isNotBlank()) sips += field()
+                    Im.CONTENT_ITEM_TYPE -> if (data1.isNotBlank()) chats += field()
                     GroupMembership.CONTENT_ITEM_TYPE -> data1.toLongOrNull()?.let { labels += it }
                 }
             }
@@ -100,7 +112,7 @@ class ContactWriter(private val context: Context) {
         )?.use { c -> if (c.moveToFirst()) ContactAccount(c.getString(0), c.getString(1), c.getString(0).orEmpty()) else null }
         contact.copy(
             account = account, phones = phones, emails = emails, addresses = addresses, events = events,
-            websites = websites, labelIds = labels,
+            websites = websites, relations = relations, sipAddresses = sips, chats = chats, labelIds = labels,
         )
     }
 
@@ -133,11 +145,13 @@ class ContactWriter(private val context: Context) {
                     StructuredName.PREFIX to edited.prefix, StructuredName.GIVEN_NAME to edited.first,
                     StructuredName.MIDDLE_NAME to edited.middle, StructuredName.FAMILY_NAME to edited.last,
                     StructuredName.SUFFIX to edited.suffix,
+                    StructuredName.PHONETIC_GIVEN_NAME to edited.phoneticFirst,
+                    StructuredName.PHONETIC_MIDDLE_NAME to edited.phoneticMiddle,
+                    StructuredName.PHONETIC_FAMILY_NAME to edited.phoneticLast,
                 ),
                 // The display name is rebuilt from the parts.
                 extra = mapOf(StructuredName.DISPLAY_NAME to null),
-                changed = original == null || listOf(original.prefix, original.first, original.middle, original.last, original.suffix) !=
-                    listOf(edited.prefix, edited.first, edited.middle, edited.last, edited.suffix),
+                changed = original == null || original.nameParts() != edited.nameParts(),
             )
             rows.single(original?.nicknameId ?: 0L, Nickname.CONTENT_ITEM_TYPE, mapOf(Nickname.NAME to edited.nickname),
                 changed = original?.nickname != edited.nickname)
@@ -162,6 +176,12 @@ class ContactWriter(private val context: Context) {
             )
             rows.repeating(Event.CONTENT_ITEM_TYPE, original?.events, edited.events, Event.START_DATE, Event.TYPE, Event.LABEL)
             rows.repeating(Website.CONTENT_ITEM_TYPE, original?.websites, edited.websites, Website.URL, Website.TYPE, Website.LABEL)
+            rows.repeating(Relation.CONTENT_ITEM_TYPE, original?.relations, edited.relations, Relation.NAME, Relation.TYPE, Relation.LABEL)
+            rows.repeating(
+                SipAddress.CONTENT_ITEM_TYPE, original?.sipAddresses, edited.sipAddresses,
+                SipAddress.SIP_ADDRESS, SipAddress.TYPE, SipAddress.LABEL,
+            )
+            rows.repeating(Im.CONTENT_ITEM_TYPE, original?.chats, edited.chats, Im.DATA, Im.TYPE, Im.LABEL)
             rows.labels(edited.contactId, original?.labelIds.orEmpty(), edited.labelIds)
 
             when (photo) {
@@ -217,6 +237,7 @@ class ContactWriter(private val context: Context) {
             organizationId = 0, noteId = 0, labelIds = emptySet(),
             phones = loaded.phones.fresh(), emails = loaded.emails.fresh(), addresses = loaded.addresses.fresh(),
             events = loaded.events.fresh(), websites = loaded.websites.fresh(),
+            relations = loaded.relations.fresh(), sipAddresses = loaded.sipAddresses.fresh(), chats = loaded.chats.fresh(),
         )
         val newId = save(null, copy, if (photo != null) PhotoChange.Set(photo) else PhotoChange.Keep) ?: return@withContext null
         // The copy's own raw contacts, told apart from the old ones it may have been joined with.
@@ -243,6 +264,10 @@ class ContactWriter(private val context: Context) {
         }.getOrDefault(false)
     }
 }
+
+/** The name and how it's said, to tell whether the name row changed. */
+private fun EditableContact.nameParts() =
+    listOf(prefix, first, middle, last, suffix, phoneticFirst, phoneticMiddle, phoneticLast)
 
 /** Builds the insert, update and delete operations for one save. */
 private class RowWriter(

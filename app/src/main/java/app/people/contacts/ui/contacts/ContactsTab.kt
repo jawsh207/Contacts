@@ -1,6 +1,19 @@
 package app.people.contacts.ui.contacts
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import kotlinx.coroutines.launch
 import app.people.contacts.ui.components.Avatar
 import androidx.compose.material3.Surface
 import androidx.compose.material.icons.rounded.QrCode2
@@ -46,13 +59,19 @@ import app.people.contacts.ui.components.SectionHeader
 import app.people.contacts.ui.components.segmentShape
 import app.people.contacts.util.foldForSearch
 
-/** The Contacts tab: search, then Favorites and everyone else, in groups by first letter. */
+/**
+ * The Contacts tab: your info, then Favorites and everyone else in groups by first letter, with
+ * an A–Z strip on the side to jump between letters. Long-press a contact to start selecting;
+ * while [selected] has anyone, tapping adds or removes contacts instead of opening them.
+ */
 @Composable
 fun ContactsTab(
     viewModel: ContactsViewModel,
     contentPadding: PaddingValues,
     onOpenContact: (Long) -> Unit,
     onSetUpProfile: () -> Unit,
+    selected: Set<Long> = emptySet(),
+    onToggleSelected: (Long) -> Unit = {},
 ) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val profile by viewModel.profile.collectAsStateWithLifecycle()
@@ -60,55 +79,146 @@ fun ContactsTab(
     val list = contacts
     val sections = remember(list, order) { list?.let { byFirstLetter(it, order) }.orEmpty() }
     val favorites = remember(list) { list?.filter { it.starred }.orEmpty() }
+    // Where each letter's header sits in the list, for the A–Z strip.
+    val headerIndex = remember(sections, favorites) {
+        var index = 1 + if (favorites.isNotEmpty()) 1 + favorites.size else 0
+        sections.associate { (letter, members) -> (letter to index).also { index += 1 + members.size } }
+    }
+    val selecting = selected.isNotEmpty()
+    val onTap: (ContactSummary) -> Unit = { if (selecting) onToggleSelected(it.id) else onOpenContact(it.id) }
+    val onLongPress: (ContactSummary) -> Unit = { onToggleSelected(it.id) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            top = contentPadding.calculateTopPadding(),
-            bottom = contentPadding.calculateBottomPadding() + 16.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
-    ) {
-        item(key = "your-info") {
-            YourInfoCard(profile, onOpen = { p -> if (p != null) onOpenContact(p.id) else onSetUpProfile() })
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(
+                top = contentPadding.calculateTopPadding(),
+                bottom = contentPadding.calculateBottomPadding() + 16.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
+        ) {
+            item(key = "your-info") {
+                YourInfoCard(profile, onOpen = { p -> if (p != null) onOpenContact(p.id) else onSetUpProfile() })
+            }
+            when {
+                list == null -> item(key = "loading") {
+                    Box(Modifier.fillMaxSize().padding(top = 96.dp), contentAlignment = Alignment.Center) {
+                        LoadingIndicator()
+                    }
+                }
+                list.isEmpty() -> item(key = "empty") {
+                    EmptyState(
+                        Icons.Rounded.Contacts,
+                        stringResource(R.string.no_contacts_title),
+                        stringResource(R.string.no_contacts_body),
+                    )
+                }
+                else -> {
+                    if (favorites.isNotEmpty()) {
+                        item(key = "favorites-header") { FavoritesHeader() }
+                        group("fav", favorites, selected, onTap, onLongPress)
+                    }
+                    sections.forEach { (letter, members) ->
+                        item(key = "h-$letter") { SectionHeader(letter) }
+                        group("c", members, selected, onTap, onLongPress)
+                    }
+                }
+            }
         }
-        when {
-            list == null -> item(key = "loading") {
-                Box(Modifier.fillMaxSize().padding(top = 96.dp), contentAlignment = Alignment.Center) {
-                    LoadingIndicator()
-                }
-            }
-            list.isEmpty() -> item(key = "empty") {
-                EmptyState(
-                    Icons.Rounded.Contacts,
-                    stringResource(R.string.no_contacts_title),
-                    stringResource(R.string.no_contacts_body),
-                )
-            }
-            else -> {
-                if (favorites.isNotEmpty()) {
-                    item(key = "favorites-header") { FavoritesHeader() }
-                    group("fav", favorites, onOpenContact)
-                }
-                sections.forEach { (letter, members) ->
-                    item(key = "h-$letter") { SectionHeader(letter) }
-                    group("c", members, onOpenContact)
-                }
-            }
+        if (sections.size > 1) {
+            LetterScroller(
+                letters = sections.map { it.first },
+                onLetter = { letter -> headerIndex[letter]?.let { scope.launch { listState.scrollToItem(it) } } },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(top = contentPadding.calculateTopPadding(), bottom = contentPadding.calculateBottomPadding()),
+            )
         }
     }
 }
 
-private fun LazyListScope.group(prefix: String, members: List<ContactSummary>, onOpenContact: (Long) -> Unit) {
+private fun LazyListScope.group(
+    prefix: String,
+    members: List<ContactSummary>,
+    selected: Set<Long>,
+    onTap: (ContactSummary) -> Unit,
+    onLongPress: (ContactSummary) -> Unit,
+) {
     itemsIndexed(members, key = { _, c -> "$prefix-${c.id}" }) { index, contact ->
         ContactRow(
             contact,
             segmentShape(index, members.size),
-            onClick = { onOpenContact(contact.id) },
+            onClick = { onTap(contact) },
+            selected = contact.id in selected,
+            onLongClick = { onLongPress(contact) },
             modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
         )
     }
 }
+
+/**
+ * The A–Z strip: tap or drag along it to jump to a letter. While dragging, the letter shows
+ * large beside it.
+ */
+@Composable
+private fun LetterScroller(letters: List<String>, onLetter: (String) -> Unit, modifier: Modifier = Modifier) {
+    var active by remember { mutableStateOf<String?>(null) }
+    var height by remember { mutableIntStateOf(0) }
+    fun pick(y: Float) {
+        if (height == 0) return
+        val letter = letters[(y / height * letters.size).toInt().coerceIn(0, letters.lastIndex)]
+        if (letter != active) {
+            active = letter
+            onLetter(letter)
+        }
+    }
+    Box(modifier, contentAlignment = Alignment.CenterEnd) {
+        Column(
+            // The letters sit in the list's right margin; the touch area reaches a little past it.
+            Modifier
+                .width(24.dp)
+                .onSizeChanged { height = it.height }
+                .pointerInput(letters) {
+                    detectVerticalDragGestures(
+                        onDragStart = { pick(it.y) },
+                        onDragEnd = { active = null },
+                        onDragCancel = { active = null },
+                    ) { change, _ -> pick(change.position.y) }
+                }
+                .pointerInput(letters) {
+                    detectTapGestures(onPress = { pick(it.y); tryAwaitRelease(); active = null })
+                },
+            horizontalAlignment = Alignment.End,
+        ) {
+            letters.forEach { letter ->
+                Box(Modifier.width(16.dp).height(LETTER_HEIGHT), contentAlignment = Alignment.Center) {
+                    Text(
+                        letter,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (letter == active) FontWeight.Bold else FontWeight.Medium,
+                        color = if (letter == active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        active?.let { letter ->
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.padding(end = 56.dp).size(72.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(letter, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
+        }
+    }
+}
+
+private val LETTER_HEIGHT = 18.dp
 
 /** Contacts in letter groups, in the order they're already sorted; anything else under "#". */
 private fun byFirstLetter(contacts: List<ContactSummary>, order: SortOrder): List<Pair<String, List<ContactSummary>>> =

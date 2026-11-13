@@ -1,6 +1,30 @@
 package app.people.contacts.ui
 
 import android.Manifest
+import android.widget.Toast
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarOutline
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.pluralStringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.people.contacts.util.Reach
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import app.people.contacts.intents.parseRequest
@@ -149,10 +173,12 @@ private fun ExternalRequest.handsBack() = this is ExternalRequest.Pick || this i
 
 /**
  * The bottom tabs, as swipeable pages (as in Dialtone): swipe between them or tap the bottom
- * bar. Back from Highlights or Organize returns to Contacts.
+ * bar. Back from Highlights or Organize returns to Contacts. Long-pressing a contact selects it,
+ * and the search bar becomes a bar of actions for the selection.
  */
 @Composable
 private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> Unit, open: (Screen) -> Unit) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val pager = rememberPagerState(initialPage = tab.ordinal) { Tab.entries.size }
     // targetPage, not currentPage, so the bar and button follow a swipe as soon as it's let go.
@@ -160,16 +186,56 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
     // Remembered outside Home, so the same tab is open on coming back from a contact.
     LaunchedEffect(pager.settledPage) { onTabChange(Tab.entries[pager.settledPage]) }
     BackHandler(enabled = current != Tab.Contacts) { scope.launch { pager.animateScrollToPage(Tab.Contacts.ordinal) } }
+
+    val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
+    // Only contacts still in the list count (one deleted elsewhere drops out).
+    val selection = contacts.orEmpty().filter { it.id in selectedIds }
+    val selecting = selection.isNotEmpty() && current == Tab.Contacts
+    LaunchedEffect(current) { if (current != Tab.Contacts) selectedIds = emptySet() }
+    BackHandler(enabled = selecting) { selectedIds = emptySet() }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var pickLabel by remember { mutableStateOf(false) }
+
+    // Undo for contacts just deleted, here or on their page.
+    val snackbar = remember { SnackbarHostState() }
+    val pending by viewModel.pendingDeletion.collectAsStateWithLifecycle()
+    LaunchedEffect(pending) {
+        val deletion = pending
+        if (deletion == null) {
+            snackbar.currentSnackbarData?.dismiss()
+            return@LaunchedEffect
+        }
+        val message = deletion.name?.takeIf { deletion.contacts.size == 1 }?.let { context.getString(R.string.deleted_one, it) }
+            ?: context.resources.getQuantityString(R.plurals.deleted_count, deletion.contacts.size, deletion.contacts.size)
+        val result = snackbar.showSnackbar(message, actionLabel = context.getString(R.string.undo), duration = SnackbarDuration.Indefinite)
+        if (result == SnackbarResult.ActionPerformed) viewModel.undoDelete()
+    }
+
     Scaffold(
         // Pinned above the tabs, as in Dialtone: lists scroll behind it. The strip is opaque in
         // the background colour (status bar included) so nothing shows through around the pill.
         topBar = {
             Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
-                SearchPill(onClick = { open(Screen.Search) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                if (selecting) {
+                    SelectionBar(
+                        count = selection.size,
+                        allStarred = selection.all { it.starred },
+                        onClose = { selectedIds = emptySet() },
+                        onSelectAll = { selectedIds = contacts.orEmpty().map { it.id }.toSet() },
+                        onStar = { viewModel.setStarred(selection.map { it.id }, !selection.all { it.starred }) },
+                        onLabel = { pickLabel = true },
+                        onShare = { Reach.shareAll(context, selection.map { it.lookupKey }.filter { it.isNotEmpty() }) },
+                        onDelete = { confirmDelete = true },
+                    )
+                } else {
+                    SearchPill(onClick = { open(Screen.Search) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                }
             }
         },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            if (current == Tab.Contacts) {
+            if (current == Tab.Contacts && !selecting) {
                 FloatingActionButton(onClick = { open(Screen.Edit(null)) }) {
                     Icon(Icons.Rounded.Add, stringResource(R.string.create_contact))
                 }
@@ -189,13 +255,19 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
             }
         },
     ) { padding ->
-        HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { Tab.entries[it] }) { page ->
+        HorizontalPager(
+            state = pager, modifier = Modifier.fillMaxSize(), key = { Tab.entries[it] },
+            // No swiping away from a selection.
+            userScrollEnabled = !selecting,
+        ) { page ->
             when (Tab.entries[page]) {
                 Tab.Contacts -> ContactsTab(
                     viewModel = viewModel,
                     contentPadding = padding,
                     onOpenContact = { open(Screen.Contact(it)) },
                     onSetUpProfile = { open(Screen.Edit(null, profile = true)) },
+                    selected = if (selecting) selectedIds else emptySet(),
+                    onToggleSelected = { id -> selectedIds = if (id in selectedIds) selectedIds - id else selectedIds + id },
                 )
                 Tab.Highlights -> HighlightsTab(
                     viewModel = viewModel,
@@ -208,6 +280,100 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                     onOpenLabel = { open(Screen.Label(it)) },
                     onOpenMerge = { open(Screen.MergeDuplicates) },
                     onOpenSettings = { open(Screen.Settings) },
+                )
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(pluralStringResource(R.plurals.delete_contacts_title, selection.size, selection.size)) },
+            text = { Text(stringResource(R.string.delete_contacts_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    viewModel.delete(selection.map { it.id to it.lookupKey }, selection.singleOrNull()?.name)
+                    selectedIds = emptySet()
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    if (pickLabel) {
+        val labels by viewModel.labels.collectAsStateWithLifecycle()
+        AlertDialog(
+            onDismissRequest = { pickLabel = false },
+            title = { Text(stringResource(R.string.add_to_label)) },
+            text = {
+                val all = labels.orEmpty()
+                if (all.isEmpty()) {
+                    Text(stringResource(R.string.no_labels))
+                } else {
+                    Column {
+                        all.forEach { label ->
+                            TextButton(onClick = {
+                                pickLabel = false
+                                val ids = selection.map { it.id }
+                                selectedIds = emptySet()
+                                scope.launch {
+                                    val added = viewModel.labelStore.addMembers(label, ids)
+                                    val message = if (added < ids.size) context.getString(R.string.label_add_skipped, ids.size - added)
+                                    else context.resources.getQuantityString(R.plurals.added_to_label, added, added, label.title)
+                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                }
+                            }, modifier = Modifier.fillMaxWidth()) { Text(label.title, modifier = Modifier.fillMaxWidth()) }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { pickLabel = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+}
+
+/** Replaces the search bar while contacts are selected: how many, and what to do with them. */
+@Composable
+private fun SelectionBar(
+    count: Int,
+    allStarred: Boolean,
+    onClose: () -> Unit,
+    onSelectAll: () -> Unit,
+    onStar: () -> Unit,
+    onLabel: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    // As tall as the search bar with its padding, so nothing shifts.
+    Row(Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, stringResource(R.string.clear_selection)) }
+        Text(
+            pluralStringResource(R.plurals.selected_count, count, count),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+        )
+        IconButton(onClick = onStar) {
+            Icon(
+                if (allStarred) Icons.Rounded.Star else Icons.Rounded.StarOutline,
+                stringResource(if (allStarred) R.string.remove_from_favorites else R.string.add_to_favorites),
+            )
+        }
+        IconButton(onClick = onShare) { Icon(Icons.Outlined.Share, stringResource(R.string.share)) }
+        IconButton(onClick = onDelete) { Icon(Icons.Outlined.Delete, stringResource(R.string.delete)) }
+        Box {
+            IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.more_options)) }
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.select_all)) },
+                    leadingIcon = { Icon(Icons.Outlined.SelectAll, null) },
+                    onClick = { menu = false; onSelectAll() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.add_to_label)) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Label, null) },
+                    onClick = { menu = false; onLabel() },
                 )
             }
         }

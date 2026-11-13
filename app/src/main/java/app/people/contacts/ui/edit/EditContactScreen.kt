@@ -1,5 +1,11 @@
 package app.people.contacts.ui.edit
 
+import android.provider.ContactsContract.CommonDataKinds.Im
+import android.provider.ContactsContract.CommonDataKinds.Relation
+import android.provider.ContactsContract.CommonDataKinds.SipAddress
+import androidx.compose.material.icons.outlined.DialerSip
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.People
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.provider.ContactsContract.CommonDataKinds.Email as EmailKind
@@ -286,7 +292,10 @@ private fun LabelChips(labels: List<app.people.contacts.data.Label>, chosen: Set
 @Composable
 private fun Fields(contact: EditableContact, res: Resources, onChange: (EditableContact) -> Unit) {
     var moreNames by remember {
-        mutableStateOf(listOf(contact.prefix, contact.middle, contact.suffix, contact.nickname).any { it.isNotBlank() })
+        mutableStateOf(
+            listOf(contact.prefix, contact.middle, contact.suffix, contact.nickname, contact.phoneticFirst, contact.phoneticMiddle, contact.phoneticLast)
+                .any { it.isNotBlank() }
+        )
     }
     val words = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
     Column(verticalArrangement = Arrangement.spacedBy(FIELD_GAP)) {
@@ -299,6 +308,9 @@ private fun Fields(contact: EditableContact, res: Resources, onChange: (Editable
         if (moreNames) {
             TextInput(R.string.name_suffix, contact.suffix, null, words) { onChange(contact.copy(suffix = it)) }
             TextInput(R.string.nickname, contact.nickname, null, words) { onChange(contact.copy(nickname = it)) }
+            TextInput(R.string.phonetic_first, contact.phoneticFirst, null, words) { onChange(contact.copy(phoneticFirst = it)) }
+            TextInput(R.string.phonetic_middle, contact.phoneticMiddle, null, words) { onChange(contact.copy(phoneticMiddle = it)) }
+            TextInput(R.string.phonetic_last, contact.phoneticLast, null, words) { onChange(contact.copy(phoneticLast = it)) }
         }
         TextButton(onClick = { moreNames = !moreNames }, modifier = Modifier.padding(start = 40.dp)) {
             Text(stringResource(if (moreNames) R.string.fewer_name_fields else R.string.more_name_fields))
@@ -312,6 +324,9 @@ private fun Fields(contact: EditableContact, res: Resources, onChange: (Editable
         RepeatingFields(addressKind(res), contact.addresses) { onChange(contact.copy(addresses = it)) }
         RepeatingFields(eventKind(res), contact.events) { onChange(contact.copy(events = it)) }
         RepeatingFields(websiteKind(), contact.websites) { onChange(contact.copy(websites = it)) }
+        RepeatingFields(relationKind(res), contact.relations) { onChange(contact.copy(relations = it)) }
+        RepeatingFields(sipKind(res), contact.sipAddresses) { onChange(contact.copy(sipAddresses = it)) }
+        RepeatingFields(chatKind(res), contact.chats) { onChange(contact.copy(chats = it)) }
         TextInput(R.string.notes, contact.note, Icons.AutoMirrored.Outlined.Notes, KeyboardOptions(capitalization = KeyboardCapitalization.Sentences), multiLine = true) {
             onChange(contact.copy(note = it))
         }
@@ -372,4 +387,28 @@ private fun websiteKind() = FieldKind(
     Icons.Outlined.Language, R.string.website, R.string.add_website,
     types = emptyList(), customType = Website.TYPE_OTHER, label = { _, custom -> custom.orEmpty() },
     keyboard = KeyboardType.Uri,
+)
+
+private fun relationKind(res: Resources) = FieldKind(
+    Icons.Outlined.People, R.string.relationship, R.string.add_relationship,
+    listOf(
+        Relation.TYPE_SPOUSE, Relation.TYPE_PARTNER, Relation.TYPE_DOMESTIC_PARTNER, Relation.TYPE_CHILD,
+        Relation.TYPE_PARENT, Relation.TYPE_MOTHER, Relation.TYPE_FATHER, Relation.TYPE_BROTHER, Relation.TYPE_SISTER,
+        Relation.TYPE_RELATIVE, Relation.TYPE_FRIEND, Relation.TYPE_MANAGER, Relation.TYPE_ASSISTANT, Relation.TYPE_REFERRED_BY,
+    ),
+    Relation.TYPE_CUSTOM, { type, custom -> Relation.getTypeLabel(res, type, custom).toString() },
+)
+
+private fun sipKind(res: Resources) = FieldKind(
+    Icons.Outlined.DialerSip, R.string.sip_address, R.string.add_sip_address,
+    listOf(SipAddress.TYPE_HOME, SipAddress.TYPE_WORK, SipAddress.TYPE_OTHER),
+    SipAddress.TYPE_CUSTOM, { type, custom -> SipAddress.getTypeLabel(res, type, custom).toString() },
+    keyboard = KeyboardType.Email,
+)
+
+private fun chatKind(res: Resources) = FieldKind(
+    Icons.Outlined.Forum, R.string.chat, R.string.add_chat,
+    listOf(Im.TYPE_HOME, Im.TYPE_WORK, Im.TYPE_OTHER),
+    Im.TYPE_CUSTOM, { type, custom -> Im.getTypeLabel(res, type, custom).toString() },
+    keyboard = KeyboardType.Email,
 )

@@ -1,18 +1,23 @@
 package app.people.contacts.data
 
 import android.Manifest
+import android.content.ContentProviderOperation
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.Event
+import android.provider.ContactsContract.AggregationExceptions
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership
+import android.provider.ContactsContract.CommonDataKinds.Im
 import android.provider.ContactsContract.CommonDataKinds.Nickname
 import android.provider.ContactsContract.CommonDataKinds.Note
 import android.provider.ContactsContract.CommonDataKinds.Organization
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.CommonDataKinds.Relation
+import android.provider.ContactsContract.CommonDataKinds.SipAddress
+import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
 import android.provider.ContactsContract.Contacts
@@ -130,28 +135,36 @@ class ContactsRepository(private val context: Context) {
         val events = ArrayList<LabeledValue>()
         val websites = ArrayList<String>()
         val relations = ArrayList<LabeledValue>()
+        val sips = ArrayList<LabeledValue>()
+        val chats = ArrayList<LabeledValue>()
         val notes = ArrayList<String>()
         val labels = ArrayList<String>()
         var nickname: String? = null
+        var phonetic: String? = null
         var company: String? = null
         var title: String? = null
         resolver.query(
             dataUriFor(base.id),
-            arrayOf(Data.MIMETYPE, Data.DATA1, Data.DATA2, Data.DATA3, Data.DATA4),
+            arrayOf(
+                Data._ID, Data.MIMETYPE, Data.DATA1, Data.DATA2, Data.DATA3, Data.DATA4,
+                Data.IS_SUPER_PRIMARY, Data.DATA7, Data.DATA8, Data.DATA9,
+            ),
             "${Data.CONTACT_ID} = ?",
             arrayOf(base.id.toString()),
             "${Data.IS_SUPER_PRIMARY} DESC, ${Data.IS_PRIMARY} DESC",
         )?.use { c ->
             while (c.moveToNext()) {
-                val data1 = c.getString(1)?.trim().orEmpty()
-                val type = if (c.isNull(2)) 0 else c.getInt(2)
-                val custom = c.getString(3)
-                when (c.getString(0)) {
+                val rowId = c.getLong(0)
+                val data1 = c.getString(2)?.trim().orEmpty()
+                val type = if (c.isNull(3)) 0 else c.getInt(3)
+                val custom = c.getString(4)
+                val isDefault = c.getInt(6) == 1
+                when (c.getString(1)) {
                     Phone.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty() && phones.none { numberKey(it.value) == numberKey(data1) }) {
-                        phones += LabeledValue(data1, Phone.getTypeLabel(res, type, custom).toString())
+                        phones += LabeledValue(data1, Phone.getTypeLabel(res, type, custom).toString(), type, rowId, isDefault)
                     }
                     Email.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty() && emails.none { it.value.equals(data1, true) }) {
-                        emails += LabeledValue(data1, Email.getTypeLabel(res, type, custom).toString())
+                        emails += LabeledValue(data1, Email.getTypeLabel(res, type, custom).toString(), type, rowId, isDefault)
                     }
                     StructuredPostal.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty()) {
                         addresses += LabeledValue(data1, StructuredPostal.getTypeLabel(res, type, custom).toString())
@@ -162,12 +175,24 @@ class ContactsRepository(private val context: Context) {
                     Relation.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty()) {
                         relations += LabeledValue(data1, Relation.getTypeLabel(res, type, custom).toString())
                     }
+                    SipAddress.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty() && sips.none { it.value.equals(data1, true) }) {
+                        sips += LabeledValue(data1, SipAddress.getTypeLabel(res, type, custom).toString())
+                    }
+                    Im.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty() && chats.none { it.value.equals(data1, true) }) {
+                        chats += LabeledValue(data1, Im.getTypeLabel(res, type, custom).toString())
+                    }
+                    StructuredName.CONTENT_ITEM_TYPE -> if (phonetic == null) {
+                        // Phonetic given, middle and family names.
+                        phonetic = listOf(c.getString(7), c.getString(8), c.getString(9))
+                            .mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
+                            .joinToString(" ").takeIf { it.isNotEmpty() }
+                    }
                     Website.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty() && data1 !in websites) websites += data1
                     Note.CONTENT_ITEM_TYPE -> if (data1.isNotEmpty() && data1 !in notes) notes += data1
                     Nickname.CONTENT_ITEM_TYPE -> if (nickname == null && data1.isNotEmpty()) nickname = data1
                     Organization.CONTENT_ITEM_TYPE -> {
                         if (company == null && data1.isNotEmpty()) company = data1
-                        val jobTitle = c.getString(4)?.trim()
+                        val jobTitle = c.getString(5)?.trim()
                         if (title == null && !jobTitle.isNullOrEmpty()) title = jobTitle
                     }
                     GroupMembership.CONTENT_ITEM_TYPE -> data1.toLongOrNull()?.let { groups[it] }
@@ -177,9 +202,67 @@ class ContactsRepository(private val context: Context) {
         }
         return base.copy(
             phones = phones, emails = emails, addresses = addresses, events = events,
-            websites = websites, relations = relations, nickname = nickname, company = company,
+            websites = websites, relations = relations, sipAddresses = sips, chats = chats,
+            phoneticName = phonetic, nickname = nickname, company = company,
             jobTitle = title, notes = notes, labels = labels.sortedWith(String.CASE_INSENSITIVE_ORDER),
+            linkedCount = rawContactIds(base.id).size.coerceAtLeast(1),
         )
+    }
+
+    /** The stored (raw) contacts linked into one contact. */
+    private fun rawContactIds(contactId: Long): List<Long> {
+        if (ContactsContract.isProfileId(contactId)) return emptyList()
+        return runCatching {
+            resolver.query(
+                RawContacts.CONTENT_URI, arrayOf(RawContacts._ID),
+                "${RawContacts.CONTACT_ID} = ? AND ${RawContacts.DELETED} = 0", arrayOf(contactId.toString()), null,
+            )?.use { c -> buildList { while (c.moveToNext()) add(c.getLong(0)) } }.orEmpty()
+        }.getOrDefault(emptyList())
+    }
+
+    /**
+     * Makes a number or email the contact's default, or (with [on] false) leaves the contact
+     * with no default of that kind.
+     */
+    suspend fun setDefault(contactId: Long, mimeType: String, dataId: Long, on: Boolean) = withContext(Dispatchers.IO) {
+        runCatching {
+            // Clear the kind's defaults first; Android keeps one per contact.
+            resolver.update(
+                dataUriFor(contactId),
+                ContentValues().apply { put(Data.IS_SUPER_PRIMARY, 0); put(Data.IS_PRIMARY, 0) },
+                "${Data.CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?",
+                arrayOf(contactId.toString(), mimeType),
+            )
+            if (on) {
+                resolver.update(
+                    ContentUris.withAppendedId(Data.CONTENT_URI, dataId),
+                    ContentValues().apply { put(Data.IS_SUPER_PRIMARY, 1); put(Data.IS_PRIMARY, 1) },
+                    null, null,
+                )
+            }
+        }
+    }
+
+    /**
+     * Splits a contact back into the stored contacts it was linked from, and keeps Android from
+     * linking them again. Returns the contacts they now show as, or empty if it failed.
+     */
+    suspend fun unlink(contactId: Long): List<Long> = withContext(Dispatchers.IO) {
+        val raws = rawContactIds(contactId)
+        if (raws.size < 2) return@withContext emptyList()
+        val ops = ArrayList<ContentProviderOperation>()
+        for (i in raws.indices) for (j in i + 1 until raws.size) {
+            ops += ContentProviderOperation.newUpdate(AggregationExceptions.CONTENT_URI)
+                .withValue(AggregationExceptions.TYPE, AggregationExceptions.TYPE_KEEP_SEPARATE)
+                .withValue(AggregationExceptions.RAW_CONTACT_ID1, raws[i])
+                .withValue(AggregationExceptions.RAW_CONTACT_ID2, raws[j])
+                .build()
+        }
+        runCatching { resolver.applyBatch(ContactsContract.AUTHORITY, ops) }.getOrNull() ?: return@withContext emptyList()
+        raws.mapNotNull { raw ->
+            resolver.query(ContentUris.withAppendedId(RawContacts.CONTENT_URI, raw), arrayOf(RawContacts.CONTACT_ID), null, null, null)
+                ?.use { c -> if (c.moveToFirst()) c.getLong(0) else null }
+        }.distinct()
     }
 
     /** User-made labels (groups) by row id; system groups like "My Contacts" are left out. */

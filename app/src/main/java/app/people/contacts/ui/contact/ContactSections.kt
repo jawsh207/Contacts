@@ -30,6 +30,20 @@ import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.Badge
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.DialerSip
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.RecordVoiceOver
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import android.provider.ContactsContract.CommonDataKinds.Email
+import android.provider.ContactsContract.CommonDataKinds.Phone
+import app.people.contacts.data.LabeledValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -61,10 +75,21 @@ private data class Detail(
     val onClick: ((Context) -> Unit)? = null,
     val action: Pair<ImageVector, (Context) -> Unit>? = null,
     val actionDescription: Int? = null,
+    /** For a number or email when there's more than one: make it the default, or stop. */
+    val isDefault: Boolean = false,
+    val onToggleDefault: (() -> Unit)? = null,
+    /** A label from resources, when [label] is null. */
+    val labelRes: Int? = null,
 )
 
-/** The contact page's cards: contact info, dates, about and labels, each only if it has anything. */
-fun LazyListScope.contactSections(contact: ContactDetails) {
+/**
+ * The contact page's cards: contact info, dates, about and labels, each only if it has anything.
+ * Long-pressing a number or email (when there's more than one) offers to make it the default,
+ * through [onSetDefault] (mime type, row id, on).
+ */
+fun LazyListScope.contactSections(contact: ContactDetails, onSetDefault: (String, Long, Boolean) -> Unit) {
+    fun toggle(mimeType: String, many: Boolean, value: LabeledValue): (() -> Unit)? =
+        if (many && value.dataId != 0L) ({ onSetDefault(mimeType, value.dataId, !value.isDefault) }) else null
     val info = buildList {
         contact.phones.forEach { p ->
             add(
@@ -73,12 +98,24 @@ fun LazyListScope.contactSections(contact: ContactDetails) {
                     onClick = { Reach.dial(it, p.value) },
                     action = Icons.Outlined.ChatBubbleOutline to { ctx -> Reach.message(ctx, p.value) },
                     actionDescription = R.string.action_text,
+                    isDefault = p.isDefault && contact.phones.size > 1,
+                    onToggleDefault = toggle(Phone.CONTENT_ITEM_TYPE, contact.phones.size > 1, p),
                 )
             )
         }
-        contact.emails.forEach { e -> add(Detail(Icons.Outlined.Email, e.value, e.label, onClick = { Reach.email(it, e.value) })) }
+        contact.emails.forEach { e ->
+            add(
+                Detail(
+                    Icons.Outlined.Email, e.value, e.label, onClick = { Reach.email(it, e.value) },
+                    isDefault = e.isDefault && contact.emails.size > 1,
+                    onToggleDefault = toggle(Email.CONTENT_ITEM_TYPE, contact.emails.size > 1, e),
+                )
+            )
+        }
         contact.addresses.forEach { a -> add(Detail(Icons.Outlined.Place, a.value, a.label, onClick = { Reach.map(it, a.value) })) }
         contact.websites.forEach { w -> add(Detail(Icons.Outlined.Language, w, onClick = { Reach.web(it, w) })) }
+        contact.sipAddresses.forEach { s -> add(Detail(Icons.Outlined.DialerSip, s.value, s.label)) }
+        contact.chats.forEach { c -> add(Detail(Icons.Outlined.Forum, c.value, c.label)) }
     }
     section("info", R.string.section_contact_info, info)
 
@@ -90,6 +127,7 @@ fun LazyListScope.contactSections(contact: ContactDetails) {
 
     val about = buildList {
         contact.nickname?.let { add(Detail(Icons.Outlined.Badge, it, null)) }
+        contact.phoneticName?.let { add(Detail(Icons.Outlined.RecordVoiceOver, it, null, labelRes = R.string.phonetic_name)) }
         contact.relations.forEach { r -> add(Detail(Icons.Outlined.People, r.value, r.label)) }
         contact.notes.forEach { n -> add(Detail(Icons.AutoMirrored.Outlined.Notes, n)) }
     }
@@ -113,6 +151,7 @@ private fun LazyListScope.section(key: String, title: Int, rows: List<Detail>) {
 private fun DetailRow(detail: Detail, shape: androidx.compose.ui.graphics.Shape, modifier: Modifier) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
+    var menu by remember { mutableStateOf(false) }
     Row(
         modifier
             .fillMaxWidth()
@@ -120,7 +159,7 @@ private fun DetailRow(detail: Detail, shape: androidx.compose.ui.graphics.Shape,
             .background(scheme.surfaceBright)
             .combinedClickable(
                 onClick = { detail.onClick?.invoke(context) },
-                onLongClick = { copy(context, detail.value) },
+                onLongClick = { if (detail.onToggleDefault != null) menu = true else copy(context, detail.value) },
             )
             .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -129,8 +168,26 @@ private fun DetailRow(detail: Detail, shape: androidx.compose.ui.graphics.Shape,
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
             Text(detail.value, style = MaterialTheme.typography.bodyLarge)
-            if (!detail.label.isNullOrEmpty()) {
-                Text(detail.label, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            val label = listOfNotNull(
+                detail.label?.takeIf { it.isNotEmpty() } ?: detail.labelRes?.let { stringResource(it) },
+                if (detail.isDefault) stringResource(R.string.default_label) else null,
+            ).joinToString(" · ")
+            if (label.isNotEmpty()) {
+                Text(label, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            }
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.copy)) },
+                    leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) },
+                    onClick = { menu = false; copy(context, detail.value) },
+                )
+                detail.onToggleDefault?.let { toggle ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (detail.isDefault) R.string.clear_default else R.string.set_default)) },
+                        leadingIcon = { Icon(Icons.Outlined.CheckCircle, null) },
+                        onClick = { menu = false; toggle() },
+                    )
+                }
             }
         }
         detail.action?.let { (icon, run) ->

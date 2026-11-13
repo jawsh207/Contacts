@@ -19,7 +19,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Email
+import app.people.contacts.util.Reach
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MoreVert
@@ -64,7 +67,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LabelScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onOpenContact: (Long) -> Unit) {
     val labels by viewModel.labels.collectAsStateWithLifecycle()
-    val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    val contacts by viewModel.shownContacts.collectAsStateWithLifecycle()
     val label = labels?.firstOrNull { it.id == id }
     LaunchedEffect(labels) { if (labels != null && label == null) onBack() }
     if (label == null) return
@@ -99,6 +102,19 @@ fun LabelScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onOp
             Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).statusBarsPadding().height(64.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back)) }
                 Text(label.title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(start = 8.dp))
+                // Everyone in the label with a number (their first) or an email address.
+                val numbers = members.mapNotNull { it.numbers.firstOrNull() }
+                val emails = members.mapNotNull { it.emails.firstOrNull() }
+                if (numbers.isNotEmpty()) {
+                    IconButton(onClick = { Reach.messageAll(context, numbers) }) {
+                        Icon(Icons.Outlined.ChatBubbleOutline, stringResource(R.string.text_everyone))
+                    }
+                }
+                if (emails.isNotEmpty()) {
+                    IconButton(onClick = { Reach.emailAll(context, emails) }) {
+                        Icon(Icons.Outlined.Email, stringResource(R.string.email_everyone))
+                    }
+                }
                 Box {
                     IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.more_options)) }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {

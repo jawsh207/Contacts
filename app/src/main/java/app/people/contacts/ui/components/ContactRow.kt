@@ -1,6 +1,12 @@
 package app.people.contacts.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +34,8 @@ val LIST_AVATAR_SIZE = 48.dp
 
 /**
  * A contact in a list: photo and name on a card, 72dp tall (48dp photo, 12dp above and below).
- * [shape] places it in its group; see [segmentShape].
+ * [shape] places it in its group; see [segmentShape]. With [onLongClick] it can be selected:
+ * [selected] tints the card and shows a tick in place of the photo.
  */
 @Composable
 fun ContactRow(
@@ -37,22 +44,47 @@ fun ContactRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     supporting: String? = null,
+    selected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
 ) {
-    Surface(onClick = onClick, shape = shape, color = MaterialTheme.colorScheme.surfaceBright, modifier = modifier.fillMaxWidth()) {
-        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    val scheme = MaterialTheme.colorScheme
+    val color = if (selected) scheme.secondaryContainer else scheme.surfaceBright
+    if (onLongClick == null) {
+        Surface(onClick = onClick, shape = shape, color = color, modifier = modifier.fillMaxWidth()) {
+            ContactRowContent(contact, supporting, selected)
+        }
+    } else {
+        Surface(
+            shape = shape, color = color,
+            modifier = modifier.fillMaxWidth().clip(shape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        ) {
+            ContactRowContent(contact, supporting, selected)
+        }
+    }
+}
+
+@Composable
+private fun ContactRowContent(contact: ContactSummary, supporting: String?, selected: Boolean) {
+    Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (selected) {
+            Box(
+                Modifier.size(LIST_AVATAR_SIZE).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.onPrimary) }
+        } else {
             Avatar(contact.name, contact.photoUri, contact.id, LIST_AVATAR_SIZE)
-            Spacer(Modifier.width(16.dp))
-            androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
-                Text(contact.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (supporting != null) {
-                    Text(
-                        supporting,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+        }
+        Spacer(Modifier.width(16.dp))
+        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+            Text(contact.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (supporting != null) {
+                Text(
+                    supporting,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

@@ -47,7 +47,7 @@
     <string name="move_body">The contact is copied to the account you choose and removed from where it is now. Labels stay behind.</string>
     <string name="move_failed">Couldn\'t move this contact</string>
     <string name="labels_in_editor">Labels</string>
-    <string name="delete_failed">Couldn\'t delete this contact</string>
+    <string name="delete_failed">Couldn\'t delete some contacts</string>
 
     <!-- Highlights -->
     <string name="for_you">For you</string>
@@ -121,7 +121,8 @@
 
     <!-- Settings -->
     <string name="settings_display">Display</string>
-    <string name="sort_by">Sort by</string>
+    <string name="sort_by">Name order</string>
+    <string name="sort_by_summary">Sorts the list, and shows names as \"Last, First\" when set to last name</string>
     <string name="settings_recents_title">Calls and texts in Recents</string>
     <string name="settings_recents_summary">Show calls and texts with your saved contacts in Highlights instead of contacts you\'ve opened. Needs call log and SMS access.</string>
     <string name="settings_accounts">Accounts</string>
@@ -211,4 +212,61 @@
     <string name="remove">Remove</string>
     <string name="custom_label">Custom label</string>
     <string name="pick_date">Pick a date</string>
+    <!-- Selecting several contacts -->
+    <string name="select_all">Select all</string>
+    <string name="clear_selection">Clear selection</string>
+    <string name="add_to_label">Add to label</string>
+    <string name="no_labels">No labels yet. Create one in Organize.</string>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">Delete <xliff:g id="count" example="1">%1$d</xliff:g> contact?</item>
+        <item quantity="other">Delete <xliff:g id="count" example="3">%1$d</xliff:g> contacts?</item>
+    </plurals>
+    <string name="delete_contacts_body">They\'ll be removed from your phone and every account they\'re saved in.</string>
+    <plurals name="added_to_label">
+        <item quantity="one">Added <xliff:g id="count" example="1">%1$d</xliff:g> contact to <xliff:g id="label" example="Family">%2$s</xliff:g></item>
+        <item quantity="other">Added <xliff:g id="count" example="3">%1$d</xliff:g> contacts to <xliff:g id="label" example="Family">%2$s</xliff:g></item>
+    </plurals>
+
+    <!-- Undo after deleting -->
+    <string name="deleted_one"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g> deleted</string>
+    <plurals name="deleted_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact deleted</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> contacts deleted</item>
+    </plurals>
+    <string name="undo">Undo</string>
+
+    <!-- Default number and email -->
+    <string name="copy">Copy</string>
+    <string name="set_default">Set as default</string>
+    <string name="clear_default">Remove default</string>
+    <string name="default_label">Default</string>
+
+    <!-- Unlinking -->
+    <string name="unlink">Unlink</string>
+    <string name="unlink_title">Unlink this contact?</string>
+    <plurals name="unlink_body">
+        <item quantity="one">It\'s linked from <xliff:g id="count" example="1">%1$d</xliff:g> saved contact.</item>
+        <item quantity="other">It\'s linked from <xliff:g id="count" example="2">%1$d</xliff:g> saved contacts. Unlinking shows them as separate contacts again; nothing is deleted.</item>
+    </plurals>
+    <string name="unlink_failed">Couldn\'t unlink this contact</string>
+
+    <!-- Hiding contacts without a number -->
+    <string name="settings_hide_no_phone_title">Only contacts with phone numbers</string>
+    <string name="settings_hide_no_phone_summary">Hide contacts that have no phone number</string>
+
+    <!-- More fields -->
+    <string name="phonetic_first">Phonetic first name</string>
+    <string name="phonetic_middle">Phonetic middle name</string>
+    <string name="phonetic_last">Phonetic last name</string>
+    <string name="phonetic_name">Phonetic name</string>
+    <string name="relationship">Relationship</string>
+    <string name="add_relationship">Add relationship</string>
+    <string name="sip_address">Internet call</string>
+    <string name="add_sip_address">Add internet call address</string>
+    <string name="chat">Chat</string>
+    <string name="add_chat">Add chat</string>
+
+    <!-- Labels -->
+    <string name="text_everyone">Text everyone</string>
+    <string name="email_everyone">Email everyone</string>
 </resources>

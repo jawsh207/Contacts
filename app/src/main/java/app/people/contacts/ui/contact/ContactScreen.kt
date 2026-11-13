@@ -6,6 +6,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.LinkOff
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.runtime.produceState
 import androidx.core.content.IntentCompat
@@ -93,6 +95,7 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
     var confirmDelete by remember { mutableStateOf(false) }
     var showQr by remember { mutableStateOf(false) }
     var moving by remember { mutableStateOf(false) }
+    var confirmUnlink by remember { mutableStateOf(false) }
     val ringtonePicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val picked = result.data?.let {
@@ -113,15 +116,30 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
-                    // Once it's gone the page closes itself (see above).
-                    scope.launch {
-                        if (!viewModel.writer.delete(contact.id, contact.lookupKey)) {
-                            android.widget.Toast.makeText(context, R.string.delete_failed, android.widget.Toast.LENGTH_LONG).show()
-                        }
-                    }
+                    // Deleted after a moment, with Undo on the list meanwhile.
+                    viewModel.delete(listOf(contact.id to contact.lookupKey), contact.name)
+                    onBack()
                 }) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
+    if (confirmUnlink && contact != null) {
+        AlertDialog(
+            onDismissRequest = { confirmUnlink = false },
+            title = { Text(stringResource(R.string.unlink_title)) },
+            text = { Text(pluralStringResource(R.plurals.unlink_body, contact.linkedCount, contact.linkedCount)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmUnlink = false
+                    viewModel.unlink(contact.id) { ok ->
+                        if (ok) onBack()
+                        else android.widget.Toast.makeText(context, R.string.unlink_failed, android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }) { Text(stringResource(R.string.unlink)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmUnlink = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
@@ -163,7 +181,9 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
                 ) {
                     item(key = "header") { ContactHeader(contact) }
                     item(key = "actions") { QuickActions(contact) }
-                    contactSections(contact)
+                    contactSections(contact, onSetDefault = { mimeType, dataId, on ->
+                        viewModel.setDefault(contact.id, mimeType, dataId, on)
+                    })
                     item(key = "bottom") { Spacer(Modifier.navigationBarsPadding()) }
                 }
             }
@@ -190,6 +210,7 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
                     )
                 },
                 onMove = { moving = true },
+                onUnlink = { confirmUnlink = true },
             )
         }
     }
@@ -208,6 +229,7 @@ private fun TopBar(
     onDelete: () -> Unit,
     onRingtone: () -> Unit,
     onMove: () -> Unit,
+    onUnlink: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().statusBarsPadding().height(CONTACT_TOP_BAR_HEIGHT).padding(horizontal = 8.dp),
@@ -247,6 +269,13 @@ private fun TopBar(
                             leadingIcon = { Icon(Icons.Outlined.SwapHoriz, null) },
                             onClick = { menu = false; onMove() },
                         )
+                        if (contact.linkedCount > 1) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.unlink)) },
+                                leadingIcon = { Icon(Icons.Outlined.LinkOff, null) },
+                                onClick = { menu = false; onUnlink() },
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.delete)) },
                             leadingIcon = { Icon(Icons.Outlined.Delete, null) },

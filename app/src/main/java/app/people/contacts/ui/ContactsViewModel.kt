@@ -6,6 +6,7 @@ import android.provider.ContactsContract
 import android.provider.Telephony
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.people.contacts.R
 import app.people.contacts.calendar.BirthdayCalendar
 import app.people.contacts.calendar.BirthdayWorker
 import app.people.contacts.data.AccountKeys
@@ -55,10 +56,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** A contact page's state: still loading, or loaded ([details] null if the contact is gone). */
 data class DetailState(val loaded: Boolean, val details: ContactDetails?)
+
+/** Contacts deleted a moment ago, gone from view but still undoable; [name] is set for one. */
+data class PendingDeletion(val token: Long, val contacts: List<Pair<Long, String>>, val name: String?)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactsViewModel(app: Application) : AndroidViewModel(app) {
@@ -84,13 +89,29 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
 
     val sortOrder: StateFlow<SortOrder> = settings.sortOrder.stateIn(viewModelScope, SharingStarted.Eagerly, SortOrder.FirstName)
 
-    /** Contacts in accounts that aren't hidden, in the chosen order; null until the first load. */
-    val contacts: StateFlow<List<ContactSummary>?> = combine(allContacts, sortOrder, settings.hiddenAccounts) { all, order, hidden ->
+    /** Contact ids just deleted, waiting out the Undo before they're really deleted. */
+    private val pendingIds = MutableStateFlow<Set<Long>>(emptySet())
+
+    /**
+     * Contacts in accounts that aren't hidden, in the chosen order, with names shown in that
+     * order too ("Last, First" when sorted by last name); null until the first load. Includes
+     * contacts without a phone number, for labels, duplicates and export.
+     */
+    val shownContacts: StateFlow<List<ContactSummary>?> = combine(allContacts, sortOrder, settings.hiddenAccounts, pendingIds) { all, order, hidden, pending ->
         val collator = Collator.getInstance().apply { strength = Collator.PRIMARY }
-        all?.filter { c -> c.accounts.isEmpty() || c.accounts.any { (type, name) -> !AccountKeys.isHidden(type, name, hidden) } }
+        all?.filter { c -> c.id !in pending && (c.accounts.isEmpty() || c.accounts.any { (type, name) -> !AccountKeys.isHidden(type, name, hidden) }) }
             ?.sortedWith { a, b -> collator.compare(a.sortName(order), b.sortName(order)) }
+            ?.map { if (order == SortOrder.LastName && it.nameAlternative.isNotBlank()) it.copy(name = it.nameAlternative) else it }
     }
         .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val hideWithoutPhone: StateFlow<Boolean> = settings.hideWithoutPhone.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** What the list, search and Highlights show: [shownContacts], less those without a number if chosen. */
+    val contacts: StateFlow<List<ContactSummary>?> = combine(shownContacts, hideWithoutPhone) { list, hide ->
+        if (hide) list?.filter { it.numbers.isNotEmpty() } else list
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** One contact's details, reloaded whenever contacts change. */
@@ -99,7 +120,7 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Birthdays today and in the next [BIRTHDAY_WINDOW_DAYS] days, soonest first. */
     val birthdays: StateFlow<List<UpcomingBirthday>> = combine(
-        contacts.filterNotNull(),
+        shownContacts.filterNotNull(),
         changes.mapLatest { repository.loadBirthdays() },
     ) { list, dates -> upcomingBirthdays(list, dates, LocalDate.now()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -142,7 +163,7 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** Sets of contacts that look like the same person, for Organize's Merge duplicates. */
-    val duplicates: StateFlow<List<DuplicateSet>> = combine(contacts.filterNotNull(), settings.dismissedDuplicates) { list, dismissed ->
+    val duplicates: StateFlow<List<DuplicateSet>> = combine(shownContacts.filterNotNull(), settings.dismissedDuplicates) { list, dismissed ->
         findDuplicates(list, dismissed)
     }
         .flowOn(Dispatchers.Default)
@@ -240,7 +261,7 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
     /** Saves every contact shown to a .vcf file. */
     suspend fun exportTo(uri: android.net.Uri): Boolean {
         val app = getApplication<Application>()
-        val keys = contacts.value.orEmpty().map { it.lookupKey }.filter { it.isNotEmpty() }
+        val keys = (shownContacts.value ?: shownContacts.filterNotNull().first()).map { it.lookupKey }.filter { it.isNotEmpty() }
         return app.contentResolver.openOutputStream(uri)?.use { VCardWriter.export(app, keys, it) } ?: false
     }
 
@@ -264,5 +285,81 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setStarred(id: Long, starred: Boolean) {
         viewModelScope.launch { repository.setStarred(id, starred) }
+    }
+
+    fun setStarred(ids: Collection<Long>, starred: Boolean) {
+        viewModelScope.launch { ids.forEach { repository.setStarred(it, starred) } }
+    }
+
+    fun setHideWithoutPhone(on: Boolean) {
+        viewModelScope.launch { settings.setHideWithoutPhone(on) }
+    }
+
+    /** Makes a number or email the default, or clears the default of its kind. */
+    fun setDefault(contactId: Long, mimeType: String, dataId: Long, on: Boolean) {
+        viewModelScope.launch { repository.setDefault(contactId, mimeType, dataId, on) }
+    }
+
+    /**
+     * Splits a linked contact apart. The pieces won't be suggested in Merge duplicates again;
+     * [onDone] gets whether it worked.
+     */
+    fun unlink(contactId: Long, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val pieces = repository.unlink(contactId)
+            if (pieces.size > 1) settings.dismissDuplicate(pieces.sorted().joinToString("-"))
+            onDone(pieces.isNotEmpty())
+        }
+    }
+
+    /** Deleted contacts waiting for their Undo to run out; null when there are none. */
+    val pendingDeletion = MutableStateFlow<PendingDeletion?>(null)
+
+    /**
+     * Deletes contacts (id, lookup key) after a short wait in which [undoDelete] brings them
+     * back. They leave the lists straight away. A newer deletion finishes the one before.
+     */
+    fun delete(contacts: List<Pair<Long, String>>, name: String?) {
+        if (contacts.isEmpty()) return
+        pendingDeletion.value?.let { finishDelete(it) }
+        val pending = PendingDeletion(System.nanoTime(), contacts, name)
+        pendingIds.update { it + contacts.map { c -> c.first } }
+        pendingDeletion.value = pending
+        viewModelScope.launch {
+            delay(UNDO_WINDOW_MS)
+            if (pendingDeletion.value?.token == pending.token) finishDelete(pending)
+        }
+    }
+
+    fun undoDelete() {
+        val pending = pendingDeletion.value ?: return
+        pendingDeletion.value = null
+        pendingIds.update { it - pending.contacts.map { c -> c.first }.toSet() }
+    }
+
+    private fun finishDelete(pending: PendingDeletion) {
+        if (pendingDeletion.value?.token == pending.token) pendingDeletion.value = null
+        // Not tied to this screen's lifetime, so closing the app doesn't stop it halfway.
+        deleteScope.launch {
+            val failed = pending.contacts.filter { (id, key) -> !writer.delete(id, key) }
+            // Deleted ones stay hidden (their ids aren't reused) so they can't flash back before
+            // the list reloads; ones that couldn't be deleted come back.
+            if (failed.isNotEmpty()) {
+                pendingIds.update { it - failed.map { c -> c.first }.toSet() }
+                launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(getApplication<Application>(), R.string.delete_failed, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        // Leaving the app ends the wait: what was deleted is deleted.
+        pendingDeletion.value?.let { finishDelete(it) }
+    }
+
+    private companion object {
+        const val UNDO_WINDOW_MS = 8_000L
+        val deleteScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
     }
 }

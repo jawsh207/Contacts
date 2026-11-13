@@ -22,6 +22,27 @@ object Reach {
     fun message(context: Context, number: String) =
         start(context, Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)))
 
+    /** A group text to several numbers. */
+    fun messageAll(context: Context, numbers: List<String>) =
+        start(context, Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + numbers.joinToString(";") { Uri.encode(it) })))
+
+    /** One email to several addresses. */
+    fun emailAll(context: Context, addresses: List<String>) = start(
+        context,
+        Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).putExtra(Intent.EXTRA_EMAIL, addresses.toTypedArray()),
+    )
+
+    /** Shares several contacts as one vCard file. */
+    fun shareAll(context: Context, lookupKeys: List<String>) {
+        if (lookupKeys.size == 1) return share(context, lookupKeys.first(), "")
+        val uri = Uri.withAppendedPath(android.provider.ContactsContract.Contacts.CONTENT_MULTI_VCARD_URI, Uri.encode(lookupKeys.joinToString(":")))
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(android.provider.ContactsContract.Contacts.CONTENT_VCARD_TYPE)
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        start(context, Intent.createChooser(send, null))
+    }
+
     fun email(context: Context, address: String) =
         start(context, Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", address, null)))
 
