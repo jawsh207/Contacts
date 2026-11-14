@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.ui.draw.clip
@@ -90,23 +91,29 @@ private fun ContactRowContent(contact: ContactSummary, supporting: String?, sele
     }
 }
 
-/** The "Search contacts" pill at the top of a tab; tapping it opens search. */
+/**
+ * The "Search contacts" pill at the top of the tabs; tapping it opens search. [trailing] goes
+ * at its right end (the Settings button). Spaced as in Dialtone's.
+ */
 @Composable
-fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
     Surface(
         onClick = onClick,
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         modifier = modifier.fillMaxWidth().height(56.dp),
     ) {
-        Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.width(8.dp))
             Icon(Icons.Rounded.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(12.dp))
             Text(
                 stringResource(R.string.search_contacts),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
             )
+            trailing?.invoke()
         }
     }
 }

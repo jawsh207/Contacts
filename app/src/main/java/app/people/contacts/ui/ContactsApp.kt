@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material3.AlertDialog
@@ -229,7 +230,15 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                         onDelete = { confirmDelete = true },
                     )
                 } else {
-                    SearchPill(onClick = { open(Screen.Search) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    SearchPill(
+                        onClick = { open(Screen.Search) },
+                        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        trailing = {
+                            IconButton(onClick = { open(Screen.Settings) }) {
+                                Icon(Icons.Rounded.Settings, stringResource(R.string.settings))
+                            }
+                        },
+                    )
                 }
             }
         },
