@@ -345,6 +345,14 @@ private fun QuickAction(icon: ImageVector, label: String, enabled: Boolean, onCl
     }
 }
 
+/** Your info as a QR code, loaded by id: for the QR button on the Contacts tab's Your info card. */
+@Composable
+fun ProfileQrDialog(viewModel: ContactsViewModel, id: Long, onDismiss: () -> Unit) {
+    val flow = remember(id) { viewModel.details(id) }
+    val state by flow.collectAsStateWithLifecycle(DetailState(false, null))
+    state.details?.let { QrDialog(it, onDismiss) }
+}
+
 /** Your info as a QR code: anyone can scan it with their camera to save your contact. */
 @Composable
 private fun QrDialog(contact: ContactDetails, onDismiss: () -> Unit) {

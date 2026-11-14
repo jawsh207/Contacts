@@ -14,6 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.launch
+import androidx.compose.material3.IconButton
+import app.people.contacts.ui.contact.ProfileQrDialog
 import app.people.contacts.ui.components.Avatar
 import androidx.compose.material3.Surface
 import androidx.compose.material.icons.rounded.QrCode2
@@ -88,6 +90,8 @@ fun ContactsTab(
     val onTap: (ContactSummary) -> Unit = { if (selecting) onToggleSelected(it.id) else onOpenContact(it.id) }
     val onLongPress: (ContactSummary) -> Unit = { onToggleSelected(it.id) }
     val listState = rememberLazyListState()
+    var showQr by remember { mutableStateOf(false) }
+    profile?.let { p -> if (showQr) ProfileQrDialog(viewModel, p.id, onDismiss = { showQr = false }) }
     val scope = rememberCoroutineScope()
 
     Box(Modifier.fillMaxSize()) {
@@ -101,7 +105,11 @@ fun ContactsTab(
             verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
         ) {
             item(key = "your-info") {
-                YourInfoCard(profile, onOpen = { p -> if (p != null) onOpenContact(p.id) else onSetUpProfile() })
+                YourInfoCard(
+                    profile,
+                    onOpen = { p -> if (p != null) onOpenContact(p.id) else onSetUpProfile() },
+                    onShowQr = { showQr = true },
+                )
             }
             when {
                 list == null -> item(key = "loading") {
@@ -229,7 +237,7 @@ private fun byFirstLetter(contacts: List<ContactSummary>, order: SortOrder): Lis
 
 /** The user's own card at the top of the list, or an invitation to set it up. */
 @Composable
-private fun YourInfoCard(profile: ContactSummary?, onOpen: (ContactSummary?) -> Unit) {
+private fun YourInfoCard(profile: ContactSummary?, onOpen: (ContactSummary?) -> Unit, onShowQr: () -> Unit) {
     Surface(
         onClick = { onOpen(profile) },
         shape = RoundedCornerShape(24.dp),
@@ -249,7 +257,11 @@ private fun YourInfoCard(profile: ContactSummary?, onOpen: (ContactSummary?) -> 
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (profile != null) Icon(Icons.Rounded.QrCode2, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (profile != null) {
+                IconButton(onClick = onShowQr) {
+                    Icon(Icons.Rounded.QrCode2, stringResource(R.string.show_qr), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
