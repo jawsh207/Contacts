@@ -2,6 +2,12 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.9
+
+- Settings now opens from a button at the right of the search bar.
+- New Fix contacts in Organize: finds empty contacts, contacts with no name, numbers saved twice and numbers missing a country code, and fixes them.
+- Import and export moved from Settings to Organize.
+
 ## 2.0.8
 
 - Long-press a contact to select several at once, then favorite, share, delete or add them to a label together.
