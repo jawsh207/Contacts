@@ -84,6 +84,7 @@ import app.people.contacts.ui.contacts.ContactsTab
 import app.people.contacts.ui.edit.EditContactScreen
 import app.people.contacts.ui.highlights.HighlightsTab
 import app.people.contacts.ui.organize.LabelScreen
+import app.people.contacts.ui.organize.FixContactsScreen
 import app.people.contacts.ui.organize.MergeScreen
 import app.people.contacts.ui.organize.OrganizeTab
 import app.people.contacts.ui.settings.SettingsScreen
@@ -154,6 +155,7 @@ fun ContactsApp(intent: Intent?, finish: (Uri?) -> Unit, viewModel: ContactsView
         )
         is Screen.Label -> LabelScreen(viewModel, screen.id, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
         Screen.MergeDuplicates -> MergeScreen(viewModel, onBack = back, onOpenContact = { open(Screen.Contact(it)) })
+        Screen.FixContacts -> FixContactsScreen(viewModel, onBack = back, onEdit = { open(Screen.Edit(it)) })
         Screen.Settings -> SettingsScreen(viewModel, onBack = back)
         is Screen.ImportFile -> ImportFileScreen(viewModel, Uri.parse(screen.uri), onDone = back)
         is Screen.Edit -> EditContactScreen(
@@ -288,7 +290,7 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                     contentPadding = padding,
                     onOpenLabel = { open(Screen.Label(it)) },
                     onOpenMerge = { open(Screen.MergeDuplicates) },
-                    onOpenSettings = { open(Screen.Settings) },
+                    onOpenFix = { open(Screen.FixContacts) },
                 )
             }
         }

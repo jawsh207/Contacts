@@ -17,6 +17,11 @@ import app.people.contacts.data.ContactSummary
 import app.people.contacts.data.ContactWriter
 import app.people.contacts.data.ContactsRepository
 import app.people.contacts.data.DuplicateSet
+import app.people.contacts.data.FixItem
+import app.people.contacts.data.Fixes
+import app.people.contacts.data.findFixes
+import app.people.contacts.data.removeNumbers
+import app.people.contacts.data.addCountryCodes as saveCountryCodes
 import app.people.contacts.data.Label
 import app.people.contacts.data.PhotoChange
 import app.people.contacts.data.renameOnDeviceAccount as renameAccountContacts
@@ -170,6 +175,23 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Every account contacts can be in, for Settings and new labels. */
+    /** What "Fix contacts" suggests; null until first checked. */
+    val fixes: StateFlow<Fixes?> = combine(shownContacts.filterNotNull(), pendingIds) { list, pending -> list to pending }
+        .mapLatest { (list, pending) ->
+            findFixes(getApplication(), list).let { f -> f.copy(empty = f.empty.filter { it.contactId !in pending }) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Removes repeated numbers; [onDone] gets how many went. */
+    fun removeRepeatedNumbers(items: List<FixItem>, onDone: (Int) -> Unit) {
+        viewModelScope.launch { onDone(removeNumbers(getApplication(), items)) }
+    }
+
+    /** Adds country codes to numbers; [onDone] gets how many changed. */
+    fun addCountryCodes(items: List<FixItem>, onDone: (Int) -> Unit) {
+        viewModelScope.launch { onDone(saveCountryCodes(getApplication(), items)) }
+    }
+
     val accounts: StateFlow<List<ContactAccount>> = combine(changes, settings.savedAccounts) { _, saved -> saved }
         .mapLatest { allAccounts(app, AccountKeys.savedNames(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

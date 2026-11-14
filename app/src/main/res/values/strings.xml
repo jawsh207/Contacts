@@ -269,4 +269,34 @@
     <!-- Labels -->
     <string name="text_everyone">Text everyone</string>
     <string name="email_everyone">Email everyone</string>
+    <!-- Fix contacts -->
+    <string name="fix_contacts">Fix contacts</string>
+    <string name="fix_summary_none">Nothing to fix</string>
+    <plurals name="fix_suggestions">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> suggestion</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> suggestions</item>
+    </plurals>
+    <plurals name="fixed_count">
+        <item quantity="one">Fixed <xliff:g id="count" example="1">%1$d</xliff:g> number</item>
+        <item quantity="other">Fixed <xliff:g id="count" example="4">%1$d</xliff:g> numbers</item>
+    </plurals>
+    <string name="fix_failed">Some numbers couldn\'t be changed. Their account may not allow it.</string>
+    <string name="fix_none_title">Nothing to fix</string>
+    <string name="fix_none_body">Every contact has a name, and every number is saved once with its country code.</string>
+    <string name="fix_empty_title">Empty contacts</string>
+    <string name="fix_empty_body">Contacts with nothing saved in them. They can\'t be seen in the list.</string>
+    <string name="delete_all">Delete all</string>
+    <plurals name="fix_empty_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> empty contact</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> empty contacts</item>
+    </plurals>
+    <string name="fix_unnamed_title">No name</string>
+    <string name="fix_unnamed_body">These show as a number or email address because they have no name.</string>
+    <string name="add_name">Add name</string>
+    <string name="fix_repeated_title">Number saved twice</string>
+    <string name="fix_repeated_body">The same number is on these contacts more than once. Removing the extra copy keeps one.</string>
+    <string name="fix_all">Fix all</string>
+    <string name="fix_codes_title">Missing country code</string>
+    <string name="fix_codes_body">Adding your country\'s code helps when you travel, and helps other apps recognise the number.</string>
+    <string name="fix">Fix</string>
 </resources>

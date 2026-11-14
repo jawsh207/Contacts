@@ -1,11 +1,7 @@
 package app.people.contacts.ui.settings
 
 import android.Manifest
-import android.widget.Toast
 import androidx.compose.material.icons.outlined.Cake
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.Upload
-import androidx.compose.runtime.rememberCoroutineScope
 import app.people.contacts.calendar.BirthdayCalendar
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -71,7 +67,7 @@ import app.people.contacts.ui.components.SectionHeader
 import app.people.contacts.ui.components.TextInputDialog
 import app.people.contacts.ui.components.segmentShape
 
-/** Settings: display, the birthday calendar, backup and accounts, in grouped cards. */
+/** Settings: display, the birthday calendar and accounts, in grouped cards. */
 @Composable
 fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -84,7 +80,6 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     var deleting by remember { mutableStateOf<ContactAccount?>(null) }
     var adding by remember { mutableStateOf(false) }
 
-    val scope = rememberCoroutineScope()
     val calendarOn by viewModel.settings.birthdayCalendar.collectAsStateWithLifecycle(false)
     val calendarAccess = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         viewModel.setBirthdayCalendar(BirthdayCalendar.canWrite(context))
@@ -97,26 +92,6 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
             else -> calendarAccess.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
         }
     }
-    var importUri by remember { mutableStateOf<android.net.Uri?>(null) }
-    fun runImport(uri: android.net.Uri, account: ContactAccount) {
-        scope.launch {
-            val added = viewModel.importFrom(uri, account)
-            Toast.makeText(context, context.resources.getQuantityString(R.plurals.imported, added, added), Toast.LENGTH_LONG).show()
-        }
-    }
-    val writable = accounts.filter { it.onDevice || it.type != null }
-    val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/x-vcard")) { uri ->
-        if (uri != null) scope.launch {
-            val ok = viewModel.exportTo(uri)
-            Toast.makeText(context, if (ok) R.string.export_done else R.string.export_failed, Toast.LENGTH_SHORT).show()
-        }
-    }
-    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            if (writable.size > 1) importUri = uri else runImport(uri, writable.firstOrNull() ?: ContactAccount(null, null, ""))
-        }
-    }
-
     val recentsAccess = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         viewModel.setRecentsFromCallsAndTexts(hasCallAndTextAccess(context))
     }
@@ -183,28 +158,6 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                 )
             }
 
-            item(key = "backup-header") { SectionHeader(stringResource(R.string.settings_backup)) }
-            item(key = "export") {
-                ListRow(
-                    icon = Icons.Outlined.Upload,
-                    title = stringResource(R.string.export_contacts),
-                    summary = stringResource(R.string.export_summary),
-                    shape = segmentShape(0, 2),
-                    onClick = { exporter.launch("contacts.vcf") },
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-            item(key = "import") {
-                ListRow(
-                    icon = Icons.Outlined.Download,
-                    title = stringResource(R.string.import_contacts),
-                    summary = stringResource(R.string.import_summary),
-                    shape = segmentShape(1, 2),
-                    onClick = { importer.launch(arrayOf("text/x-vcard", "text/vcard", "text/directory", "*/*")) },
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-
             item(key = "accounts-header") { SectionHeader(stringResource(R.string.settings_accounts)) }
             val rows = accounts.size + 1
             itemsIndexed(accounts, key = { _, a -> "account-${a.type}|${a.name}" }) { index, account ->
@@ -226,24 +179,6 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                 )
             }
         }
-    }
-
-    importUri?.let { uri ->
-        AlertDialog(
-            onDismissRequest = { importUri = null },
-            title = { Text(stringResource(R.string.import_to)) },
-            text = {
-                Column {
-                    writable.forEach { account ->
-                        TextButton(onClick = { importUri = null; runImport(uri, account) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(account.label, modifier = Modifier.fillMaxWidth())
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = { importUri = null }) { Text(stringResource(R.string.cancel)) } },
-        )
     }
 
     if (adding) {

@@ -9,7 +9,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.AutoFixHigh
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Healing
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -43,10 +45,12 @@ fun OrganizeTab(
     contentPadding: PaddingValues,
     onOpenLabel: (Long) -> Unit,
     onOpenMerge: () -> Unit,
-    onOpenSettings: () -> Unit,
+    onOpenFix: () -> Unit,
 ) {
     val labels by viewModel.labels.collectAsStateWithLifecycle()
     val duplicates by viewModel.duplicates.collectAsStateWithLifecycle()
+    val fixes by viewModel.fixes.collectAsStateWithLifecycle()
+    val backup = rememberBackupActions(viewModel)
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf<ContactAccount?>(null) }
@@ -110,18 +114,41 @@ fun OrganizeTab(
                 summary = if (duplicates.isEmpty()) stringResource(R.string.merge_none)
                 else pluralStringResource(R.plurals.merge_suggestions, duplicates.size, duplicates.size),
                 summaryColor = if (duplicates.isEmpty()) null else MaterialTheme.colorScheme.primary,
-                shape = segmentShape(0, 2),
+                shape = segmentShape(0, 4),
                 onClick = onOpenMerge,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
         }
-        item(key = "settings") {
+        item(key = "fix") {
+            val count = fixes?.count ?: 0
             ListRow(
-                icon = Icons.Outlined.Settings,
-                title = stringResource(R.string.settings),
-                summary = stringResource(R.string.settings_summary),
-                shape = segmentShape(1, 2),
-                onClick = onOpenSettings,
+                icon = Icons.Outlined.Healing,
+                title = stringResource(R.string.fix_contacts),
+                summary = if (count == 0) stringResource(R.string.fix_summary_none)
+                else pluralStringResource(R.plurals.fix_suggestions, count, count),
+                summaryColor = if (count == 0) null else MaterialTheme.colorScheme.primary,
+                shape = segmentShape(1, 4),
+                onClick = onOpenFix,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+        item(key = "import") {
+            ListRow(
+                icon = Icons.Outlined.Download,
+                title = stringResource(R.string.import_contacts),
+                summary = stringResource(R.string.import_summary),
+                shape = segmentShape(2, 4),
+                onClick = backup.import,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+        item(key = "export") {
+            ListRow(
+                icon = Icons.Outlined.Upload,
+                title = stringResource(R.string.export_contacts),
+                summary = stringResource(R.string.export_summary),
+                shape = segmentShape(3, 4),
+                onClick = backup.export,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
         }
