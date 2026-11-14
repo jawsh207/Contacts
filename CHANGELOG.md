@@ -2,6 +2,10 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.10
+
+- Tapping the QR code on the Your info card opens your QR code for sharing.
+
 ## 2.0.9
 
 - Settings now opens from a button at the right of the search bar.
