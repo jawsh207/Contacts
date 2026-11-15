@@ -17,6 +17,23 @@ messages, release notes or pull requests.
 - Keep the look in step with Dialtone: theme, bottom bar, favorite avatars and grouped cards
   should match it exactly.
 
+## Documentation
+
+Describing the code is part of every change, not a follow-up:
+
+- Every Kotlin file, and every class, object, interface and function in it that isn't private,
+  starts with a `/** … */` description: in plain words, what it is and why it's there, plus
+  anything surprising (an Android rule it works around, why it runs where it does).
+- When you change code, re-read its description and fix anything the change made wrong.
+- Comments inside functions explain why, not what: Android behaviour, choices between
+  alternatives. Don't narrate the lines.
+- Describe only what the code does. Check each claim against the code.
+- Update `README.md` when a change affects building, installing, permissions or how a feature
+  behaves.
+
+`python3 scripts/check-docs.py` lists anything missing a description. CI runs it on every
+build and stops the build if something is missing.
+
 ## Releases
 
 When the owner says "Build release":

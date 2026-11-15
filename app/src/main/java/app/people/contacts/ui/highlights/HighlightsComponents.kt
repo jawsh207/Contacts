@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.CallMade
 import androidx.compose.material.icons.automirrored.rounded.CallMissed
 import androidx.compose.material.icons.automirrored.rounded.CallReceived
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.ChatBubble
@@ -158,7 +159,9 @@ private fun birthdayWhen(birthday: UpcomingBirthday): String {
 
 /**
  * A Recents entry: photo, name, and what happened (a call icon or the message) and when.
- * Tapping a call opens the dialer with its number, a text the conversation, a view the contact.
+ * Texts you sent show a send arrow and start "You:", as in messaging apps, so they stand apart
+ * from texts you got. Tapping a call opens the dialer with its number, a text the
+ * conversation, a view the contact.
  */
 @Composable
 fun RecentRow(entry: RecentEntry, shape: Shape, onOpenContact: () -> Unit, modifier: Modifier = Modifier) {
@@ -187,7 +190,7 @@ fun RecentRow(entry: RecentEntry, shape: Shape, onOpenContact: () -> Unit, modif
                     Spacer(Modifier.width(6.dp))
                     val time = DateUtils.getRelativeTimeSpanString(entry.time, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
                     Text(
-                        listOfNotNull(entry.snippet?.takeIf { it.isNotBlank() } ?: kindText(entry.kind), time).joinToString(" · "),
+                        listOfNotNull(summary(entry), time).joinToString(" · "),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (missed) scheme.error else scheme.onSurfaceVariant,
                         maxLines = 1,
@@ -204,7 +207,15 @@ private fun kindIcon(kind: RecentKind): ImageVector = when (kind) {
     RecentKind.CallMissed -> Icons.AutoMirrored.Rounded.CallMissed
     RecentKind.CallIncoming -> Icons.AutoMirrored.Rounded.CallReceived
     RecentKind.CallOutgoing -> Icons.AutoMirrored.Rounded.CallMade
-    RecentKind.TextReceived, RecentKind.TextSent -> Icons.Rounded.ChatBubble
+    RecentKind.TextReceived -> Icons.Rounded.ChatBubble
+    RecentKind.TextSent -> Icons.AutoMirrored.Rounded.Send
+}
+
+/** The message (with "You:" before one you sent), or what kind of entry it is. */
+@Composable
+private fun summary(entry: RecentEntry): String {
+    val message = entry.snippet?.takeIf { it.isNotBlank() } ?: return kindText(entry.kind)
+    return if (entry.kind == RecentKind.TextSent) stringResource(R.string.recent_you, message) else message
 }
 
 @Composable

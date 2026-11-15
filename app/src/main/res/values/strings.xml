@@ -69,6 +69,7 @@
     <string name="recent_outgoing">Outgoing call</string>
     <string name="recent_text_received">Text</string>
     <string name="recent_text_sent">Text sent</string>
+    <string name="recent_you">You: <xliff:g id="message" example="See you soon">%1$s</xliff:g></string>
 
     <!-- Organize -->
     <string name="fix_and_manage">Fix and manage</string>
