@@ -2,6 +2,11 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.11
+
+- Recents: tell sent texts from received; require code descriptions
+- Describe the remaining undocumented code
+
 ## 2.0.10
 
 - Tapping the QR code on the Your info card opens your QR code for sharing.
