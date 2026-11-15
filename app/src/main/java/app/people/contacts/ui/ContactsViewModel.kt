@@ -70,6 +70,12 @@ data class DetailState(val loaded: Boolean, val details: ContactDetails?)
 /** Contacts deleted a moment ago, gone from view but still undoable; [name] is set for one. */
 data class PendingDeletion(val token: Long, val contacts: List<Pair<Long, String>>, val name: String?)
 
+/**
+ * Everything the screens show and do, in one place: the contact lists (sorted, filtered and kept
+ * up to date as contacts change), settings, labels, duplicates, fixes and birthdays, plus
+ * saving, deleting with Undo, merging, unlinking, import and export. It outlives screen
+ * rotations, and each screen reads from it.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactsViewModel(app: Application) : AndroidViewModel(app) {
     private val repository = ContactsRepository(app)

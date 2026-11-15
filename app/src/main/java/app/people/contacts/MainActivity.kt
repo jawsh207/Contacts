@@ -9,6 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import app.people.contacts.ui.ContactsApp
 import app.people.contacts.ui.theme.ContactsTheme
 
+/**
+ * The app's only screen holder. It opens from the launcher and also handles other apps'
+ * requests (pick a contact, add one, open a .vcf file), all through [ContactsApp].
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

@@ -14,6 +14,10 @@ private val WITH_YEAR = Regex("""^(\d{4})-(\d{1,2})-(\d{1,2})""")
 private val WITHOUT_YEAR = Regex("""^--(\d{1,2})-?(\d{1,2})""")
 private val COMPACT = Regex("""^(\d{4})(\d{2})(\d{2})$""")
 
+/**
+ * Reads a stored date: "1990-03-04", "19900304", or without a year "--03-04" or "--0304".
+ * Null if it's in another format or isn't a real date.
+ */
 fun parseEventDate(raw: String): EventDate? {
     val text = raw.trim()
     val m = WITH_YEAR.find(text) ?: COMPACT.find(text)
