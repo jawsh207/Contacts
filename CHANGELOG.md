@@ -2,6 +2,11 @@
 
 Each release's notes on the GitHub Releases page come from its section here. Newest first; headings are `## <version name>`, matching line 2 of `version.txt`.
 
+## 2.0.12
+
+- Search also finds people by company, job title, nickname, notes and address.
+- Choosing a contact photo now lets you zoom and drag to pick what shows in the circle.
+
 ## 2.0.11
 
 - Recents: tell sent texts from received; require code descriptions
