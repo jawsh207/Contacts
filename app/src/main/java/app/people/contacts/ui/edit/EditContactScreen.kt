@@ -87,7 +87,9 @@ import app.people.contacts.data.writableAccounts
 import app.people.contacts.intents.mergePrefill
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.Avatar
-import app.people.contacts.util.scaledContactPhoto
+import app.people.contacts.util.croppedContactPhoto
+import app.people.contacts.util.loadPhotoForCrop
+import android.graphics.Bitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -137,10 +139,23 @@ fun EditContactScreen(
     val close = { if (dirty) confirmDiscard = true else onClose() }
     BackHandler(onBack = close)
 
+    // A picked photo goes to the cropper first; the chosen square becomes the new photo.
+    var cropping by remember { mutableStateOf<Bitmap?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) scope.launch {
-            withContext(Dispatchers.IO) { scaledContactPhoto(context, uri) }?.let { photo = PhotoChange.Set(it) }
+            cropping = withContext(Dispatchers.IO) { loadPhotoForCrop(context, uri) }
         }
+    }
+    cropping?.let { image ->
+        PhotoCropper(
+            image,
+            onDone = { window ->
+                cropping = null
+                scope.launch { withContext(Dispatchers.IO) { croppedContactPhoto(image, window) }?.let { photo = PhotoChange.Set(it) } }
+            },
+            onCancel = { cropping = null },
+        )
+        return
     }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

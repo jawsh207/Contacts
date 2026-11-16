@@ -12,6 +12,8 @@ data class ContactSummary(
     /** Phone numbers and email addresses, for search. */
     val numbers: List<String> = emptyList(),
     val emails: List<String> = emptyList(),
+    /** Company, job title, nickname, notes and addresses, so search can find people by them. */
+    val details: List<String> = emptyList(),
     /** The accounts it's stored in, as (type, name); both null for the phone. */
     val accounts: List<Pair<String?, String?>> = emptyList(),
 )

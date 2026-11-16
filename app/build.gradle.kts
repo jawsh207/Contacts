@@ -23,6 +23,10 @@ android {
         resValue("string", "account_type", "app.people.contacts")
     }
 
+    // Unit tests run on the computer, not a phone. Android calls the tested code happens to make
+    // (number formatting, say) return empty defaults instead of failing.
+    testOptions { unitTests.isReturnDefaultValues = true }
+
     // CI supplies the key through ORG_GRADLE_PROJECT_RELEASE_* (the dev key for test builds,
     // the release key for releases). Without it, builds are signed with the debug key.
     val storeFilePath = findProperty("RELEASE_STORE_FILE") as String?
@@ -94,7 +98,17 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     // QR codes for sharing Your info.
     implementation(libs.zxing.core)
+
+    testImplementation(libs.junit)
 }
 
 // APKs are named contacts-dev.apk / contacts-release.apk, as in the app this one replaces.
 base.archivesName.set("contacts")
+
+// A failing unit test prints what was expected and what came out, so CI can show it.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
+    }
+}

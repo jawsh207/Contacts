@@ -42,21 +42,21 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.people.contacts.R
+import app.people.contacts.data.SearchResult
+import app.people.contacts.data.searchContacts
 import app.people.contacts.data.ContactSummary
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.ContactRow
 import app.people.contacts.ui.components.EmptyState
 import app.people.contacts.ui.components.SEGMENT_GAP
 import app.people.contacts.ui.components.segmentShape
-import app.people.contacts.util.foldForSearch
-import app.people.contacts.util.formatNumber
 
 /** Search by name (in either order), phone number or email, as you type. */
 @Composable
 fun SearchScreen(viewModel: ContactsViewModel, onBack: () -> Unit, onOpenContact: (Long) -> Unit) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
-    val results = remember(contacts, query) { search(contacts.orEmpty(), query) }
+    val results = remember(contacts, query) { searchContacts(contacts.orEmpty(), query) }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
 
@@ -124,26 +124,6 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit, onBack: 
                     Icon(Icons.Rounded.Close, stringResource(R.string.clear_search))
                 }
             }
-        }
-    }
-}
-
-/** A search hit, with the number or email that matched when it wasn't the name. */
-private data class SearchResult(val contact: ContactSummary, val matchedDetail: String?)
-
-private fun search(contacts: List<ContactSummary>, rawQuery: String): List<SearchResult> {
-    val query = foldForSearch(rawQuery.trim())
-    if (query.isEmpty()) return emptyList()
-    val digits = rawQuery.filter { it.isDigit() }
-    // A query that's mostly digits is a phone number search.
-    val numberSearch = digits.length >= 2 && digits.length * 2 >= rawQuery.count { !it.isWhitespace() }
-    return contacts.mapNotNull { c ->
-        when {
-            foldForSearch(c.name).contains(query) || foldForSearch(c.nameAlternative).contains(query) ->
-                SearchResult(c, null)
-            numberSearch -> c.numbers.firstOrNull { it.filter(Char::isDigit).contains(digits) }
-                ?.let { SearchResult(c, formatNumber(it)) }
-            else -> c.emails.firstOrNull { foldForSearch(it).contains(query) }?.let { SearchResult(c, it) }
         }
     }
 }

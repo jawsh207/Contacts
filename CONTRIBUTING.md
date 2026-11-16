@@ -30,6 +30,16 @@ Describing the code is part of every change, not a follow-up:
 - Describe only what the code does. Check each claim against the code.
 - Update `README.md` when a change affects building, installing, permissions or how a feature
   behaves.
+- Update `docs/HOW-IT-WORKS.md` in the same commit when a change adds, removes, renames or
+  moves a feature, screen, setting, permission or file. It's the guide for people who don't read
+  code: keep it free of code and keep its tables (screen → file, job → file) accurate.
+
+## Tests
+
+Logic that doesn't need a phone (parsing, matching, maths) has unit tests in `app/src/test`.
+When you add or change such logic, add or update its tests. Keep that logic in plain functions
+outside the screens so it can be tested. CI runs the tests on every build and stops on a
+failure; run them locally with `./gradlew :app:testDevUnitTest`.
 
 `python3 scripts/check-docs.py` lists anything missing a description. CI runs it on every
 build and stops the build if something is missing.

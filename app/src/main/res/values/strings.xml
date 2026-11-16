@@ -157,6 +157,8 @@
     <string name="show_qr">Show QR code</string>
     <string name="qr_hint">Show this code to share your contact info. Others can scan it with their phone camera to save it.</string>
     <string name="done">Done</string>
+    <string name="crop_photo">Crop photo</string>
+    <string name="crop_photo_hint">Pinch to zoom and drag to choose what shows in the circle.</string>
 
     <!-- Requests from other apps -->
     <string name="pick_contact">Choose a contact</string>

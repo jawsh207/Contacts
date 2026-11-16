@@ -41,18 +41,33 @@ class ContactsRepository(private val context: Context) {
         if (!canRead()) return@withContext emptyList()
         val numbers = HashMap<Long, MutableList<String>>()
         val emails = HashMap<Long, MutableList<String>>()
+        val details = HashMap<Long, MutableList<String>>()
         runCatching {
             resolver.query(
                 Data.CONTENT_URI,
-                arrayOf(Data.CONTACT_ID, Data.MIMETYPE, Data.DATA1),
-                "${Data.MIMETYPE} IN (?, ?)",
-                arrayOf(Phone.CONTENT_ITEM_TYPE, Email.CONTENT_ITEM_TYPE),
+                arrayOf(Data.CONTACT_ID, Data.MIMETYPE, Data.DATA1, Data.DATA4),
+                "${Data.MIMETYPE} IN (?, ?, ?, ?, ?, ?)",
+                arrayOf(
+                    Phone.CONTENT_ITEM_TYPE, Email.CONTENT_ITEM_TYPE, Organization.CONTENT_ITEM_TYPE,
+                    Nickname.CONTENT_ITEM_TYPE, Note.CONTENT_ITEM_TYPE, StructuredPostal.CONTENT_ITEM_TYPE,
+                ),
                 null,
             )?.use { c ->
                 while (c.moveToNext()) {
-                    val value = c.getString(2)?.takeIf { it.isNotBlank() } ?: continue
-                    val target = if (c.getString(1) == Phone.CONTENT_ITEM_TYPE) numbers else emails
-                    target.getOrPut(c.getLong(0)) { mutableListOf() }.add(value)
+                    val id = c.getLong(0)
+                    val value = c.getString(2)?.trim()?.takeIf { it.isNotEmpty() }
+                    when (c.getString(1)) {
+                        Phone.CONTENT_ITEM_TYPE -> value?.let { numbers.getOrPut(id) { mutableListOf() }.add(it) }
+                        Email.CONTENT_ITEM_TYPE -> value?.let { emails.getOrPut(id) { mutableListOf() }.add(it) }
+                        else -> {
+                            // DATA1 is the company, nickname, note or address; DATA4 an organization's job title.
+                            val list = details.getOrPut(id) { mutableListOf() }
+                            value?.let { if (it !in list) list += it }
+                            if (c.getString(1) == Organization.CONTENT_ITEM_TYPE) {
+                                c.getString(3)?.trim()?.takeIf { it.isNotEmpty() && it !in list }?.let { list += it }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -94,6 +109,7 @@ class ContactsRepository(private val context: Context) {
                         starred = c.getInt(5) == 1,
                         numbers = numbers[id].orEmpty(),
                         emails = emails[id].orEmpty(),
+                        details = details[id].orEmpty(),
                         accounts = accounts[id].orEmpty(),
                     )
                 }

@@ -97,16 +97,21 @@ jobs:
             echo "::warning::No DEV_KEYSTORE_BASE64 secret set; this test build is signed with a throwaway key."
           fi
 
-      # On failure, Gradle's error summary and compiler errors are re-emitted as
-      # annotations so they show on the run page without opening the full log.
-      - name: Build APK
+      # Runs the unit tests (app/src/test), then builds. A failing test stops the build.
+      # On failure, failed tests, Gradle's error summary and compiler errors are re-emitted
+      # as annotations so they show on the run page without opening the full log.
+      - name: Test and build APK
         run: |
           set -o pipefail
           TASK=":app:assemble${VARIANT^}"
-          if ./gradlew "$TASK" --console=plain 2>&1 | tee build.log; then
+          TESTS=":app:test${VARIANT^}UnitTest"
+          if ./gradlew "$TESTS" "$TASK" --console=plain 2>&1 | tee build.log; then
             exit 0
           fi
-          grep -E '^e: |^ERROR|Error: |error: ' build.log | head -20 | while IFS= read -r line; do
+          grep -E ' > .* FAILED$' build.log | head -20 | while IFS= read -r line; do
+            echo "::error title=Test failed::${line}"
+          done
+          grep -E '^e: |^ERROR|Error: |error: |Exception at |expected:<' build.log | head -20 | while IFS= read -r line; do
             echo "::error::${line}"
           done
           summary=$(awk '/What went wrong:/{f=1} /\* Try:/{f=0} f' build.log | head -40 | sed ':a;N;$!ba;s/\n/%0A/g')

@@ -26,7 +26,14 @@ To build locally (JDK 21 and the Android SDK required):
 ```sh
 ./gradlew :app:assembleDev       # test build
 ./gradlew :app:assembleRelease   # release
+./gradlew :app:testDevUnitTest   # unit tests
 ```
+
+Every CI build runs the unit tests (`app/src/test`) and `scripts/check-docs.py` first, and
+stops if either fails.
+
+For what each part of the app does and which file it's in, see
+[docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md).
 
 ### Signing keys
 
